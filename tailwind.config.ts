@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,7 +62,33 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				halaeats: {
+					'50': '#f8f9fa',
+					'100': '#ebedf0',
+					'200': '#dde0e4',
+					'300': '#c8ccd3',
+					'400': '#a9afb9',
+					'500': '#8e96a3',
+					'600': '#747d8c',
+					'700': '#616875',
+					'800': '#4d5360',
+					'900': '#3d4150',
+					'950': '#23252f'
+				},
+				cuisine: {
+					'50': '#fff9ed',
+					'100': '#fff2d5',
+					'200': '#ffe2aa',
+					'300': '#ffcb73',
+					'400': '#ffaf3d',
+					'500': '#ff9418',
+					'600': '#ff7e0c',
+					'700': '#cc5a08',
+					'800': '#a1450e',
+					'900': '#823b10',
+					'950': '#461c05'
+				},
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -70,26 +97,73 @@ export default {
 			},
 			keyframes: {
 				'accordion-down': {
-					from: {
-						height: '0'
-					},
-					to: {
-						height: 'var(--radix-accordion-content-height)'
-					}
+					from: { height: '0' },
+					to: { height: 'var(--radix-accordion-content-height)' },
 				},
 				'accordion-up': {
-					from: {
-						height: 'var(--radix-accordion-content-height)'
-					},
-					to: {
-						height: '0'
-					}
-				}
+					from: { height: 'var(--radix-accordion-content-height)' },
+					to: { height: '0' },
+				},
+				'fade-in': {
+					from: { opacity: '0' },
+					to: { opacity: '1' },
+				},
+				'fade-out': {
+					from: { opacity: '1' },
+					to: { opacity: '0' },
+				},
+				'slide-up': {
+					from: { transform: 'translateY(10px)', opacity: '0' },
+					to: { transform: 'translateY(0)', opacity: '1' },
+				},
+				'slide-down': {
+					from: { transform: 'translateY(-10px)', opacity: '0' },
+					to: { transform: 'translateY(0)', opacity: '1' },
+				},
+				'scale-in': {
+					from: { transform: 'scale(0.95)', opacity: '0' },
+					to: { transform: 'scale(1)', opacity: '1' },
+				},
+				'float': {
+					'0%, 100%': { transform: 'translateY(0)' },
+					'50%': { transform: 'translateY(-5px)' },
+				},
+				'pulse-subtle': {
+					'0%, 100%': { opacity: '1' },
+					'50%': { opacity: '0.85' },
+				},
+				'shimmer': {
+					'0%': { backgroundPosition: '-500px 0' },
+					'100%': { backgroundPosition: '500px 0' },
+				},
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
-			}
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'fade-in': 'fade-in 0.3s ease-out',
+				'fade-out': 'fade-out 0.3s ease-out',
+				'slide-up': 'slide-up 0.4s ease-out',
+				'slide-down': 'slide-down 0.4s ease-out',
+				'scale-in': 'scale-in 0.3s ease-out',
+				'float': 'float 3s ease-in-out infinite',
+				'pulse-subtle': 'pulse-subtle 3s ease-in-out infinite',
+				'shimmer': 'shimmer 1.5s infinite linear',
+			},
+			boxShadow: {
+				'soft': '0 10px 25px -5px rgba(0, 0, 0, 0.05)',
+				'elevation-soft': '0 2px 10px rgba(0, 0, 0, 0.05)',
+				'elevation-medium': '0 4px 20px rgba(0, 0, 0, 0.08)',
+				'elevation-hard': '0 10px 30px rgba(0, 0, 0, 0.12)',
+				'glass': '0 8px 32px rgba(0, 0, 0, 0.08)',
+			},
+			backgroundImage: {
+				'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+				'shimmer': 'linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.2) 20%, rgba(255, 255, 255, 0.5) 60%, rgba(255, 255, 255, 0) 100%)',
+			},
+			transitionTimingFunction: {
+				'out-expo': 'cubic-bezier(0.19, 1, 0.22, 1)',
+				'ease-spring': 'cubic-bezier(0.25, 0.1, 0.25, 1.5)',
+			},
 		}
 	},
 	plugins: [require("tailwindcss-animate")],
