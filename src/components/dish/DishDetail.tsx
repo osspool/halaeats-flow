@@ -13,7 +13,7 @@ import {
   Info
 } from 'lucide-react';
 import { parseISO, format } from 'date-fns';
-import { MenuItem, CustomizationOption, MenuItemCustomization, TimeSlot } from '@/types';
+import type { MenuItem, CustomizationOption as CustomizationOptionType, MenuItemCustomization, TimeSlot } from '@/types';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { 
@@ -413,7 +413,7 @@ const DishDetail = ({
 };
 
 interface CustomizationOptionProps {
-  option: CustomizationOption;
+  option: CustomizationOptionType;
   customization: MenuItemCustomization;
   isSelected: boolean;
   onSelect: () => void;

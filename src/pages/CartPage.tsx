@@ -1,15 +1,14 @@
-
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingBag } from 'lucide-react';
-import { CartItem, OrderSummary, OrderType } from '@/types';
+import { CartItem as CartItemType, OrderSummary, OrderType } from '@/types';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
-import CartItem from '@/components/cart/CartItem';
+import CartItemComponent from '@/components/cart/CartItem';
 import CartSidebar from '@/components/cart/CartSidebar';
 
 // Mock cart data for demo purposes
-const mockCartItems: CartItem[] = [
+const mockCartItems: CartItemType[] = [
   {
     id: 'cart-1',
     menuItem: {
@@ -87,7 +86,7 @@ const mockCartItems: CartItem[] = [
 ];
 
 const CartPage = () => {
-  const [cartItems, setCartItems] = useState<CartItem[]>(mockCartItems);
+  const [cartItems, setCartItems] = useState<CartItemType[]>(mockCartItems);
   const [orderType, setOrderType] = useState<OrderType>('delivery');
   const [orderSummary, setOrderSummary] = useState<OrderSummary>({
     subtotal: 0,
@@ -166,7 +165,7 @@ const CartPage = () => {
               ) : (
                 <div>
                   {cartItems.map(item => (
-                    <CartItem 
+                    <CartItemComponent 
                       key={item.id}
                       item={item}
                       onUpdateQuantity={handleUpdateQuantity}
