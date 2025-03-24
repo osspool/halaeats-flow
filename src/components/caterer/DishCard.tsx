@@ -20,20 +20,16 @@ interface DishCardProps {
 }
 
 const DishCard = ({ dish, selectedDate, onAddToCart }: DishCardProps) => {
-  const [isAvailable, setIsAvailable] = useState(false);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const [availabilityDates, setAvailabilityDates] = useState<string[]>([]);
   
   useEffect(() => {
-    // Check if dish is available on the selected date
-    setIsAvailable(dish.availableDates.includes(selectedDate));
-    
     // Format the availability dates for display
     const formattedDates = dish.availableDates.map(date => 
       format(parseISO(date), 'EEE, MMM d')
     );
     setAvailabilityDates(formattedDates);
-  }, [dish, selectedDate]);
+  }, [dish]);
   
   return (
     <div 
@@ -148,16 +144,10 @@ const DishCard = ({ dish, selectedDate, onAddToCart }: DishCardProps) => {
             onClick={onAddToCart} 
             variant="outline"
             size="sm"
-            className={cn(
-              "text-sm",
-              isAvailable 
-                ? "border-primary text-primary hover:bg-primary hover:text-white" 
-                : "border-halaeats-300 text-halaeats-400 cursor-not-allowed"
-            )}
-            disabled={!isAvailable}
+            className="border-primary text-primary hover:bg-primary hover:text-white text-sm"
           >
             <PlusCircle className="mr-1 h-4 w-4" />
-            {isAvailable ? "Add to Cart" : "Not Available"}
+            Add to Cart
           </Button>
         </div>
       </div>

@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { format, parseISO, isToday, isTomorrow, addDays } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { Calendar } from 'lucide-react';
 import { AvailableDate } from '@/types';
 import { cn } from '@/lib/utils';
@@ -30,7 +30,8 @@ const MenuDatePicker = ({ availableDates, selectedDate, onSelectDate }: MenuDate
     <div className="mb-8">
       <div className="flex items-center mb-4">
         <Calendar className="h-5 w-5 text-primary mr-2" />
-        <h3 className="text-lg font-medium">Available Days</h3>
+        <h3 className="text-lg font-medium">Serving Days</h3>
+        <span className="ml-2 text-sm text-halaeats-500">(all dishes shown regardless of availability)</span>
       </div>
       
       <div className="flex flex-wrap gap-2 md:gap-3">
