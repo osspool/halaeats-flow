@@ -9,6 +9,7 @@ import Footer from '@/components/layout/Footer';
 import CatererProfile from '@/components/caterer/CatererProfile';
 import MenuDatePicker from '@/components/caterer/MenuDatePicker';
 import DishCard from '@/components/caterer/DishCard';
+import { useDishDetailsSheet } from '@/pages/DishPage';
 
 const CatererPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -16,6 +17,9 @@ const CatererPage = () => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  
+  // Use the dish details sheet hook
+  const { openDishDetails, DishDetailsSheetComponent } = useDishDetailsSheet();
   
   // Find the caterer data
   const caterer = caterers.find(c => c.id === id);
@@ -57,8 +61,15 @@ const CatererPage = () => {
   };
   
   const handleViewDetails = (item: MenuItem) => {
-    // In a real app, we would show detailed view of the item
-    console.log('View details for:', item.name);
+    // Add caterer info to the dish for the sheet
+    const enrichedItem = {
+      ...item,
+      catererId: caterer?.id,
+      catererName: caterer?.name
+    };
+    
+    // Open the dish details sheet
+    openDishDetails(enrichedItem as MenuItem);
   };
   
   if (!caterer) {
@@ -133,12 +144,16 @@ const CatererPage = () => {
                     dish={item}
                     selectedDate={selectedDate}
                     onViewDetails={handleViewDetails}
+                    onAddToCart={handleViewDetails}
                   />
                 ))}
               </div>
             )}
           </div>
         </div>
+        
+        {/* Render the dish details sheet component */}
+        <DishDetailsSheetComponent />
       </main>
       
       <Footer />
