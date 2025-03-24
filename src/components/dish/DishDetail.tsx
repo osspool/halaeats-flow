@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   ChevronLeft, 
   Plus, 
@@ -10,9 +9,11 @@ import {
   Clock, 
   Home,
   Check,
-  Info
+  Info,
+  AlertCircle
 } from 'lucide-react';
 import { parseISO, format } from 'date-fns';
+import { toast } from 'sonner';
 import type { MenuItem, CustomizationOption as CustomizationOptionType, MenuItemCustomization, TimeSlot } from '@/types';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -38,26 +39,11 @@ const DishDetail = ({
   availableDates,
   onAddToCart 
 }: DishDetailProps) => {
+  const navigate = useNavigate();
   const [quantity, setQuantity] = useState(1);
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot | null>(null);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const [selectedCustomizations, setSelectedCustomizations] = useState<Record<string, string[]>>({});
-
-  // Initialize selected date with first available date
-  useEffect(() => {
-    if (availableDates.length > 0 && !selectedDate) {
-      setSelectedDate(availableDates[0].date);
-      
-      if (availableDates[0].timeSlots.length > 0) {
-        // Find first available time slot
-        const availableSlot = availableDates[0].timeSlots.find(slot => slot.available);
-        if (availableSlot) {
-          setSelectedTimeSlot(availableSlot);
-        }
-      }
-    }
-  }, [availableDates, selectedDate]);
+  const [availabilityDays, setAvailabilityDays] = useState<string[]>([]);
 
   // Initialize selected customizations
   useEffect(() => {
@@ -75,19 +61,19 @@ const DishDetail = ({
       
       setSelectedCustomizations(initialCustomizations);
     }
+
+    // Extract days of week from available dates
+    if (dish.availableDates && dish.availableDates.length > 0) {
+      const days = dish.availableDates.map(date => 
+        format(parseISO(date), 'EEEE') // e.g., "Monday", "Tuesday", etc.
+      );
+      // Remove duplicates
+      setAvailabilityDays([...new Set(days)]);
+    }
   }, [dish]);
 
   const incrementQuantity = () => setQuantity(prev => prev + 1);
   const decrementQuantity = () => setQuantity(prev => (prev > 1 ? prev - 1 : 1));
-
-  const handleDateSelect = (date: string) => {
-    setSelectedDate(date);
-    setSelectedTimeSlot(null);
-  };
-
-  const handleTimeSlotSelect = (timeSlot: TimeSlot) => {
-    setSelectedTimeSlot(timeSlot);
-  };
 
   const handleOptionSelect = (customizationId: string, optionId: string, multiple: boolean) => {
     setSelectedCustomizations(prev => {
@@ -138,12 +124,23 @@ const DishDetail = ({
   });
 
   const handleAddToCart = () => {
-    if (selectedDate && selectedTimeSlot) {
-      onAddToCart(quantity, selectedDate, selectedTimeSlot, formattedCustomizations);
+    // Show a message that this dish will be added to cart and delivery details will be selected during checkout
+    toast.success('Item added to cart!', {
+      description: `${dish.name} has been added to your cart. You'll select delivery details during checkout.`,
+      action: {
+        label: 'View Cart',
+        onClick: () => navigate('/cart')
+      }
+    });
+    
+    // Pick the first available date and time slot for now
+    if (availableDates.length > 0 && availableDates[0].timeSlots.length > 0) {
+      const defaultDate = availableDates[0].date;
+      const defaultTimeSlot = availableDates[0].timeSlots.find(slot => slot.available) || availableDates[0].timeSlots[0];
+      
+      onAddToCart(quantity, defaultDate, defaultTimeSlot, formattedCustomizations);
     }
   };
-
-  const isAddToCartDisabled = !selectedDate || !selectedTimeSlot || !dish.availableDates.includes(selectedDate);
 
   // Check if all required customizations are selected
   const hasRequiredCustomizations = () => {
@@ -244,71 +241,21 @@ const DishDetail = ({
             </div>
           </div>
           
-          {/* Date Selection */}
+          {/* Availability Information */}
           <div className="mb-6">
-            <div className="flex items-center mb-3">
-              <Calendar className="h-4 w-4 text-primary mr-2" />
-              <label className="block text-sm font-medium text-halaeats-700">
-                Select Delivery Date
-              </label>
-            </div>
-            <div className="flex flex-wrap gap-2 mb-4">
-              {availableDates.map(({ date, timeSlots }) => {
-                const isAvailable = dish.availableDates.includes(date);
-                const formattedDate = format(parseISO(date), 'EEE, MMM d');
-                
-                return (
-                  <button
-                    key={date}
-                    onClick={() => isAvailable && handleDateSelect(date)}
-                    className={cn(
-                      "px-3 py-2 rounded-md border text-sm transition-colors",
-                      selectedDate === date
-                        ? "bg-primary text-white border-primary"
-                        : isAvailable
-                        ? "bg-white border-halaeats-200 hover:border-primary/50"
-                        : "bg-halaeats-50 border-halaeats-100 text-halaeats-400 cursor-not-allowed"
-                    )}
-                    disabled={!isAvailable}
-                  >
-                    {formattedDate}
-                  </button>
-                );
-              })}
-            </div>
-            
-            {/* Time Slot Selection */}
-            {selectedDate && (
+            <div className="flex items-start mb-3">
+              <Calendar className="h-5 w-5 text-primary mr-2 mt-0.5" />
               <div>
-                <div className="flex items-center mb-3">
-                  <Clock className="h-4 w-4 text-primary mr-2" />
-                  <label className="block text-sm font-medium text-halaeats-700">
-                    Select Delivery Time
-                  </label>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {availableDates
-                    .find(d => d.date === selectedDate)
-                    ?.timeSlots.map(timeSlot => (
-                      <button
-                        key={timeSlot.id}
-                        onClick={() => timeSlot.available && handleTimeSlotSelect(timeSlot)}
-                        className={cn(
-                          "px-3 py-2 rounded-md border text-sm transition-colors",
-                          selectedTimeSlot?.id === timeSlot.id
-                            ? "bg-primary text-white border-primary"
-                            : timeSlot.available
-                            ? "bg-white border-halaeats-200 hover:border-primary/50"
-                            : "bg-halaeats-50 border-halaeats-100 text-halaeats-400 cursor-not-allowed"
-                        )}
-                        disabled={!timeSlot.available}
-                      >
-                        {timeSlot.startTime} - {timeSlot.endTime}
-                      </button>
-                    ))}
-                </div>
+                <h4 className="text-sm font-medium text-halaeats-700">Serving Days</h4>
+                <p className="text-sm text-halaeats-500 mt-1">
+                  This dish is available on: {availabilityDays.join(', ')}
+                </p>
+                <p className="text-sm text-halaeats-500 mt-1">
+                  <Info className="h-4 w-4 inline mr-1" />
+                  You'll select delivery date and time during checkout
+                </p>
               </div>
-            )}
+            </div>
           </div>
           
           {/* Customizations */}
@@ -381,26 +328,14 @@ const DishDetail = ({
             
             <Button 
               onClick={handleAddToCart}
-              disabled={isAddToCartDisabled || !hasRequiredCustomizations()}
+              disabled={!hasRequiredCustomizations()}
               className="w-full bg-primary hover:bg-cuisine-600 transition-gpu h-12 text-base"
             >
               <ShoppingCart className="mr-2 h-5 w-5" />
               Add to Cart
             </Button>
             
-            {isAddToCartDisabled && (
-              <p className="mt-2 text-sm text-halaeats-500 text-center">
-                {!selectedDate 
-                  ? "Please select a delivery date" 
-                  : !selectedTimeSlot 
-                  ? "Please select a delivery time" 
-                  : !dish.availableDates.includes(selectedDate)
-                  ? "This dish is not available on the selected date"
-                  : ""}
-              </p>
-            )}
-            
-            {!isAddToCartDisabled && !hasRequiredCustomizations() && (
+            {!hasRequiredCustomizations() && (
               <p className="mt-2 text-sm text-red-500 text-center">
                 Please select all required customization options
               </p>

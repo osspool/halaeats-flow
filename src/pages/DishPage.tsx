@@ -93,15 +93,6 @@ const DishPage = () => {
     
     // In a real app, we would add this to a cart state or context
     console.log('Adding to cart:', cartItem);
-    
-    // Show success toast and navigate to cart
-    toast.success('Item added to cart!', {
-      description: `${dish.name} has been added to your cart for ${selectedDate}.`,
-      action: {
-        label: 'View Cart',
-        onClick: () => navigate('/cart')
-      }
-    });
   };
   
   if (!dish) {

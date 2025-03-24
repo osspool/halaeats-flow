@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { PlusCircle, Info, Calendar } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { MenuItem } from '@/types';
@@ -22,6 +22,7 @@ interface DishCardProps {
 const DishCard = ({ dish, selectedDate, onAddToCart }: DishCardProps) => {
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const [availabilityDates, setAvailabilityDates] = useState<string[]>([]);
+  const navigate = useNavigate();
   
   useEffect(() => {
     // Format the availability dates for display
@@ -30,6 +31,10 @@ const DishCard = ({ dish, selectedDate, onAddToCart }: DishCardProps) => {
     );
     setAvailabilityDates(formattedDates);
   }, [dish]);
+  
+  const handleViewDetail = () => {
+    navigate(`/dish/${dish.id}`);
+  };
   
   return (
     <div 
@@ -141,7 +146,7 @@ const DishCard = ({ dish, selectedDate, onAddToCart }: DishCardProps) => {
           </Link>
           
           <Button 
-            onClick={onAddToCart} 
+            onClick={handleViewDetail} 
             variant="outline"
             size="sm"
             className="border-primary text-primary hover:bg-primary hover:text-white text-sm"
