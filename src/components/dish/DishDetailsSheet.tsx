@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { 
   Calendar, 
@@ -56,18 +55,15 @@ export const DishDetailsSheet = ({
   const [selectedCustomizations, setSelectedCustomizations] = useState<Record<string, string[]>>({});
   const [availabilityDays, setAvailabilityDays] = useState<string[]>([]);
 
-  // Reset state when the dish changes
   useEffect(() => {
     if (dish) {
       setQuantity(1);
       setIsImageLoaded(false);
       
-      // Initialize customizations
       if (dish.customizations) {
         const initialCustomizations: Record<string, string[]> = {};
         
         dish.customizations.forEach(customization => {
-          // For required single-select options, preselect the first option
           if (customization.required && !customization.multiple && customization.options.length > 0) {
             initialCustomizations[customization.id] = [customization.options[0].id];
           } else {
@@ -78,12 +74,10 @@ export const DishDetailsSheet = ({
         setSelectedCustomizations(initialCustomizations);
       }
 
-      // Extract days of week from available dates
       if (dish.availableDates && dish.availableDates.length > 0) {
         const days = dish.availableDates.map(date => 
-          format(parseISO(date), 'EEEE') // e.g., "Monday", "Tuesday", etc.
+          format(parseISO(date), 'EEEE')
         );
-        // Remove duplicates
         setAvailabilityDays([...new Set(days)]);
       }
     }
@@ -99,7 +93,6 @@ export const DishDetailsSheet = ({
       const updatedCustomizations = { ...prev };
       
       if (multiple) {
-        // For multi-select, toggle the selection
         if (updatedCustomizations[customizationId].includes(optionId)) {
           updatedCustomizations[customizationId] = updatedCustomizations[customizationId].filter(
             id => id !== optionId
@@ -108,7 +101,6 @@ export const DishDetailsSheet = ({
           updatedCustomizations[customizationId] = [...updatedCustomizations[customizationId], optionId];
         }
       } else {
-        // For single-select, replace the selection
         updatedCustomizations[customizationId] = [optionId];
       }
       
@@ -119,7 +111,6 @@ export const DishDetailsSheet = ({
   const calculateTotalPrice = () => {
     let total = dish.price * quantity;
     
-    // Add price of selected customizations
     if (dish.customizations) {
       dish.customizations.forEach(customization => {
         const selectedOptions = selectedCustomizations[customization.id] || [];
@@ -143,7 +134,6 @@ export const DishDetailsSheet = ({
   });
 
   const handleAddToCart = () => {
-    // Show a message that this dish will be added to cart and delivery details will be selected during checkout
     toast.success('Item added to cart!', {
       description: `${dish.name} has been added to your cart. You'll select delivery details during checkout.`,
       action: {
@@ -152,17 +142,15 @@ export const DishDetailsSheet = ({
       }
     });
     
-    // Pick the first available date and time slot for now
     if (availableDates.length > 0 && availableDates[0].timeSlots.length > 0) {
       const defaultDate = availableDates[0].date;
       const defaultTimeSlot = availableDates[0].timeSlots.find(slot => slot.available) || availableDates[0].timeSlots[0];
       
       onAddToCart(quantity, defaultDate, defaultTimeSlot, formattedCustomizations);
-      onClose(); // Close the sheet after adding to cart
+      onClose();
     }
   };
 
-  // Check if all required customizations are selected
   const hasRequiredCustomizations = () => {
     if (!dish.customizations) return true;
     
@@ -176,7 +164,6 @@ export const DishDetailsSheet = ({
 
   const renderContent = () => (
     <div className="flex flex-col h-full bg-white">
-      {/* Close button */}
       <div className="absolute right-4 top-4 z-50">
         {isMobile ? (
           <DrawerClose className="h-7 w-7 rounded-full bg-white/90 p-1.5 text-halaeats-600 shadow-sm backdrop-blur border border-halaeats-100 hover:bg-white">
@@ -191,7 +178,6 @@ export const DishDetailsSheet = ({
         )}
       </div>
 
-      {/* Image */}
       <div className="relative aspect-video overflow-hidden">
         <div 
           className={cn(
@@ -209,7 +195,6 @@ export const DishDetailsSheet = ({
           onLoad={() => setIsImageLoaded(true)}
         />
         
-        {/* Dietary Tags */}
         <div className="absolute bottom-4 left-4 flex flex-wrap gap-1">
           {dish.dietary.map(diet => (
             <span 
@@ -223,7 +208,6 @@ export const DishDetailsSheet = ({
       </div>
       
       <div className="flex-1 overflow-y-auto px-6 pt-5 pb-24">
-        {/* Dish Info */}
         <div className="mb-6">
           <span className="text-sm text-primary font-medium">
             {dish.category}
@@ -238,7 +222,6 @@ export const DishDetailsSheet = ({
           </p>
         </div>
         
-        {/* Availability Information */}
         <div className="mb-6 pt-4 pb-4 border-t border-b border-halaeats-100">
           <div className="flex items-start">
             <Calendar className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" />
@@ -260,7 +243,6 @@ export const DishDetailsSheet = ({
           </div>
         </div>
 
-        {/* Quantity Selector */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-halaeats-700 mb-2">
             Quantity
@@ -286,7 +268,6 @@ export const DishDetailsSheet = ({
           </div>
         </div>
         
-        {/* Customizations */}
         {dish.customizations && dish.customizations.length > 0 && (
           <div className="mb-6">
             <h4 className="text-sm font-medium text-halaeats-700 mb-3">Customizations</h4>
@@ -324,8 +305,7 @@ export const DishDetailsSheet = ({
         )}
       </div>
       
-      {/* Total and Add to Cart - Fixed at Bottom */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-halaeats-100 px-6 py-4 z-10 backdrop-blur-lg bg-white/90">
+      <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-halaeats-100 px-6 py-4 z-10 backdrop-blur-lg bg-white/90">
         <div className="flex items-center justify-between mb-3">
           <div className="flex flex-col">
             <span className="text-sm text-halaeats-600">Total Price</span>
