@@ -8,7 +8,6 @@ import { cn } from '@/lib/utils';
 import { 
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger 
 } from '@/components/ui/tooltip';
 
@@ -77,18 +76,16 @@ const CartSidebar = ({
               <div className="flex justify-between items-center mb-4">
                 <div className="flex items-center">
                   <span className="text-sm text-halaeats-600">Tax</span>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button className="ml-1 text-halaeats-400">
-                          <InfoIcon className="h-3 w-3" />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="text-xs">Includes sales tax and fees</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button className="ml-1 text-halaeats-400">
+                        <InfoIcon className="h-3 w-3" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">Includes sales tax and fees</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
                 <span className="font-medium">${orderSummary.tax.toFixed(2)}</span>
               </div>

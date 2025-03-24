@@ -20,7 +20,6 @@ import { cn } from '@/lib/utils';
 import { 
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger 
 } from '@/components/ui/tooltip';
 
@@ -45,13 +44,11 @@ const DishDetail = ({
   const [selectedCustomizations, setSelectedCustomizations] = useState<Record<string, string[]>>({});
   const [availabilityDays, setAvailabilityDays] = useState<string[]>([]);
 
-  // Initialize selected customizations
   useEffect(() => {
     if (dish.customizations) {
       const initialCustomizations: Record<string, string[]> = {};
       
       dish.customizations.forEach(customization => {
-        // For required single-select options, preselect the first option
         if (customization.required && !customization.multiple && customization.options.length > 0) {
           initialCustomizations[customization.id] = [customization.options[0].id];
         } else {
@@ -62,12 +59,10 @@ const DishDetail = ({
       setSelectedCustomizations(initialCustomizations);
     }
 
-    // Extract days of week from available dates
     if (dish.availableDates && dish.availableDates.length > 0) {
       const days = dish.availableDates.map(date => 
-        format(parseISO(date), 'EEEE') // e.g., "Monday", "Tuesday", etc.
+        format(parseISO(date), 'EEEE')
       );
-      // Remove duplicates
       setAvailabilityDays([...new Set(days)]);
     }
   }, [dish]);
@@ -80,7 +75,6 @@ const DishDetail = ({
       const updatedCustomizations = { ...prev };
       
       if (multiple) {
-        // For multi-select, toggle the selection
         if (updatedCustomizations[customizationId].includes(optionId)) {
           updatedCustomizations[customizationId] = updatedCustomizations[customizationId].filter(
             id => id !== optionId
@@ -89,7 +83,6 @@ const DishDetail = ({
           updatedCustomizations[customizationId] = [...updatedCustomizations[customizationId], optionId];
         }
       } else {
-        // For single-select, replace the selection
         updatedCustomizations[customizationId] = [optionId];
       }
       
@@ -100,7 +93,6 @@ const DishDetail = ({
   const calculateTotalPrice = () => {
     let total = dish.price * quantity;
     
-    // Add price of selected customizations
     if (dish.customizations) {
       dish.customizations.forEach(customization => {
         const selectedOptions = selectedCustomizations[customization.id] || [];
@@ -124,7 +116,6 @@ const DishDetail = ({
   });
 
   const handleAddToCart = () => {
-    // Show a message that this dish will be added to cart and delivery details will be selected during checkout
     toast.success('Item added to cart!', {
       description: `${dish.name} has been added to your cart. You'll select delivery details during checkout.`,
       action: {
@@ -133,7 +124,6 @@ const DishDetail = ({
       }
     });
     
-    // Pick the first available date and time slot for now
     if (availableDates.length > 0 && availableDates[0].timeSlots.length > 0) {
       const defaultDate = availableDates[0].date;
       const defaultTimeSlot = availableDates[0].timeSlots.find(slot => slot.available) || availableDates[0].timeSlots[0];
@@ -142,7 +132,6 @@ const DishDetail = ({
     }
   };
 
-  // Check if all required customizations are selected
   const hasRequiredCustomizations = () => {
     if (!dish.customizations) return true;
     
@@ -167,7 +156,6 @@ const DishDetail = ({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Left Column - Image */}
         <div className="rounded-xl overflow-hidden bg-white shadow-elevation-soft">
           <div className="relative aspect-[4/3]">
             <div 
@@ -211,11 +199,9 @@ const DishDetail = ({
           </div>
         </div>
 
-        {/* Right Column - Details and Order Form */}
         <div className="bg-white rounded-xl shadow-elevation-soft p-6">
           <h3 className="text-lg font-medium mb-4">Order Details</h3>
           
-          {/* Quantity Selector */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-halaeats-700 mb-2">
               Quantity
@@ -241,7 +227,6 @@ const DishDetail = ({
             </div>
           </div>
           
-          {/* Availability Information */}
           <div className="mb-6">
             <div className="flex items-start mb-3">
               <Calendar className="h-5 w-5 text-primary mr-2 mt-0.5" />
@@ -258,7 +243,6 @@ const DishDetail = ({
             </div>
           </div>
           
-          {/* Customizations */}
           {dish.customizations && dish.customizations.length > 0 && (
             <div className="mb-6">
               <h4 className="text-sm font-medium text-halaeats-700 mb-3">Customizations</h4>
@@ -295,7 +279,6 @@ const DishDetail = ({
             </div>
           )}
           
-          {/* Total and Add to Cart */}
           <div className="mt-8 pt-4 border-t border-halaeats-100">
             <div className="flex items-center justify-between mb-4">
               <span className="text-halaeats-700">Price:</span>

@@ -8,7 +8,6 @@ import { cn } from '@/lib/utils';
 import { 
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger 
 } from '@/components/ui/tooltip';
 
@@ -98,18 +97,16 @@ const DishCard = ({ dish, selectedDate, onViewDetails, onAddToCart }: DishCardPr
           <div className="flex items-center">
             <span className="font-medium text-primary">${dish.price.toFixed(2)}</span>
             {dish.customizations && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button className="ml-1.5 text-halaeats-400 hover:text-halaeats-700">
-                      <Info className="h-4 w-4" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">Customization options available</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button className="ml-1.5 text-halaeats-400 hover:text-halaeats-700">
+                    <Info className="h-4 w-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">Customization options available</p>
+                </TooltipContent>
+              </Tooltip>
             )}
           </div>
         </div>
@@ -122,27 +119,25 @@ const DishCard = ({ dish, selectedDate, onViewDetails, onAddToCart }: DishCardPr
         <div className="mt-3 flex items-center text-xs text-halaeats-500">
           <Calendar className="h-3 w-3 mr-1" />
           <span>Available on: </span>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button className="ml-1 text-primary hover:underline">
-                  {availabilityDates.length > 1 
-                    ? `${availabilityDates.length} dates` 
-                    : availabilityDates[0] || 'No dates'}
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <div className="max-h-28 overflow-y-auto">
-                  <p className="text-xs font-medium mb-1">Available on:</p>
-                  <ul className="text-xs space-y-1">
-                    {availabilityDates.map((date, index) => (
-                      <li key={index}>{date}</li>
-                    ))}
-                  </ul>
-                </div>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button className="ml-1 text-primary hover:underline">
+                {availabilityDates.length > 1 
+                  ? `${availabilityDates.length} dates` 
+                  : availabilityDates[0] || 'No dates'}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <div className="max-h-28 overflow-y-auto">
+                <p className="text-xs font-medium mb-1">Available on:</p>
+                <ul className="text-xs space-y-1">
+                  {availabilityDates.map((date, index) => (
+                    <li key={index}>{date}</li>
+                  ))}
+                </ul>
+              </div>
+            </TooltipContent>
+          </Tooltip>
         </div>
         
         <div className="mt-4 pt-4 border-t border-halaeats-100 flex justify-between items-center">
