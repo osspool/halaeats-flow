@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import DeliveryMethodStep from '@/components/checkout/DeliveryMethodStep';
-import PaymentStep from '@/components/checkout/PaymentStep';
+import StripePaymentWrapper from '@/components/checkout/StripePaymentWrapper';
 import ReviewStep from '@/components/checkout/ReviewStep';
 import ConfirmationStep from '@/components/checkout/ConfirmationStep';
 import CheckoutProgress from '@/components/checkout/CheckoutProgress';
@@ -78,7 +78,7 @@ const CheckoutPage = () => {
         );
       case 'payment':
         return (
-          <PaymentStep
+          <StripePaymentWrapper
             selectedPaymentMethodId={checkoutState.selectedPaymentMethodId}
             onPaymentMethodSelect={setSelectedPaymentMethodId}
             onNext={nextStep}

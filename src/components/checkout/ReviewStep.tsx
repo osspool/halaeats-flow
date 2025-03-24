@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Check, ShoppingBag, Truck, MapPin, CreditCard, Shield } from 'lucide-react';
 import { OrderSummary, CartItem, OrderType } from '@/types';
 import { Address, PaymentMethod } from '@/types/checkout';
-import { mockAddresses, mockPaymentMethods, createMockPaymentIntent, confirmMockPaymentIntent } from '@/data/checkoutMockData';
+import { mockAddresses, mockPaymentMethods } from '@/data/checkoutMockData';
 import { useToast } from '@/hooks/use-toast';
 import { useCheckout } from '@/hooks/useCheckout';
 
@@ -39,8 +39,15 @@ const ReviewStep = ({
     ? mockPaymentMethods.find(pm => pm.id === selectedPaymentMethodId) 
     : undefined;
   
+  useEffect(() => {
+    console.log('ReviewStep - selectedPaymentMethodId:', selectedPaymentMethodId);
+    console.log('ReviewStep - checkoutState:', checkoutState);
+  }, [selectedPaymentMethodId, checkoutState]);
+  
   const handlePlaceOrder = async () => {
-    if (!selectedPaymentMethodId) {
+    console.log('Placing order with payment method:', selectedPaymentMethodId);
+    
+    if (!selectedPaymentMethodId && !checkoutState.selectedPaymentMethodId) {
       toast({
         title: "Payment required",
         description: "Please select a payment method before placing your order.",

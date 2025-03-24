@@ -1,5 +1,5 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useStripe, useElements, PaymentElement, CardElement } from '@stripe/react-stripe-js';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
@@ -19,14 +19,6 @@ interface PaymentStepProps {
   onPrevious: () => void;
 }
 
-interface NewCardFormData {
-  cardNumber: string;
-  expiry: string;
-  cvc: string;
-  name: string;
-  saveCard: boolean;
-}
-
 const PaymentStep = ({
   selectedPaymentMethodId,
   onPaymentMethodSelect,
@@ -41,78 +33,87 @@ const PaymentStep = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
   
-  const form = useForm<NewCardFormData>({
+  // Stripe hooks
+  const stripe = useStripe();
+  const elements = useElements();
+  
+  const form = useForm({
     defaultValues: {
-      cardNumber: '',
-      expiry: '',
-      cvc: '',
-      name: '',
       saveCard: true,
     },
   });
 
+  useEffect(() => {
+    // Log the current selected payment method for debugging
+    console.log('PaymentStep - selected payment method:', selected);
+    console.log('PaymentStep - selectedPaymentMethodId prop:', selectedPaymentMethodId);
+    
+    // If a payment method is selected, call the parent callback
+    if (selected) {
+      onPaymentMethodSelect(selected);
+    }
+  }, [selected, selectedPaymentMethodId, onPaymentMethodSelect]);
+
   const handlePaymentMethodChange = (value: string) => {
+    console.log('Payment method changed to:', value);
     setSelected(value);
     onPaymentMethodSelect(value);
   };
 
-  // Mock function to simulate creating a payment method with Stripe
-  const createMockStripePaymentMethod = async (cardData: NewCardFormData) => {
-    setIsProcessing(true);
-    // Simulate network request
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Simulate success response from Stripe Connect
-    const response = {
-      id: `pm_${Math.random().toString(36).substring(2, 10)}`,
-      object: 'payment_method',
-      card: {
-        brand: 'visa',
-        last4: cardData.cardNumber.slice(-4),
-        exp_month: parseInt(cardData.expiry.split('/')[0]),
-        exp_year: parseInt(`20${cardData.expiry.split('/')[1]}`),
-      },
-      created: Date.now() / 1000,
-      customer: null,
-      livemode: false,
-    };
-    
-    setIsProcessing(false);
-    return response;
-  };
-
-  const onSubmitNewCard = async (data: NewCardFormData) => {
-    try {
-      // Mock create payment method via Stripe Connect
-      const paymentMethod = await createMockStripePaymentMethod(data);
-      
-      // Add to saved methods if user opted to save
-      if (data.saveCard) {
-        const newPaymentMethod: PaymentMethod = {
-          id: paymentMethod.id,
-          brand: paymentMethod.card.brand,
-          last4: paymentMethod.card.last4,
-          expiryMonth: paymentMethod.card.exp_month,
-          expiryYear: paymentMethod.card.exp_year,
-          isDefault: false,
-        };
-        
-        // In a real app, this would be an API call to save to the database
-        // Mock behavior here
-        console.log('Adding new payment method to account:', newPaymentMethod);
-        
-        // Update local state for demo purposes
-        paymentMethods.push(newPaymentMethod);
-        setSelected(newPaymentMethod.id);
-        onPaymentMethodSelect(newPaymentMethod.id);
-      }
-      
+  const onSubmitNewCard = async (data: any) => {
+    if (!stripe || !elements) {
+      console.error('Stripe has not loaded properly');
       toast({
-        title: "Card added successfully",
-        description: "Your new payment method has been added.",
+        title: "Error",
+        description: "Payment system not initialized correctly. Please try again later.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsProcessing(true);
+    
+    try {
+      // In a real implementation, this would use Stripe.js to create the payment method
+      const result = await stripe.createPaymentMethod({
+        type: 'card',
+        card: elements.getElement(CardElement)!,
+        billing_details: {
+          name: data.name,
+        },
       });
       
-      setAddingNewCard(false);
+      if (result.error) {
+        throw new result.error;
+      }
+      
+      if (result.paymentMethod) {
+        if (data.saveCard) {
+          // In a real app, you would send this to your server to save
+          const newPaymentMethod: PaymentMethod = {
+            id: result.paymentMethod.id,
+            brand: result.paymentMethod.card?.brand || 'unknown',
+            last4: result.paymentMethod.card?.last4 || '0000',
+            expiryMonth: result.paymentMethod.card?.exp_month || 1,
+            expiryYear: result.paymentMethod.card?.exp_year || 2023,
+            isDefault: false,
+          };
+          
+          console.log('Adding new payment method:', newPaymentMethod);
+          
+          // For demo purposes
+          paymentMethods.push(newPaymentMethod);
+          setSelected(newPaymentMethod.id);
+          onPaymentMethodSelect(newPaymentMethod.id);
+        }
+        
+        toast({
+          title: "Card added successfully",
+          description: "Your new payment method has been added.",
+        });
+        
+        setAddingNewCard(false);
+      }
     } catch (error) {
       console.error('Error adding card:', error);
       toast({
@@ -120,10 +121,14 @@ const PaymentStep = ({
         description: "There was a problem adding your card. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   const handleContinue = () => {
+    console.log('Continue clicked with selected payment method:', selected);
+    
     if (!selected) {
       toast({
         title: "Payment method required",
@@ -244,54 +249,40 @@ const PaymentStep = ({
         <div className="space-y-6">
           <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 text-blue-700 text-sm flex items-start">
             <CheckCircle className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
-            <p>For demo purposes, you can enter any valid-looking card details. No real charges will be made.</p>
+            <p>Enter your card details. Your payment information is securely processed by Stripe.</p>
           </div>
           
           <form onSubmit={form.handleSubmit(onSubmitNewCard)} className="space-y-4">
             <div className="space-y-4">
-              <div className="grid grid-cols-1 gap-4">
-                <div className="form-group">
-                  <Label htmlFor="cardName">Name on Card</Label>
-                  <Input
-                    id="cardName"
-                    placeholder="John Doe"
-                    {...form.register('name')}
-                    className="mt-1"
-                  />
-                </div>
-              </div>
-              
               <div className="form-group">
-                <Label htmlFor="cardNumber">Card Number</Label>
+                <Label htmlFor="cardName">Name on Card</Label>
                 <Input
-                  id="cardNumber"
-                  placeholder="4242 4242 4242 4242"
-                  maxLength={19}
-                  {...form.register('cardNumber')}
+                  id="cardName"
+                  placeholder="John Doe"
+                  {...form.register('name')}
                   className="mt-1"
                 />
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
-                <div className="form-group">
-                  <Label htmlFor="cardExpiry">Expiry Date</Label>
-                  <Input
-                    id="cardExpiry"
-                    placeholder="MM/YY"
-                    maxLength={5}
-                    {...form.register('expiry')}
-                    className="mt-1"
-                  />
-                </div>
-                
-                <div className="form-group">
-                  <Label htmlFor="cardCvc">Security Code</Label>
-                  <Input
-                    id="cardCvc"
-                    placeholder="CVC"
-                    maxLength={3}
-                    {...form.register('cvc')}
-                    className="mt-1"
+              <div className="form-group">
+                <Label htmlFor="card-element">Card Details</Label>
+                <div className="border border-gray-300 rounded p-3 mt-1 bg-white">
+                  <CardElement
+                    id="card-element"
+                    options={{
+                      style: {
+                        base: {
+                          fontSize: '16px',
+                          color: '#424770',
+                          '::placeholder': {
+                            color: '#aab7c4',
+                          },
+                        },
+                        invalid: {
+                          color: '#9e2146',
+                        },
+                      },
+                    }}
                   />
                 </div>
               </div>
@@ -332,7 +323,7 @@ const PaymentStep = ({
               <Button 
                 type="submit"
                 className="w-full sm:w-auto bg-primary hover:bg-primary/90"
-                disabled={isProcessing}
+                disabled={isProcessing || !stripe || !elements}
               >
                 {isProcessing ? 'Processing...' : 'Add Payment Method'}
               </Button>
