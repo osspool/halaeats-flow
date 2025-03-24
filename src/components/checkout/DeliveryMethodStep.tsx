@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Truck, Home, ArrowLeft, Plus } from 'lucide-react';
+import { Truck, Home, Plus } from 'lucide-react';
 import { OrderType } from '@/types';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
@@ -24,6 +24,7 @@ interface DeliveryMethodStepProps {
   selectedAddressId?: string;
   onAddressSelect: (addressId: string) => void;
   onDeliveryInstructionsChange: (instructions: string) => void;
+  onPickupTimeChange: (time: string) => void;
   onNext: () => void;
 }
 
@@ -33,6 +34,7 @@ const DeliveryMethodStep = ({
   selectedAddressId,
   onAddressSelect,
   onDeliveryInstructionsChange,
+  onPickupTimeChange,
   onNext 
 }: DeliveryMethodStepProps) => {
   const [selectedType, setSelectedType] = useState<OrderType>(orderType);
@@ -64,6 +66,11 @@ const DeliveryMethodStep = ({
   const handleInstructionsChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInstructions(e.target.value);
     onDeliveryInstructionsChange(e.target.value);
+  };
+
+  const handlePickupTimeChange = (value: string) => {
+    setPickupTime(value);
+    onPickupTimeChange(value);
   };
 
   const handleContinue = () => {
@@ -172,7 +179,7 @@ const DeliveryMethodStep = ({
 
             <div>
               <h3 className="font-medium mb-2">Pickup Time</h3>
-              <Select onValueChange={setPickupTime} defaultValue={timeSlots[0]}>
+              <Select onValueChange={handlePickupTimeChange} defaultValue={timeSlots[0]}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select pickup time" />
                 </SelectTrigger>
