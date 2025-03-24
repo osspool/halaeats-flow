@@ -4,10 +4,18 @@ import { Link, useLocation } from 'react-router-dom';
 import { ShoppingCart, Menu, X, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { mockCartItems } from '@/pages/CartPage';
+import CartDropdown from '@/components/cart/CartDropdown';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
@@ -22,9 +30,11 @@ const Header = () => {
   // Close mobile menu when route changes
   useEffect(() => {
     setIsMenuOpen(false);
+    setIsCartOpen(false);
   }, [location]);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+  const closeCart = () => setIsCartOpen(false);
 
   return (
     <header 
@@ -84,12 +94,21 @@ const Header = () => {
               className="pl-10 pr-4 py-2 rounded-full bg-halaeats-50 border border-halaeats-100 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm transition-gpu w-56" 
             />
           </div>
-          <Link to="/cart">
-            <Button variant="ghost" size="icon" className="relative">
-              <ShoppingCart className="h-5 w-5" />
-              <span className="absolute -top-1 -right-1 bg-primary text-white text-xs font-medium rounded-full h-5 w-5 flex items-center justify-center">3</span>
-            </Button>
-          </Link>
+          
+          <Popover open={isCartOpen} onOpenChange={setIsCartOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="icon" className="relative">
+                <ShoppingCart className="h-5 w-5" />
+                <span className="absolute -top-1 -right-1 bg-primary text-white text-xs font-medium rounded-full h-5 w-5 flex items-center justify-center">
+                  {mockCartItems.length}
+                </span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="p-0 border-none shadow-none bg-transparent w-auto" align="end">
+              <CartDropdown items={mockCartItems} onClose={closeCart} />
+            </PopoverContent>
+          </Popover>
+          
           <Button className="bg-gradient-to-r from-primary to-cuisine-600 hover:shadow-md transition-gpu" size="sm">
             Sign In
           </Button>
@@ -97,12 +116,20 @@ const Header = () => {
 
         {/* Mobile Menu Button */}
         <div className="flex items-center space-x-3 md:hidden">
-          <Link to="/cart">
-            <Button variant="ghost" size="icon" className="relative">
-              <ShoppingCart className="h-5 w-5" />
-              <span className="absolute -top-1 -right-1 bg-primary text-white text-xs font-medium rounded-full h-5 w-5 flex items-center justify-center">3</span>
-            </Button>
-          </Link>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="icon" className="relative">
+                <ShoppingCart className="h-5 w-5" />
+                <span className="absolute -top-1 -right-1 bg-primary text-white text-xs font-medium rounded-full h-5 w-5 flex items-center justify-center">
+                  {mockCartItems.length}
+                </span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="p-0 border-none shadow-none bg-transparent w-auto" align="end">
+              <CartDropdown items={mockCartItems} onClose={() => {}} />
+            </PopoverContent>
+          </Popover>
+          
           <Button variant="ghost" size="icon" onClick={toggleMenu}>
             {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>

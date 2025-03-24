@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -11,10 +11,13 @@ import CheckoutProgress from '@/components/checkout/CheckoutProgress';
 import { useCheckout } from '@/hooks/useCheckout';
 import { mockCartItems } from '@/pages/CartPage';
 import { useToast } from '@/hooks/use-toast';
+import { CartItem } from '@/types';
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [filteredItems, setFilteredItems] = useState<CartItem[]>([]);
+  
   const {
     checkoutState,
     nextStep,
@@ -27,8 +30,34 @@ const CheckoutPage = () => {
     resetCheckout,
   } = useCheckout();
   
+  useEffect(() => {
+    // Get the selected caterer ID from localStorage
+    const selectedCatererId = localStorage.getItem('selectedCatererId');
+    
+    // Filter cart items by the selected caterer
+    const items = selectedCatererId
+      ? mockCartItems.filter(item => item.caterer.id === selectedCatererId)
+      : mockCartItems;
+      
+    setFilteredItems(items);
+    
+    // If no items or no selected caterer, redirect to cart
+    if (items.length === 0) {
+      navigate('/cart');
+      toast({
+        title: "Empty cart",
+        description: "Your cart is empty or no caterer was selected. Add some items before checkout.",
+      });
+    }
+    
+    // Clear the selected caterer from localStorage when unmounting
+    return () => {
+      localStorage.removeItem('selectedCatererId');
+    };
+  }, [navigate, toast]);
+  
   // Calculate order summary
-  const subtotal = mockCartItems.reduce((total, item) => total + item.subtotal, 0);
+  const subtotal = filteredItems.reduce((total, item) => total + item.subtotal, 0);
   const deliveryFee = checkoutState.orderType === 'delivery' ? 3.99 : 0;
   const tax = subtotal * 0.08; // 8% tax rate
   const total = subtotal + deliveryFee + tax;
@@ -39,17 +68,6 @@ const CheckoutPage = () => {
     tax,
     total,
   };
-  
-  // Redirect to cart if no items
-  useEffect(() => {
-    if (mockCartItems.length === 0) {
-      navigate('/cart');
-      toast({
-        title: "Empty cart",
-        description: "Your cart is empty. Add some items before checkout.",
-      });
-    }
-  }, [navigate, toast]);
   
   // Reset checkout when unmounting
   useEffect(() => {
@@ -88,7 +106,7 @@ const CheckoutPage = () => {
       case 'review':
         return (
           <ReviewStep
-            items={mockCartItems}
+            items={filteredItems}
             orderSummary={orderSummary}
             orderType={checkoutState.orderType}
             selectedAddressId={checkoutState.selectedAddressId}

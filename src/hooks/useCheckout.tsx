@@ -100,26 +100,28 @@ export const useCheckout = () => {
 
   const createPaymentIntent = async (amount: number, cartItems: any[]) => {
     try {
-      const itemsByCaterer: Record<string, { items: any[], subtotal: number }> = {};
+      // Get the caterer ID from the cart items
+      // Since we've filtered the cart items by caterer at this point,
+      // all items should belong to the same caterer
+      if (!cartItems.length) {
+        throw new Error('No items in cart');
+      }
       
-      cartItems.forEach(item => {
-        const catererId = item.caterer.id;
-        if (!itemsByCaterer[catererId]) {
-          itemsByCaterer[catererId] = { items: [], subtotal: 0 };
-        }
-        
-        itemsByCaterer[catererId].items.push(item);
-        itemsByCaterer[catererId].subtotal += item.subtotal;
-      });
+      const catererId = cartItems[0].caterer.id;
+      const connectedAccountId = mockConnectedAccounts[catererId];
       
-      const firstCatererId = Object.keys(itemsByCaterer)[0];
-      const connectedAccountId = mockConnectedAccounts[firstCatererId];
+      if (!connectedAccountId) {
+        throw new Error('Caterer not found in connected accounts');
+      }
       
       const paymentIntent = await createMockPaymentIntent(
         Math.round(amount * 100),
         'usd',
         checkoutState.selectedPaymentMethodId,
-        { order_id: `order_${Math.random().toString(36).substring(2, 10)}` },
+        { 
+          order_id: `order_${Math.random().toString(36).substring(2, 10)}`,
+          caterer_id: catererId
+        },
         connectedAccountId
       );
       
