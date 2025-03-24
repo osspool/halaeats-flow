@@ -12,56 +12,53 @@ interface MenuDatePickerProps {
 }
 
 const MenuDatePicker = ({ availableDates, selectedDate, onSelectDate }: MenuDatePickerProps) => {
-  const [dateOptions, setDateOptions] = useState<{ date: string; label: string }[]>([]);
+  const [dateOptions, setDateOptions] = useState<{ date: string; dayOfWeek: string }[]>([]);
   
   useEffect(() => {
-    // Create date options with readable labels
+    // Group dates by day of week
     const options = availableDates.map(({ date }) => {
       const parsedDate = parseISO(date);
-      let label = '';
+      const dayOfWeek = format(parsedDate, 'EEEE'); // Get day name (Monday, Tuesday, etc.)
       
-      if (isToday(parsedDate)) {
-        label = 'Today';
-      } else if (isTomorrow(parsedDate)) {
-        label = 'Tomorrow';
-      } else {
-        label = format(parsedDate, 'EEE, MMM d');
-      }
-      
-      return { date, label };
+      return { date, dayOfWeek };
     });
     
     setDateOptions(options);
   }, [availableDates]);
   
-  const today = new Date();
-  const next7Days = Array.from({ length: 7 }, (_, i) => addDays(today, i));
-  
   return (
     <div className="mb-8">
       <div className="flex items-center mb-4">
         <Calendar className="h-5 w-5 text-primary mr-2" />
-        <h3 className="text-lg font-medium">Available Dates</h3>
+        <h3 className="text-lg font-medium">Available Days</h3>
       </div>
       
-      <div className="flex overflow-x-auto pb-3 gap-2 md:gap-3">
-        {dateOptions.map(({ date, label }) => (
-          <button
-            key={date}
-            onClick={() => onSelectDate(date)}
-            className={cn(
-              "flex-shrink-0 py-2 px-4 rounded-full border transition-all",
-              selectedDate === date
-                ? "bg-primary text-white border-primary"
-                : "bg-white text-halaeats-700 border-halaeats-200 hover:border-primary/50"
-            )}
-          >
-            <span className="text-sm font-medium">{label}</span>
-            <span className="block text-xs">
-              {format(parseISO(date), 'MMM d')}
-            </span>
-          </button>
-        ))}
+      <div className="flex flex-wrap gap-2 md:gap-3">
+        {Array.from(new Set(dateOptions.map(option => option.dayOfWeek))).map(dayOfWeek => {
+          // Find the first date that corresponds to this day of week
+          const relevantDate = dateOptions.find(option => option.dayOfWeek === dayOfWeek)?.date || '';
+          const isSelected = selectedDate && format(parseISO(selectedDate), 'EEEE') === dayOfWeek;
+          
+          return (
+            <button
+              key={dayOfWeek}
+              onClick={() => {
+                // If this day is selected, find the date that matches this day of week and select it
+                if (relevantDate) {
+                  onSelectDate(relevantDate);
+                }
+              }}
+              className={cn(
+                "py-2 px-4 rounded-full border transition-all",
+                isSelected
+                  ? "bg-primary text-white border-primary"
+                  : "bg-white text-halaeats-700 border-halaeats-200 hover:border-primary/50"
+              )}
+            >
+              <span className="text-sm font-medium">{dayOfWeek}</span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
