@@ -1,4 +1,5 @@
-import { useState } from 'react';
+
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckoutState, CheckoutStep, MockStripePaymentIntent } from '@/types/checkout';
 import { OrderType } from '@/types';
@@ -15,7 +16,7 @@ export const useCheckout = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const nextStep = () => {
+  const nextStep = useCallback(() => {
     console.log('Current step:', checkoutState.step);
     
     switch (checkoutState.step) {
@@ -41,9 +42,9 @@ export const useCheckout = () => {
         console.log('Unknown step:', checkoutState.step);
         break;
     }
-  };
+  }, [checkoutState.step]);
 
-  const previousStep = () => {
+  const previousStep = useCallback(() => {
     switch (checkoutState.step) {
       case 'payment':
         setCheckoutState(prev => ({
@@ -60,42 +61,42 @@ export const useCheckout = () => {
       default:
         break;
     }
-  };
+  }, [checkoutState.step]);
 
-  const setOrderType = (orderType: OrderType) => {
+  const setOrderType = useCallback((orderType: OrderType) => {
     setCheckoutState(prev => ({
       ...prev,
       orderType,
     }));
-  };
+  }, []);
 
-  const setSelectedAddressId = (addressId: string) => {
+  const setSelectedAddressId = useCallback((addressId: string) => {
     setCheckoutState(prev => ({
       ...prev,
       selectedAddressId: addressId,
     }));
-  };
+  }, []);
 
-  const setSelectedPaymentMethodId = (paymentMethodId: string) => {
+  const setSelectedPaymentMethodId = useCallback((paymentMethodId: string) => {
     setCheckoutState(prev => ({
       ...prev,
       selectedPaymentMethodId: paymentMethodId,
     }));
-  };
+  }, []);
 
-  const setDeliveryInstructions = (instructions: string) => {
+  const setDeliveryInstructions = useCallback((instructions: string) => {
     setCheckoutState(prev => ({
       ...prev,
       deliveryInstructions: instructions,
     }));
-  };
+  }, []);
 
-  const setPickupTime = (time: string) => {
+  const setPickupTime = useCallback((time: string) => {
     setCheckoutState(prev => ({
       ...prev,
       pickupTime: time,
     }));
-  };
+  }, []);
 
   const createPaymentIntent = async (amount: number, cartItems: any[]) => {
     try {
@@ -196,9 +197,9 @@ export const useCheckout = () => {
     }
   };
 
-  const resetCheckout = () => {
+  const resetCheckout = useCallback(() => {
     setCheckoutState(initialState);
-  };
+  }, []);
 
   return {
     checkoutState,

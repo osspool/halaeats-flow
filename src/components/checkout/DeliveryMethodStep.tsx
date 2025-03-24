@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Truck, Home, Plus } from 'lucide-react';
@@ -43,6 +43,16 @@ const DeliveryMethodStep = ({
   const [instructions, setInstructions] = useState<string>('');
   const [pickupTime, setPickupTime] = useState<string>('');
 
+  // Set initial values when component mounts
+  useEffect(() => {
+    // Set default address if none is selected
+    if (!selected && addresses.length > 0) {
+      const defaultAddress = addresses.find(a => a.isDefault)?.id || addresses[0].id;
+      setSelected(defaultAddress);
+      onAddressSelect(defaultAddress);
+    }
+  }, [addresses, selected, onAddressSelect]);
+
   const timeSlots = [
     "ASAP (15-30 min)",
     "Today, 11:30 AM",
@@ -73,7 +83,10 @@ const DeliveryMethodStep = ({
     onPickupTimeChange(value);
   };
 
-  const handleContinue = () => {
+  const handleContinue = (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    // Validation: Don't proceed if delivery is selected but no address is chosen
     if (selectedType === 'delivery' && !selected) return;
     
     // Set default pickup time if not selected for pickup
@@ -83,6 +96,7 @@ const DeliveryMethodStep = ({
     
     // Debugging
     console.log('Continue button clicked, navigating to next step');
+    console.log('Current selection:', { selectedType, selected, pickupTime });
     
     // Call the onNext function to proceed to the next step
     onNext();
@@ -99,6 +113,7 @@ const DeliveryMethodStep = ({
         <Tabs 
           defaultValue={orderType} 
           className="w-full"
+          value={selectedType}
           onValueChange={handleSelect}
         >
           <TabsList className="grid grid-cols-2 w-full mb-6">
@@ -189,7 +204,11 @@ const DeliveryMethodStep = ({
 
             <div>
               <h3 className="font-medium mb-2">Pickup Time</h3>
-              <Select onValueChange={handlePickupTimeChange} defaultValue={timeSlots[0]}>
+              <Select 
+                value={pickupTime} 
+                onValueChange={handlePickupTimeChange} 
+                defaultValue={timeSlots[0]}
+              >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select pickup time" />
                 </SelectTrigger>

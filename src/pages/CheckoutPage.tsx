@@ -57,7 +57,7 @@ const CheckoutPage = () => {
     return () => {
       resetCheckout();
     };
-  }, [resetCheckout, checkoutState.step]);
+  }, [resetCheckout]);
   
   // Render step content
   const renderStepContent = () => {
