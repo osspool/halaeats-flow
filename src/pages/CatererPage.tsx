@@ -28,27 +28,25 @@ const CatererPage = () => {
       // Get all menu items across all dates
       const allItems = caterer.availableDates.flatMap(date => date.menu);
       
+      // Remove duplicates by id
+      const uniqueItems = Array.from(
+        new Map(allItems.map(item => [item.id, item])).values()
+      );
+      
       // Get unique categories
-      const uniqueCategories = ['All', ...new Set(allItems.map(item => item.category))];
+      const uniqueCategories = ['All', ...new Set(uniqueItems.map(item => item.category))];
       
       setCategories(uniqueCategories);
-    }
-  }, [caterer]);
-  
-  useEffect(() => {
-    if (caterer && selectedDate) {
-      // Find the selected date's menu
-      const dateData = caterer.availableDates.find(d => d.date === selectedDate);
-      if (dateData) {
-        // Filter by category if needed
-        let filteredItems = dateData.menu;
-        if (selectedCategory !== 'All') {
-          filteredItems = filteredItems.filter(item => item.category === selectedCategory);
-        }
-        setMenuItems(filteredItems);
+      
+      // Filter by category if needed
+      let filteredItems = uniqueItems;
+      if (selectedCategory !== 'All') {
+        filteredItems = filteredItems.filter(item => item.category === selectedCategory);
       }
+      
+      setMenuItems(filteredItems);
     }
-  }, [caterer, selectedDate, selectedCategory]);
+  }, [caterer, selectedCategory]);
   
   const handleDateSelect = (date: string) => {
     setSelectedDate(date);
@@ -120,11 +118,11 @@ const CatererPage = () => {
               <div className="bg-halaeats-50 rounded-lg p-8 text-center">
                 <p className="text-halaeats-600">
                   {selectedCategory !== 'All'
-                    ? `No ${selectedCategory} dishes available on the selected date.`
-                    : 'No dishes available on the selected date.'}
+                    ? `No ${selectedCategory} dishes available.`
+                    : 'No dishes available.'}
                 </p>
                 <p className="text-sm text-halaeats-500 mt-2">
-                  Try selecting a different date or category.
+                  Try selecting a different category.
                 </p>
               </div>
             ) : (

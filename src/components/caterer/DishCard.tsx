@@ -1,7 +1,8 @@
 
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { PlusCircle, Info } from 'lucide-react';
+import { PlusCircle, Info, Calendar } from 'lucide-react';
+import { format, parseISO } from 'date-fns';
 import { MenuItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -21,19 +22,24 @@ interface DishCardProps {
 const DishCard = ({ dish, selectedDate, onAddToCart }: DishCardProps) => {
   const [isAvailable, setIsAvailable] = useState(false);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
+  const [availabilityDates, setAvailabilityDates] = useState<string[]>([]);
   
   useEffect(() => {
     // Check if dish is available on the selected date
     setIsAvailable(dish.availableDates.includes(selectedDate));
+    
+    // Format the availability dates for display
+    const formattedDates = dish.availableDates.map(date => 
+      format(parseISO(date), 'EEE, MMM d')
+    );
+    setAvailabilityDates(formattedDates);
   }, [dish, selectedDate]);
   
   return (
     <div 
       className={cn(
         "flex flex-col rounded-xl overflow-hidden border transition-all group",
-        isAvailable 
-          ? "border-halaeats-200 hover:border-primary/50 hover:shadow-elevation-soft" 
-          : "border-halaeats-100 opacity-70"
+        "border-halaeats-200 hover:border-primary/50 hover:shadow-elevation-soft"
       )}
     >
       {/* Image */}
@@ -49,7 +55,7 @@ const DishCard = ({ dish, selectedDate, onAddToCart }: DishCardProps) => {
           alt={dish.name} 
           className={cn(
             "w-full h-full object-cover transition-transform duration-500",
-            isAvailable && "group-hover:scale-105",
+            "group-hover:scale-105",
             isImageLoaded ? "opacity-100" : "opacity-0"
           )}
           onLoad={() => setIsImageLoaded(true)}
@@ -72,15 +78,6 @@ const DishCard = ({ dish, selectedDate, onAddToCart }: DishCardProps) => {
             </span>
           ))}
         </div>
-        
-        {/* Availability Label */}
-        {!isAvailable && (
-          <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px] flex items-center justify-center">
-            <span className="bg-halaeats-800/90 text-white px-3 py-1 rounded-md text-sm font-medium">
-              Not Available on Selected Date
-            </span>
-          </div>
-        )}
       </div>
       
       {/* Content */}
@@ -112,6 +109,33 @@ const DishCard = ({ dish, selectedDate, onAddToCart }: DishCardProps) => {
           {dish.description}
         </p>
         
+        {/* Availability Dates */}
+        <div className="mt-3 flex items-center text-xs text-halaeats-500">
+          <Calendar className="h-3 w-3 mr-1" />
+          <span>Available on: </span>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button className="ml-1 text-primary hover:underline">
+                  {availabilityDates.length > 1 
+                    ? `${availabilityDates.length} dates` 
+                    : availabilityDates[0] || 'No dates'}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <div className="max-h-28 overflow-y-auto">
+                  <p className="text-xs font-medium mb-1">Available on:</p>
+                  <ul className="text-xs space-y-1">
+                    {availabilityDates.map((date, index) => (
+                      <li key={index}>{date}</li>
+                    ))}
+                  </ul>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+        
         <div className="mt-4 pt-4 border-t border-halaeats-100 flex justify-between items-center">
           <Link 
             to={`/dish/${dish.id}`} 
@@ -133,7 +157,7 @@ const DishCard = ({ dish, selectedDate, onAddToCart }: DishCardProps) => {
             disabled={!isAvailable}
           >
             <PlusCircle className="mr-1 h-4 w-4" />
-            Add to Cart
+            {isAvailable ? "Add to Cart" : "Not Available"}
           </Button>
         </div>
       </div>
