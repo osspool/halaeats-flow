@@ -10,9 +10,11 @@ import ConfirmationStep from '@/components/checkout/ConfirmationStep';
 import CheckoutProgress from '@/components/checkout/CheckoutProgress';
 import { useCheckout } from '@/hooks/useCheckout';
 import { mockCartItems } from '@/pages/CartPage';
+import { useToast } from '@/hooks/use-toast';
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const {
     checkoutState,
     nextStep,
@@ -42,8 +44,12 @@ const CheckoutPage = () => {
   useEffect(() => {
     if (mockCartItems.length === 0) {
       navigate('/cart');
+      toast({
+        title: "Empty cart",
+        description: "Your cart is empty. Add some items before checkout.",
+      });
     }
-  }, [navigate]);
+  }, [navigate, toast]);
   
   // Reset checkout when unmounting
   useEffect(() => {
@@ -63,6 +69,7 @@ const CheckoutPage = () => {
             selectedAddressId={checkoutState.selectedAddressId}
             onAddressSelect={setSelectedAddressId}
             onDeliveryInstructionsChange={setDeliveryInstructions}
+            onPickupTimeChange={setPickupTime}
             onNext={nextStep}
           />
         );

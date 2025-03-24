@@ -30,14 +30,14 @@ const CheckoutProgress = ({ currentStep }: CheckoutProgressProps) => {
                 <div
                   className={cn(
                     "w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium",
-                    isCompleted ? "bg-primary" : isCurrent ? "bg-primary" : "bg-halaeats-200"
+                    isCompleted ? "bg-primary" : isCurrent ? "bg-primary" : "bg-gray-200"
                   )}
                 >
                   {isCompleted ? <Check className="h-4 w-4" /> : index + 1}
                 </div>
                 <span className={cn(
                   "text-xs mt-1",
-                  isCurrent ? "font-medium text-primary" : "text-halaeats-500"
+                  isCurrent ? "font-medium text-primary" : "text-gray-500"
                 )}>
                   {step.label}
                 </span>
@@ -47,7 +47,7 @@ const CheckoutProgress = ({ currentStep }: CheckoutProgressProps) => {
                 <div
                   className={cn(
                     "h-0.5 flex-1 mx-2",
-                    index < currentStepIndex ? "bg-primary" : "bg-halaeats-200"
+                    index < currentStepIndex ? "bg-primary" : "bg-gray-200"
                   )}
                 />
               )}

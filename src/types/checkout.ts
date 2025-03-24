@@ -19,6 +19,26 @@ export interface PaymentMethod {
   isDefault: boolean;
 }
 
+export interface MockStripePaymentIntent {
+  id: string;
+  object: 'payment_intent';
+  amount: number;
+  currency: string;
+  status: 'requires_payment_method' | 'requires_confirmation' | 'requires_action' | 'processing' | 'requires_capture' | 'canceled' | 'succeeded';
+  client_secret: string;
+  payment_method?: string;
+  created: number;
+  livemode: boolean;
+  metadata: {
+    order_id?: string;
+    customer_id?: string;
+  };
+  application_fee_amount?: number;
+  transfer_data?: {
+    destination: string; // Stripe account ID of the connected account (restaurant/caterer)
+  };
+}
+
 export type CheckoutStep = 'delivery-method' | 'payment' | 'review' | 'confirmation';
 
 export interface CheckoutState {
@@ -28,4 +48,5 @@ export interface CheckoutState {
   selectedPaymentMethodId?: string;
   deliveryInstructions?: string;
   pickupTime?: string;
+  paymentIntent?: MockStripePaymentIntent;
 }
