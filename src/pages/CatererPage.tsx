@@ -56,9 +56,9 @@ const CatererPage = () => {
     setSelectedCategory(category);
   };
   
-  const handleAddToCart = (item: MenuItem) => {
-    // In a real app, we would add the item to cart with the selected date
-    toast.success(`${item.name} added to cart for ${selectedDate}`);
+  const handleViewDetails = (item: MenuItem) => {
+    // In a real app, we would show detailed view of the item
+    console.log('View details for:', item.name);
   };
   
   if (!caterer) {
@@ -132,7 +132,7 @@ const CatererPage = () => {
                     key={item.id}
                     dish={item}
                     selectedDate={selectedDate}
-                    onAddToCart={() => handleAddToCart(item)}
+                    onViewDetails={handleViewDetails}
                   />
                 ))}
               </div>

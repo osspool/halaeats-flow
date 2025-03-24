@@ -16,9 +16,10 @@ interface DishCardProps {
   dish: MenuItem;
   selectedDate: string;
   onViewDetails: (dish: MenuItem) => void;
+  onAddToCart?: (dish: MenuItem) => void; // Make this prop optional
 }
 
-const DishCard = ({ dish, selectedDate, onViewDetails }: DishCardProps) => {
+const DishCard = ({ dish, selectedDate, onViewDetails, onAddToCart }: DishCardProps) => {
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const [availabilityDates, setAvailabilityDates] = useState<string[]>([]);
   
@@ -32,6 +33,15 @@ const DishCard = ({ dish, selectedDate, onViewDetails }: DishCardProps) => {
   
   const handleViewDetail = () => {
     onViewDetails(dish);
+  };
+  
+  const handleAddToCart = () => {
+    // If onAddToCart is provided, use it, otherwise fall back to onViewDetails
+    if (onAddToCart) {
+      onAddToCart(dish);
+    } else {
+      onViewDetails(dish);
+    }
   };
   
   return (
@@ -144,7 +154,7 @@ const DishCard = ({ dish, selectedDate, onViewDetails }: DishCardProps) => {
           </button>
           
           <Button 
-            onClick={handleViewDetail} 
+            onClick={handleAddToCart} 
             variant="outline"
             size="sm"
             className="border-primary text-primary hover:bg-primary hover:text-white text-sm"
