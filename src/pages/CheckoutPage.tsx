@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import DeliveryMethodStep from '@/components/checkout/DeliveryMethodStep';
-import AddressStep from '@/components/checkout/AddressStep';
 import PaymentStep from '@/components/checkout/PaymentStep';
 import ReviewStep from '@/components/checkout/ReviewStep';
 import ConfirmationStep from '@/components/checkout/ConfirmationStep';
@@ -61,18 +60,10 @@ const CheckoutPage = () => {
           <DeliveryMethodStep
             orderType={checkoutState.orderType}
             onOrderTypeChange={setOrderType}
-            onNext={nextStep}
-          />
-        );
-      case 'address':
-        return (
-          <AddressStep
             selectedAddressId={checkoutState.selectedAddressId}
-            orderType={checkoutState.orderType}
             onAddressSelect={setSelectedAddressId}
             onDeliveryInstructionsChange={setDeliveryInstructions}
             onNext={nextStep}
-            onPrevious={previousStep}
           />
         );
       case 'payment':

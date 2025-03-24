@@ -19,7 +19,7 @@ export interface PaymentMethod {
   isDefault: boolean;
 }
 
-export type CheckoutStep = 'delivery-method' | 'address' | 'payment' | 'review' | 'confirmation';
+export type CheckoutStep = 'delivery-method' | 'payment' | 'review' | 'confirmation';
 
 export interface CheckoutState {
   step: CheckoutStep;

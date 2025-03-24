@@ -18,12 +18,6 @@ export const useCheckout = () => {
       case 'delivery-method':
         setCheckoutState(prev => ({
           ...prev,
-          step: 'address',
-        }));
-        break;
-      case 'address':
-        setCheckoutState(prev => ({
-          ...prev,
           step: 'payment',
         }));
         break;
@@ -43,16 +37,10 @@ export const useCheckout = () => {
 
   const previousStep = () => {
     switch (checkoutState.step) {
-      case 'address':
-        setCheckoutState(prev => ({
-          ...prev,
-          step: 'delivery-method',
-        }));
-        break;
       case 'payment':
         setCheckoutState(prev => ({
           ...prev,
-          step: 'address',
+          step: 'delivery-method',
         }));
         break;
       case 'review':

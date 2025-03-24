@@ -9,7 +9,6 @@ interface CheckoutProgressProps {
 
 const steps: { key: CheckoutStep; label: string }[] = [
   { key: 'delivery-method', label: 'Delivery' },
-  { key: 'address', label: 'Address' },
   { key: 'payment', label: 'Payment' },
   { key: 'review', label: 'Review' },
 ];

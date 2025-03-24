@@ -2,26 +2,73 @@
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Truck, Home } from 'lucide-react';
+import { Truck, Home, ArrowLeft, Plus } from 'lucide-react';
 import { OrderType } from '@/types';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Address } from '@/types/checkout';
+import { cn } from '@/lib/utils';
+import { mockAddresses } from '@/data/checkoutMockData';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface DeliveryMethodStepProps {
   orderType: OrderType;
   onOrderTypeChange: (type: OrderType) => void;
+  selectedAddressId?: string;
+  onAddressSelect: (addressId: string) => void;
+  onDeliveryInstructionsChange: (instructions: string) => void;
   onNext: () => void;
 }
 
 const DeliveryMethodStep = ({ 
   orderType, 
   onOrderTypeChange, 
+  selectedAddressId,
+  onAddressSelect,
+  onDeliveryInstructionsChange,
   onNext 
 }: DeliveryMethodStepProps) => {
   const [selectedType, setSelectedType] = useState<OrderType>(orderType);
+  const [addresses] = useState<Address[]>(mockAddresses);
+  const [selected, setSelected] = useState<string>(selectedAddressId || addresses.find(a => a.isDefault)?.id || '');
+  const [instructions, setInstructions] = useState<string>('');
+  const [pickupTime, setPickupTime] = useState<string>('');
+
+  const timeSlots = [
+    "ASAP (15-30 min)",
+    "Today, 11:30 AM",
+    "Today, 12:00 PM",
+    "Today, 12:30 PM",
+    "Today, 1:00 PM",
+    "Today, 1:30 PM",
+  ];
 
   const handleSelect = (value: string) => {
     const type = value as OrderType;
     setSelectedType(type);
     onOrderTypeChange(type);
+  };
+
+  const handleAddressChange = (value: string) => {
+    setSelected(value);
+    onAddressSelect(value);
+  };
+
+  const handleInstructionsChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInstructions(e.target.value);
+    onDeliveryInstructionsChange(e.target.value);
+  };
+
+  const handleContinue = () => {
+    if (selectedType === 'delivery' && !selected) return;
+    onNext();
   };
 
   return (
@@ -48,33 +95,106 @@ const DeliveryMethodStep = ({
             </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="delivery" className="p-4 bg-halaeats-50 rounded-lg">
-            <h3 className="font-medium mb-2">Delivery Service</h3>
-            <p className="text-sm text-halaeats-600">
-              Get your food delivered straight to your door. Please ensure someone is available to receive the order.
-            </p>
-            <p className="text-xs text-halaeats-500 mt-2">
-              Delivery fee applies based on distance and order size.
-            </p>
+          <TabsContent value="delivery" className="p-4 bg-halaeats-50 rounded-lg space-y-6">
+            <div>
+              <h3 className="font-medium mb-2">Delivery Address</h3>
+              <p className="text-sm text-halaeats-600 mb-4">
+                Select where you'd like your order delivered
+              </p>
+
+              <RadioGroup
+                value={selected}
+                onValueChange={handleAddressChange}
+                className="space-y-3"
+              >
+                {addresses.map((address) => (
+                  <div
+                    key={address.id}
+                    className={cn(
+                      "flex items-start space-x-3 border rounded-lg p-4 transition-colors",
+                      selected === address.id
+                        ? "border-primary bg-primary/5"
+                        : "border-halaeats-200"
+                    )}
+                  >
+                    <RadioGroupItem value={address.id} id={address.id} className="mt-1" />
+                    <div className="flex-1">
+                      <Label
+                        htmlFor={address.id}
+                        className="font-medium flex items-center cursor-pointer"
+                      >
+                        {address.name}
+                        {address.isDefault && (
+                          <span className="ml-2 bg-halaeats-100 text-halaeats-700 text-xs px-2 py-0.5 rounded-full">
+                            Default
+                          </span>
+                        )}
+                      </Label>
+                      <p className="text-sm text-halaeats-600 mt-1">
+                        {address.street}{address.apt ? `, ${address.apt}` : ''}
+                      </p>
+                      <p className="text-sm text-halaeats-600">
+                        {address.city}, {address.state} {address.zipCode}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+
+                <Button
+                  variant="outline"
+                  className="flex items-center w-full py-6 border-dashed"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add New Address
+                </Button>
+              </RadioGroup>
+            </div>
+
+            <div>
+              <h3 className="font-medium mb-2">Delivery Instructions (Optional)</h3>
+              <Textarea
+                placeholder="Add any special instructions for delivery..."
+                value={instructions}
+                onChange={handleInstructionsChange}
+              />
+            </div>
           </TabsContent>
           
-          <TabsContent value="pickup" className="p-4 bg-halaeats-50 rounded-lg">
-            <h3 className="font-medium mb-2">Pickup Service</h3>
-            <p className="text-sm text-halaeats-600">
-              Pick up your order directly from the restaurant. No delivery fee and typically faster.
-            </p>
-            <p className="text-xs text-halaeats-500 mt-2">
-              You'll receive a notification when your order is ready for pickup.
-            </p>
+          <TabsContent value="pickup" className="p-4 bg-halaeats-50 rounded-lg space-y-6">
+            <div>
+              <h3 className="font-medium mb-2">Pickup Location</h3>
+              <div className="bg-white p-4 rounded-lg border border-halaeats-100">
+                <h4 className="font-medium text-halaeats-800 mb-2">Spice Delight</h4>
+                <p className="text-sm text-halaeats-600 mb-1">123 Food Street, San Francisco, CA 94105</p>
+                <p className="text-sm text-halaeats-600">Open: 11:00 AM - 9:00 PM</p>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="font-medium mb-2">Pickup Time</h3>
+              <Select onValueChange={setPickupTime} defaultValue={timeSlots[0]}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select pickup time" />
+                </SelectTrigger>
+                <SelectContent>
+                  {timeSlots.map((time) => (
+                    <SelectItem key={time} value={time}>
+                      {time}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
       
       <Button 
-        onClick={onNext}
+        onClick={handleContinue}
         className="w-full bg-primary hover:bg-cuisine-600"
+        disabled={selectedType === 'delivery' && !selected}
       >
-        Continue
+        Continue to Payment
       </Button>
     </div>
   );
