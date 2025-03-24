@@ -7,7 +7,8 @@ import {
   Check,
   ShoppingCart,
   Plus, 
-  Minus
+  Minus,
+  X
 } from 'lucide-react';
 import { parseISO, format } from 'date-fns';
 import { toast } from 'sonner';
@@ -15,13 +16,15 @@ import {
   Sheet, 
   SheetContent, 
   SheetHeader, 
-  SheetTitle 
+  SheetTitle,
+  SheetClose
 } from '@/components/ui/sheet';
 import {
   Drawer,
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
+  DrawerClose
 } from "@/components/ui/drawer";
 import { MenuItem, TimeSlot, MenuItemCustomization, CustomizationOption as CustomizationOptionType } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -172,9 +175,24 @@ export const DishDetailsSheet = ({
   };
 
   const renderContent = () => (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-white">
+      {/* Close button */}
+      <div className="absolute right-4 top-4 z-50">
+        {isMobile ? (
+          <DrawerClose className="h-7 w-7 rounded-full bg-white/90 p-1.5 text-halaeats-600 shadow-sm backdrop-blur border border-halaeats-100 hover:bg-white">
+            <X className="h-full w-full" />
+            <span className="sr-only">Close</span>
+          </DrawerClose>
+        ) : (
+          <SheetClose className="h-7 w-7 rounded-full bg-white/90 p-1.5 text-halaeats-600 shadow-sm backdrop-blur border border-halaeats-100 hover:bg-white">
+            <X className="h-full w-full" />
+            <span className="sr-only">Close</span>
+          </SheetClose>
+        )}
+      </div>
+
       {/* Image */}
-      <div className="relative aspect-[4/3] max-h-[30vh] overflow-hidden">
+      <div className="relative aspect-video overflow-hidden">
         <div 
           className={cn(
             "absolute inset-0 bg-halaeats-100 image-loading",
@@ -190,42 +208,52 @@ export const DishDetailsSheet = ({
           )}
           onLoad={() => setIsImageLoaded(true)}
         />
+        
+        {/* Dietary Tags */}
+        <div className="absolute bottom-4 left-4 flex flex-wrap gap-1">
+          {dish.dietary.map(diet => (
+            <span 
+              key={diet}
+              className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-black/60 text-white backdrop-blur-sm"
+            >
+              {diet}
+            </span>
+          ))}
+        </div>
       </div>
       
-      <div className="flex-1 overflow-y-auto pt-4 pb-20">
+      <div className="flex-1 overflow-y-auto px-6 pt-5 pb-24">
         {/* Dish Info */}
-        <div className="px-4 mb-4">
-          <div className="flex flex-wrap gap-1 mb-2">
-            {dish.dietary.map(diet => (
-              <span 
-                key={diet}
-                className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-halaeats-100 text-halaeats-700"
-              >
-                {diet}
-              </span>
-            ))}
+        <div className="mb-6">
+          <span className="text-sm text-primary font-medium">
+            {dish.category}
+          </span>
+          <h2 className="text-xl font-serif font-bold mt-1">{dish.name}</h2>
+          <div className="flex justify-between items-center mt-2">
+            <span className="text-lg text-primary font-semibold">${dish.price.toFixed(2)}</span>
+            <span className="text-sm text-halaeats-500">From {catererName}</span>
           </div>
-          
-          <h2 className="text-xl font-serif font-bold">{dish.name}</h2>
-          <p className="text-sm text-halaeats-600 mt-1">{dish.description}</p>
-          
-          <div className="flex items-center mt-2 text-sm text-halaeats-500">
-            <span className="text-primary font-semibold mr-auto">${dish.price.toFixed(2)}</span>
-            <span>From {catererName}</span>
-          </div>
+          <p className="text-sm text-halaeats-600 mt-3 leading-relaxed">
+            {dish.description}
+          </p>
         </div>
         
         {/* Availability Information */}
-        <div className="px-4 mb-6 pt-4 border-t border-halaeats-100">
+        <div className="mb-6 pt-4 pb-4 border-t border-b border-halaeats-100">
           <div className="flex items-start">
-            <Calendar className="h-5 w-5 text-primary mr-2 mt-0.5" />
+            <Calendar className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" />
             <div>
               <h4 className="text-sm font-medium text-halaeats-700">Serving Days</h4>
-              <p className="text-sm text-halaeats-500 mt-1">
-                This dish is available on: {availabilityDays.join(', ')}
+              <p className="text-sm text-halaeats-500 mt-1 flex flex-wrap gap-1">
+                Available on: 
+                {availabilityDays.map((day, index) => (
+                  <span key={day} className="text-primary font-medium">
+                    {day}{index < availabilityDays.length - 1 ? ',' : ''}
+                  </span>
+                ))}
               </p>
-              <p className="text-sm text-halaeats-500 mt-1">
-                <Info className="h-4 w-4 inline mr-1" />
+              <p className="text-xs text-halaeats-500 mt-2 flex items-center">
+                <Info className="h-3.5 w-3.5 inline mr-1 text-halaeats-400" />
                 You'll select delivery date and time during checkout
               </p>
             </div>
@@ -233,14 +261,14 @@ export const DishDetailsSheet = ({
         </div>
 
         {/* Quantity Selector */}
-        <div className="px-4 mb-6">
+        <div className="mb-6">
           <label className="block text-sm font-medium text-halaeats-700 mb-2">
             Quantity
           </label>
           <div className="flex items-center">
             <button 
               onClick={decrementQuantity}
-              className="p-2 rounded-l-md border border-r-0 border-halaeats-200 text-halaeats-500 hover:bg-halaeats-50"
+              className="p-2 rounded-l-md border border-r-0 border-halaeats-200 text-halaeats-500 hover:bg-halaeats-50 transition-colors"
               aria-label="Decrease quantity"
             >
               <Minus className="h-4 w-4" />
@@ -250,7 +278,7 @@ export const DishDetailsSheet = ({
             </div>
             <button 
               onClick={incrementQuantity}
-              className="p-2 rounded-r-md border border-l-0 border-halaeats-200 text-halaeats-500 hover:bg-halaeats-50"
+              className="p-2 rounded-r-md border border-l-0 border-halaeats-200 text-halaeats-500 hover:bg-halaeats-50 transition-colors"
               aria-label="Increase quantity"
             >
               <Plus className="h-4 w-4" />
@@ -260,7 +288,7 @@ export const DishDetailsSheet = ({
         
         {/* Customizations */}
         {dish.customizations && dish.customizations.length > 0 && (
-          <div className="px-4 mb-6">
+          <div className="mb-6">
             <h4 className="text-sm font-medium text-halaeats-700 mb-3">Customizations</h4>
             
             {dish.customizations.map(customization => (
@@ -268,18 +296,18 @@ export const DishDetailsSheet = ({
                 <div className="flex items-center mb-2">
                   <p className="text-halaeats-800 font-medium">{customization.name}</p>
                   {customization.required && (
-                    <span className="ml-2 text-xs bg-halaeats-100 text-halaeats-800 px-1.5 py-0.5 rounded">
+                    <span className="ml-2 text-xs bg-red-50 text-red-600 px-1.5 py-0.5 rounded-full border border-red-100">
                       Required
                     </span>
                   )}
                   {customization.multiple && (
-                    <span className="ml-2 text-xs bg-halaeats-100 text-halaeats-800 px-1.5 py-0.5 rounded">
-                      Select Multiple
+                    <span className="ml-2 text-xs bg-halaeats-50 text-halaeats-700 px-1.5 py-0.5 rounded-full border border-halaeats-100">
+                      Multiple
                     </span>
                   )}
                 </div>
                 
-                <div className="space-y-2 ml-1">
+                <div className="space-y-2">
                   {customization.options.map(option => (
                     <CustomizationOption
                       key={option.id}
@@ -297,23 +325,27 @@ export const DishDetailsSheet = ({
       </div>
       
       {/* Total and Add to Cart - Fixed at Bottom */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-halaeats-100 px-4 py-3 z-10">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-halaeats-100 px-6 py-4 z-10 backdrop-blur-lg bg-white/90">
         <div className="flex items-center justify-between mb-3">
-          <span className="text-base font-medium">Total:</span>
-          <span className="text-lg font-bold text-primary">${calculateTotalPrice().toFixed(2)}</span>
+          <div className="flex flex-col">
+            <span className="text-sm text-halaeats-600">Total Price</span>
+            <span className="text-lg font-bold text-primary">
+              ${calculateTotalPrice().toFixed(2)}
+            </span>
+          </div>
+          
+          <Button 
+            onClick={handleAddToCart}
+            disabled={!hasRequiredCustomizations()}
+            className="bg-primary hover:bg-cuisine-600 px-6 transition-gpu h-12"
+          >
+            <ShoppingCart className="mr-2 h-5 w-5" />
+            Add to Cart
+          </Button>
         </div>
         
-        <Button 
-          onClick={handleAddToCart}
-          disabled={!hasRequiredCustomizations()}
-          className="w-full bg-primary hover:bg-cuisine-600 transition-gpu h-12 text-base"
-        >
-          <ShoppingCart className="mr-2 h-5 w-5" />
-          Add to Cart
-        </Button>
-        
         {!hasRequiredCustomizations() && (
-          <p className="mt-2 text-sm text-red-500 text-center">
+          <p className="mt-1 text-sm text-red-500 text-center">
             Please select all required customization options
           </p>
         )}
@@ -325,18 +357,18 @@ export const DishDetailsSheet = ({
     <>
       {isMobile ? (
         <Drawer open={isOpen} onOpenChange={onClose}>
-          <DrawerContent className="max-h-[85vh]">
-            <DrawerHeader className="mb-0 pb-0">
-              <DrawerTitle sr-only>{dish.name}</DrawerTitle>
+          <DrawerContent className="max-h-[90vh] rounded-t-xl">
+            <DrawerHeader className="mb-0 pb-0 sr-only">
+              <DrawerTitle>{dish.name}</DrawerTitle>
             </DrawerHeader>
             {renderContent()}
           </DrawerContent>
         </Drawer>
       ) : (
         <Sheet open={isOpen} onOpenChange={onClose}>
-          <SheetContent className="w-[400px] sm:max-w-xl p-0 overflow-hidden">
-            <SheetHeader className="mb-0 pb-0">
-              <SheetTitle sr-only>{dish.name}</SheetTitle>
+          <SheetContent className="w-[450px] sm:max-w-xl p-0 overflow-hidden">
+            <SheetHeader className="mb-0 pb-0 sr-only">
+              <SheetTitle>{dish.name}</SheetTitle>
             </SheetHeader>
             {renderContent()}
           </SheetContent>
@@ -356,7 +388,7 @@ interface CustomizationOptionProps {
 const CustomizationOption = ({ option, customization, isSelected, onSelect }: CustomizationOptionProps) => (
   <div 
     className={cn(
-      "flex items-center justify-between py-2 px-3 rounded-md border transition-colors cursor-pointer",
+      "flex items-center justify-between py-2.5 px-3.5 rounded-md border transition-colors cursor-pointer",
       isSelected 
         ? "bg-primary/5 border-primary" 
         : "bg-white border-halaeats-200 hover:border-primary/50"
