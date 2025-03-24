@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingBag } from 'lucide-react';
@@ -7,8 +8,8 @@ import Footer from '@/components/layout/Footer';
 import CartItemComponent from '@/components/cart/CartItem';
 import CartSidebar from '@/components/cart/CartSidebar';
 
-// Mock cart data for demo purposes
-const mockCartItems: CartItemType[] = [
+// Mock cart data for demo purposes (exported for use in checkout)
+export const mockCartItems: CartItemType[] = [
   {
     id: 'cart-1',
     menuItem: {

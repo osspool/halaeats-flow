@@ -11,6 +11,7 @@ import Index from "./pages/Index";
 import CatererPage from "./pages/CatererPage";
 import DishPage from "./pages/DishPage";
 import CartPage from "./pages/CartPage";
+import CheckoutPage from "./pages/CheckoutPage";
 import NotFound from "./pages/NotFound";
 
 // Create QueryClient
@@ -99,6 +100,21 @@ const AnimatedRoutes = () => (
             transition={pageTransition}
           >
             <CartPage />
+          </motion.div>
+        } 
+      />
+      <Route 
+        path="/checkout" 
+        element={
+          <motion.div
+            key="checkout"
+            initial="initial"
+            animate="in"
+            exit="out"
+            variants={pageVariants}
+            transition={pageTransition}
+          >
+            <CheckoutPage />
           </motion.div>
         } 
       />

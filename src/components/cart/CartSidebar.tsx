@@ -1,11 +1,9 @@
 
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ShoppingBag, CreditCard, Truck, Home, InfoIcon } from 'lucide-react';
+import { ShoppingBag, CreditCard, InfoIcon } from 'lucide-react';
 import { CartItem, OrderSummary, OrderType } from '@/types';
 import { Button } from '@/components/ui/button';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { 
   Tooltip,
@@ -104,59 +102,14 @@ const CartSidebar = ({
       </div>
       
       {!isEmpty && (
-        <>
-          <div className="p-6 border-b border-halaeats-100">
-            <h4 className="font-medium mb-3">Delivery Method</h4>
-            <RadioGroup 
-              value={orderType} 
-              onValueChange={(value) => onOrderTypeChange(value as OrderType)}
-              className="space-y-3"
-            >
-              <div className={cn(
-                "flex items-start space-x-3 border rounded-lg p-3 transition-colors",
-                orderType === 'delivery' ? "border-primary bg-primary/5" : "border-halaeats-200"
-              )}>
-                <RadioGroupItem value="delivery" id="delivery" className="mt-1" />
-                <div className="flex-1">
-                  <div className="flex items-center">
-                    <Label htmlFor="delivery" className="font-medium flex items-center cursor-pointer">
-                      <Truck className="h-4 w-4 mr-2 text-primary" />
-                      Delivery
-                    </Label>
-                  </div>
-                  <p className="text-sm text-halaeats-600 mt-1">
-                    Get your order delivered to your location
-                  </p>
-                </div>
-              </div>
-              
-              <div className={cn(
-                "flex items-start space-x-3 border rounded-lg p-3 transition-colors",
-                orderType === 'pickup' ? "border-primary bg-primary/5" : "border-halaeats-200"
-              )}>
-                <RadioGroupItem value="pickup" id="pickup" className="mt-1" />
-                <div className="flex-1">
-                  <div className="flex items-center">
-                    <Label htmlFor="pickup" className="font-medium flex items-center cursor-pointer">
-                      <Home className="h-4 w-4 mr-2 text-primary" />
-                      Pickup
-                    </Label>
-                  </div>
-                  <p className="text-sm text-halaeats-600 mt-1">
-                    Pick up your order directly from the caterer
-                  </p>
-                </div>
-              </div>
-            </RadioGroup>
-          </div>
-          
-          <div className="p-6">
+        <div className="p-6">
+          <Link to="/checkout">
             <Button className="w-full bg-primary hover:bg-cuisine-600 h-12">
               <CreditCard className="mr-2 h-5 w-5" />
               Proceed to Checkout
             </Button>
-          </div>
-        </>
+          </Link>
+        </div>
       )}
     </div>
   );
