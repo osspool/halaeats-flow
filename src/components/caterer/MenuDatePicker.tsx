@@ -63,27 +63,6 @@ const MenuDatePicker = ({ availableDates, selectedDate, onSelectDate }: MenuDate
           </button>
         ))}
       </div>
-      
-      <div className="mt-6">
-        <h4 className="text-sm font-medium mb-3">Available Time Slots</h4>
-        <div className="flex flex-wrap gap-2">
-          {availableDates
-            .find(d => d.date === selectedDate)
-            ?.availableTimeSlots.map(slot => (
-              <div 
-                key={slot.id}
-                className={cn(
-                  "py-2 px-4 rounded-lg border text-sm",
-                  slot.available
-                    ? "bg-white border-halaeats-200 hover:border-primary/50 cursor-pointer"
-                    : "bg-halaeats-50 border-halaeats-100 text-halaeats-400 cursor-not-allowed"
-                )}
-              >
-                {slot.startTime} - {slot.endTime}
-              </div>
-            ))}
-        </div>
-      </div>
     </div>
   );
 };
