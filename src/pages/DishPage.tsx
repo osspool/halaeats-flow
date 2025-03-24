@@ -8,7 +8,9 @@ import { MenuItem, TimeSlot, CartItem, SelectedCustomization } from '@/types';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import DishDetail from '@/components/dish/DishDetail';
+import DishDetailsSheet from '@/components/dish/DishDetailsSheet';
 
+// This component is for direct URL access to a dish
 const DishPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -127,6 +129,118 @@ const DishPage = () => {
       <Footer />
     </div>
   );
+};
+
+// Export a component to handle opening the dish in a sheet
+export const useDishDetailsSheet = () => {
+  const [selectedDish, setSelectedDish] = useState<MenuItem | null>(null);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [catererDetails, setCatererDetails] = useState<{
+    name: string;
+    id: string;
+    availableDates: { date: string; timeSlots: TimeSlot[] }[];
+  } | null>(null);
+
+  const openDishDetails = (dish: MenuItem) => {
+    // Find caterer details
+    const catererId = (dish as any).catererId;
+    const catererName = (dish as any).catererName;
+    
+    if (catererId && catererName) {
+      // Find the caterer's available dates for this dish
+      const caterer = caterers.find(c => c.id === catererId);
+      if (caterer) {
+        // Filter dates where this dish is available
+        const datesWithDish = caterer.availableDates
+          .filter(date => date.menu.some(item => item.id === dish.id))
+          .map(date => ({
+            date: date.date,
+            timeSlots: date.availableTimeSlots
+          }));
+        
+        setCatererDetails({
+          name: catererName,
+          id: catererId,
+          availableDates: datesWithDish
+        });
+      }
+    }
+
+    setSelectedDish(dish);
+    setIsSheetOpen(true);
+  };
+
+  const closeDishDetails = () => {
+    setIsSheetOpen(false);
+    // Delay clearing the dish to allow for the closing animation
+    setTimeout(() => {
+      setSelectedDish(null);
+      setCatererDetails(null);
+    }, 300);
+  };
+
+  const handleAddToCart = (
+    quantity: number, 
+    selectedDate: string, 
+    selectedTimeSlot: TimeSlot, 
+    customizations: { customizationId: string; optionIds: string[] }[]
+  ) => {
+    if (!selectedDish || !catererDetails) return;
+    
+    // Calculate the total price including customizations
+    let itemTotal = selectedDish.price * quantity;
+    
+    // Add price of customizations
+    if (selectedDish.customizations) {
+      selectedDish.customizations.forEach(customization => {
+        const selectedOptions = customizations
+          .find(c => c.customizationId === customization.id)
+          ?.optionIds || [];
+        
+        selectedOptions.forEach(optionId => {
+          const option = customization.options.find(opt => opt.id === optionId);
+          if (option) {
+            itemTotal += option.price * quantity;
+          }
+        });
+      });
+    }
+    
+    // Create a cart item
+    const cartItem: CartItem = {
+      id: uuidv4(),
+      menuItem: selectedDish,
+      quantity,
+      selectedDate,
+      selectedTimeSlot,
+      customizations: customizations as SelectedCustomization[],
+      caterer: {
+        id: catererDetails.id,
+        name: catererDetails.name
+      },
+      subtotal: itemTotal
+    };
+    
+    // In a real app, we would add this to a cart state or context
+    console.log('Adding to cart from sheet:', cartItem);
+  };
+
+  const DishDetailsSheetComponent = () => (
+    <DishDetailsSheet
+      isOpen={isSheetOpen}
+      onClose={closeDishDetails}
+      dish={selectedDish}
+      catererName={catererDetails?.name || ''}
+      catererId={catererDetails?.id || ''}
+      availableDates={catererDetails?.availableDates || []}
+      onAddToCart={handleAddToCart}
+    />
+  );
+
+  return {
+    openDishDetails,
+    DishDetailsSheetComponent
+  };
 };
 
 export default DishPage;

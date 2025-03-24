@@ -1,8 +1,7 @@
 
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { PlusCircle, Info, Calendar } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
+import { PlusCircle, Info, Calendar } from 'lucide-react';
 import { MenuItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -16,13 +15,12 @@ import {
 interface DishCardProps {
   dish: MenuItem;
   selectedDate: string;
-  onAddToCart: () => void;
+  onViewDetails: (dish: MenuItem) => void;
 }
 
-const DishCard = ({ dish, selectedDate, onAddToCart }: DishCardProps) => {
+const DishCard = ({ dish, selectedDate, onViewDetails }: DishCardProps) => {
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const [availabilityDates, setAvailabilityDates] = useState<string[]>([]);
-  const navigate = useNavigate();
   
   useEffect(() => {
     // Format the availability dates for display
@@ -33,7 +31,7 @@ const DishCard = ({ dish, selectedDate, onAddToCart }: DishCardProps) => {
   }, [dish]);
   
   const handleViewDetail = () => {
-    navigate(`/dish/${dish.id}`);
+    onViewDetails(dish);
   };
   
   return (
@@ -138,12 +136,12 @@ const DishCard = ({ dish, selectedDate, onAddToCart }: DishCardProps) => {
         </div>
         
         <div className="mt-4 pt-4 border-t border-halaeats-100 flex justify-between items-center">
-          <Link 
-            to={`/dish/${dish.id}`} 
+          <button 
+            onClick={handleViewDetail}
             className="text-primary hover:text-cuisine-600 text-sm font-medium"
           >
             View Details
-          </Link>
+          </button>
           
           <Button 
             onClick={handleViewDetail} 
