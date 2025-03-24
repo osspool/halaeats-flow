@@ -53,13 +53,16 @@ const CheckoutPage = () => {
   
   // Reset checkout when unmounting
   useEffect(() => {
+    console.log('Current checkout step:', checkoutState.step);
     return () => {
       resetCheckout();
     };
-  }, [resetCheckout]);
+  }, [resetCheckout, checkoutState.step]);
   
   // Render step content
   const renderStepContent = () => {
+    console.log('Rendering step:', checkoutState.step);
+    
     switch (checkoutState.step) {
       case 'delivery-method':
         return (

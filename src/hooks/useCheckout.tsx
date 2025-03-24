@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckoutState, CheckoutStep, MockStripePaymentIntent } from '@/types/checkout';
@@ -17,23 +16,29 @@ export const useCheckout = () => {
   const { toast } = useToast();
 
   const nextStep = () => {
+    console.log('Current step:', checkoutState.step);
+    
     switch (checkoutState.step) {
       case 'delivery-method':
+        console.log('Moving to payment step');
         setCheckoutState(prev => ({
           ...prev,
           step: 'payment',
         }));
         break;
       case 'payment':
+        console.log('Moving to review step');
         setCheckoutState(prev => ({
           ...prev,
           step: 'review',
         }));
         break;
       case 'review':
+        console.log('Completing checkout');
         completeCheckout();
         break;
       default:
+        console.log('Unknown step:', checkoutState.step);
         break;
     }
   };
@@ -92,10 +97,8 @@ export const useCheckout = () => {
     }));
   };
 
-  // Create a payment intent (in a real app, this would be a server call)
   const createPaymentIntent = async (amount: number, cartItems: any[]) => {
     try {
-      // Group items by caterer
       const itemsByCaterer: Record<string, { items: any[], subtotal: number }> = {};
       
       cartItems.forEach(item => {
@@ -108,17 +111,11 @@ export const useCheckout = () => {
         itemsByCaterer[catererId].subtotal += item.subtotal;
       });
       
-      // For demo purposes, we're creating just one payment intent
-      // In a real Connect implementation, you might create multiple payment intents
-      // or use transfers with your platform account
-
-      // Get the first caterer (in a real app, you'd handle multiple)
       const firstCatererId = Object.keys(itemsByCaterer)[0];
       const connectedAccountId = mockConnectedAccounts[firstCatererId];
       
-      // Create payment intent for the total amount
       const paymentIntent = await createMockPaymentIntent(
-        Math.round(amount * 100), // Convert to cents
+        Math.round(amount * 100),
         'usd',
         checkoutState.selectedPaymentMethodId,
         { order_id: `order_${Math.random().toString(36).substring(2, 10)}` },
@@ -142,7 +139,6 @@ export const useCheckout = () => {
     }
   };
 
-  // Confirm payment intent (in a real app, this would be a server call)
   const confirmPaymentIntent = async (paymentIntentId: string, paymentMethodId: string) => {
     try {
       const confirmedIntent = await confirmMockPaymentIntent(paymentIntentId, paymentMethodId);
@@ -165,7 +161,6 @@ export const useCheckout = () => {
   };
 
   const completeCheckout = async () => {
-    // Mock API call to process payment and create order
     try {
       console.log('Processing payment and creating order with:', checkoutState);
       
@@ -173,21 +168,15 @@ export const useCheckout = () => {
         throw new Error('No payment method selected');
       }
       
-      // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // In a real implementation, here you would call your backend
-      // to handle the Stripe payment confirmation
-      
       if (checkoutState.paymentIntent?.id) {
-        // Confirm the payment intent if it exists
         await confirmPaymentIntent(
           checkoutState.paymentIntent.id,
           checkoutState.selectedPaymentMethodId
         );
       }
       
-      // Move to confirmation step
       setCheckoutState(prev => ({
         ...prev,
         step: 'confirmation',

@@ -75,6 +75,16 @@ const DeliveryMethodStep = ({
 
   const handleContinue = () => {
     if (selectedType === 'delivery' && !selected) return;
+    
+    // Set default pickup time if not selected for pickup
+    if (selectedType === 'pickup' && !pickupTime) {
+      handlePickupTimeChange(timeSlots[0]);
+    }
+    
+    // Debugging
+    console.log('Continue button clicked, navigating to next step');
+    
+    // Call the onNext function to proceed to the next step
     onNext();
   };
 
