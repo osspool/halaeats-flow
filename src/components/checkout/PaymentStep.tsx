@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useStripe, useElements, PaymentElement, CardElement } from '@stripe/react-stripe-js';
 import { Button } from '@/components/ui/button';
@@ -40,6 +41,7 @@ const PaymentStep = ({
   const form = useForm({
     defaultValues: {
       saveCard: true,
+      cardholderName: '',
     },
   });
 
@@ -79,12 +81,13 @@ const PaymentStep = ({
         type: 'card',
         card: elements.getElement(CardElement)!,
         billing_details: {
-          name: data.name,
+          name: data.cardholderName,
         },
       });
       
       if (result.error) {
-        throw new result.error;
+        // Fixed: Don't try to construct StripeError, just throw the error object
+        throw result.error;
       }
       
       if (result.paymentMethod) {
@@ -255,11 +258,11 @@ const PaymentStep = ({
           <form onSubmit={form.handleSubmit(onSubmitNewCard)} className="space-y-4">
             <div className="space-y-4">
               <div className="form-group">
-                <Label htmlFor="cardName">Name on Card</Label>
+                <Label htmlFor="cardholderName">Name on Card</Label>
                 <Input
-                  id="cardName"
+                  id="cardholderName"
                   placeholder="John Doe"
-                  {...form.register('name')}
+                  {...form.register('cardholderName')}
                   className="mt-1"
                 />
               </div>
