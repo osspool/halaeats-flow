@@ -1,4 +1,3 @@
-
 import React from "react";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 
@@ -7,16 +6,18 @@ interface CalendarDayContentProps {
   count: number;
   isSelected: boolean;
   isMobile: boolean;
+  onClick?: () => void;
 }
 
-const CalendarDayContent = ({ day, count, isSelected, isMobile }: CalendarDayContentProps) => {
+const CalendarDayContent = ({ day, count, isSelected, isMobile, onClick }: CalendarDayContentProps) => {
   // For mobile, keep it simple
   if (isMobile) {
     return (
       <div 
-        className={`relative w-full h-full flex items-center justify-center ${
+        className={`relative w-full h-full flex items-center justify-center cursor-pointer ${
           count > 0 ? 'font-semibold' : ''
-        } ${isSelected ? 'text-primary-foreground' : ''}`}
+        } ${isSelected ? 'text-white bg-primary rounded-md' : ''}`}
+        onClick={onClick}
       >
         {day.getDate()}
         {count > 0 && !isSelected && (
@@ -31,9 +32,10 @@ const CalendarDayContent = ({ day, count, isSelected, isMobile }: CalendarDayCon
     <HoverCard openDelay={300} closeDelay={100}>
       <HoverCardTrigger asChild>
         <div 
-          className={`relative w-full h-full flex items-center justify-center ${
+          className={`relative w-full h-full flex items-center justify-center cursor-pointer ${
             count > 0 ? 'font-semibold' : ''
-          } ${isSelected ? 'text-primary-foreground' : ''}`}
+          } ${isSelected ? 'text-white bg-primary rounded-md' : ''}`}
+          onClick={onClick}
         >
           {day.getDate()}
           {count > 0 && !isSelected && (

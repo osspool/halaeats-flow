@@ -48,6 +48,10 @@ const CalendarWrapper = ({
                       date.getMonth() === selectedDate.getMonth() && 
                       date.getFullYear() === selectedDate.getFullYear();
 
+    const handleDayClick = () => {
+      onDateSelect(date);
+    };
+
     return (
       <div {...props}>
         <CalendarDayContent 
@@ -55,6 +59,7 @@ const CalendarWrapper = ({
           count={count} 
           isSelected={isSelected}
           isMobile={isMobile}
+          onClick={handleDayClick}
         />
       </div>
     );
