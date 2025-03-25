@@ -5,6 +5,7 @@ import { Calendar as CalendarIcon, Clock, Users, Utensils, CreditCard, Check, X,
 import { useQuery } from "@tanstack/react-query";
 import { restaurantService } from "@/services/restaurantService";
 import { Order } from "@/types/restaurant";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,8 @@ const OrderCalendar = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const isMobile = useIsMobile();
 
   // Format selected date as ISO string for API
   const formattedDate = selectedDate 
@@ -78,10 +81,8 @@ const OrderCalendar = () => {
 
   // Open dialog with order details
   const handleViewDetails = (order: Order) => {
-    // In a real app, this would open a dialog with more details or navigate to order detail page
-    toast.info(`Viewing details for Order #${order.id}`, {
-      description: `${order.items.length} items for ${order.customer.name}`
-    });
+    setSelectedOrder(order);
+    setIsDialogOpen(true);
   };
 
   // Get status badge with appropriate color
@@ -116,7 +117,7 @@ const OrderCalendar = () => {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-3 lg:grid-cols-3 md:grid-cols-1 gap-6">
         {/* Calendar Card */}
         <Card className="md:col-span-1">
           <CardHeader>
@@ -171,9 +172,9 @@ const OrderCalendar = () => {
         </Card>
 
         {/* Orders Overview Card */}
-        <Card className="md:col-span-2">
+        <Card className="md:col-span-1 lg:col-span-2 xl:col-span-2">
           <CardHeader className="pb-3">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
                 <CardTitle>
                   {selectedDate ? (
@@ -190,7 +191,7 @@ const OrderCalendar = () => {
               </div>
               
               {/* Status Filter */}
-              <div className="flex space-x-2">
+              <div className="flex flex-wrap gap-2">
                 <Button
                   variant={statusFilter === null ? "default" : "outline"}
                   size="sm"
@@ -251,14 +252,14 @@ const OrderCalendar = () => {
                 {filteredOrders.length > 0 ? (
                   <div className="px-6 overflow-auto max-h-[400px]">
                     <Table>
-                      <TableHeader className="sticky top-0 bg-card">
+                      <TableHeader className="sticky top-0 bg-card z-10">
                         <TableRow>
                           <TableHead>Time</TableHead>
                           <TableHead>Customer</TableHead>
-                          <TableHead>Items</TableHead>
-                          <TableHead>Total</TableHead>
+                          <TableHead className="hidden md:table-cell">Items</TableHead>
+                          <TableHead className="hidden md:table-cell">Total</TableHead>
                           <TableHead>Status</TableHead>
-                          <TableHead>Payment</TableHead>
+                          <TableHead className="hidden md:table-cell">Payment</TableHead>
                           <TableHead></TableHead>
                         </TableRow>
                       </TableHeader>
@@ -277,20 +278,20 @@ const OrderCalendar = () => {
                                 {order.customer.name}
                               </div>
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="hidden md:table-cell">
                               <div className="flex items-center">
                                 <Utensils className="mr-1 h-3 w-3" />
                                 {order.items.length} items
                               </div>
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="hidden md:table-cell">
                               <div className="flex items-center">
                                 <CreditCard className="mr-1 h-3 w-3" />
                                 ${order.total.toFixed(2)}
                               </div>
                             </TableCell>
                             <TableCell>{getStatusBadge(order.status)}</TableCell>
-                            <TableCell>{getPaymentBadge(order.paymentStatus)}</TableCell>
+                            <TableCell className="hidden md:table-cell">{getPaymentBadge(order.paymentStatus)}</TableCell>
                             <TableCell>
                               <Button 
                                 variant="outline" 
@@ -315,6 +316,77 @@ const OrderCalendar = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Order Details Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Order Details</DialogTitle>
+            <DialogDescription>
+              {selectedOrder && `Order #${selectedOrder.id} - ${format(parseISO(selectedOrder.date), 'MMM d, yyyy')} at ${selectedOrder.time}`}
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedOrder && (
+            <div className="space-y-4">
+              <div className="flex justify-between">
+                <div>
+                  <h3 className="font-medium">Customer</h3>
+                  <p className="text-sm text-muted-foreground">{selectedOrder.customer.name}</p>
+                  {selectedOrder.customer.email && (
+                    <p className="text-sm text-muted-foreground">{selectedOrder.customer.email}</p>
+                  )}
+                  {selectedOrder.customer.phone && (
+                    <p className="text-sm text-muted-foreground">{selectedOrder.customer.phone}</p>
+                  )}
+                </div>
+                <div className="text-right">
+                  <h3 className="font-medium">Status</h3>
+                  <div className="mt-1">{getStatusBadge(selectedOrder.status)}</div>
+                  <div className="mt-1">{getPaymentBadge(selectedOrder.paymentStatus)}</div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="font-medium mb-2">Order Items</h3>
+                <div className="bg-muted p-3 rounded-md space-y-2">
+                  {selectedOrder.items.map((item) => (
+                    <div key={item.id} className="flex justify-between text-sm">
+                      <span>{item.quantity}x {item.name}</span>
+                      <span>${(item.price * item.quantity).toFixed(2)}</span>
+                    </div>
+                  ))}
+                  <div className="border-t pt-2 mt-2 font-medium flex justify-between">
+                    <span>Total</span>
+                    <span>${selectedOrder.total.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {selectedOrder.notes && (
+                <div>
+                  <h3 className="font-medium mb-1">Notes</h3>
+                  <p className="text-sm bg-muted p-3 rounded-md">{selectedOrder.notes}</p>
+                </div>
+              )}
+
+              <div className="flex justify-between pt-2">
+                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                  Close
+                </Button>
+                <div className="space-x-2">
+                  {selectedOrder.status === 'pending' && (
+                    <Button>Confirm Order</Button>
+                  )}
+                  {(selectedOrder.status === 'pending' || selectedOrder.status === 'confirmed') && (
+                    <Button variant="destructive">Cancel Order</Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
