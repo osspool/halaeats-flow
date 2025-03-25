@@ -1,12 +1,12 @@
 
 import React, { useState } from "react";
-import { format } from "date-fns";
 import { 
   PlusCircle, 
   Pencil, 
   Trash2, 
   Calendar as CalendarIcon,
-  Clock
+  Clock,
+  Check
 } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,14 +29,28 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { Checkbox } from "@/components/ui/checkbox";
+
+// Days of the week
+const DAYS_OF_WEEK = [
+  "Monday",
+  "Tuesday", 
+  "Wednesday", 
+  "Thursday", 
+  "Friday", 
+  "Saturday", 
+  "Sunday"
+];
+
+// Available time slots
+const TIME_SLOTS = [
+  "07:00-09:00",
+  "11:00-14:00", 
+  "18:00-21:00",
+  "21:00-23:00"
+];
 
 // Mock data for dishes
 const mockDishes = [
@@ -46,12 +60,11 @@ const mockDishes = [
     price: 14.99,
     description: "Creamy pasta with bacon and parmesan",
     category: "Pasta",
-    availableDates: [
-      { date: new Date(new Date().setDate(new Date().getDate() + 1)), 
-        timeSlots: ["11:00-14:00", "18:00-21:00"] },
-      { date: new Date(new Date().setDate(new Date().getDate() + 2)), 
-        timeSlots: ["11:00-14:00", "18:00-21:00"] }
-    ],
+    availability: {
+      Monday: ["11:00-14:00", "18:00-21:00"],
+      Wednesday: ["11:00-14:00", "18:00-21:00"],
+      Friday: ["18:00-21:00"],
+    },
     dietary: ["Vegetarian-option"]
   },
   {
@@ -60,12 +73,11 @@ const mockDishes = [
     price: 12.99,
     description: "Classic tomato and mozzarella pizza",
     category: "Pizza",
-    availableDates: [
-      { date: new Date(new Date().setDate(new Date().getDate() + 1)), 
-        timeSlots: ["11:00-14:00", "18:00-21:00"] },
-      { date: new Date(new Date().setDate(new Date().getDate() + 3)), 
-        timeSlots: ["11:00-14:00", "18:00-21:00"] }
-    ],
+    availability: {
+      Tuesday: ["11:00-14:00", "18:00-21:00"],
+      Thursday: ["11:00-14:00", "18:00-21:00"],
+      Saturday: ["11:00-14:00", "18:00-21:00", "21:00-23:00"],
+    },
     dietary: ["Vegetarian"]
   },
   {
@@ -74,12 +86,10 @@ const mockDishes = [
     price: 16.99,
     description: "Spicy chicken curry with basmati rice",
     category: "Main Course",
-    availableDates: [
-      { date: new Date(new Date().setDate(new Date().getDate() + 2)), 
-        timeSlots: ["18:00-21:00"] },
-      { date: new Date(new Date().setDate(new Date().getDate() + 4)), 
-        timeSlots: ["18:00-21:00"] }
-    ],
+    availability: {
+      Wednesday: ["18:00-21:00"],
+      Sunday: ["11:00-14:00", "18:00-21:00"],
+    },
     dietary: ["Gluten-free"]
   }
 ];
@@ -89,10 +99,9 @@ const DishManagement = () => {
   const [isAddDishOpen, setIsAddDishOpen] = useState(false);
   const [isEditAvailabilityOpen, setIsEditAvailabilityOpen] = useState(false);
   const [currentDish, setCurrentDish] = useState<any>(null);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [selectedTimeSlots, setSelectedTimeSlots] = useState<string[]>([]);
-  const availableTimeSlots = ["11:00-14:00", "18:00-21:00"];
-
+  const [selectedDay, setSelectedDay] = useState<string>("Monday");
+  const [selectedTimeSlots, setSelectedTimeSlots] = useState<{ [day: string]: string[] }>({});
+  
   const handleAddDish = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -102,7 +111,7 @@ const DishManagement = () => {
       price: parseFloat(formData.get('price') as string),
       description: formData.get('description') as string,
       category: formData.get('category') as string,
-      availableDates: [],
+      availability: {},
       dietary: []
     };
     
@@ -113,43 +122,24 @@ const DishManagement = () => {
 
   const handleEditAvailability = (dish: any) => {
     setCurrentDish(dish);
-    if (dish.availableDates && dish.availableDates.length > 0) {
-      setSelectedDate(dish.availableDates[0].date);
-      setSelectedTimeSlots(dish.availableDates[0].timeSlots);
-    } else {
-      setSelectedDate(new Date());
-      setSelectedTimeSlots([]);
-    }
+    setSelectedTimeSlots(dish.availability || {});
+    setSelectedDay("Monday");
     setIsEditAvailabilityOpen(true);
   };
 
   const handleSaveAvailability = () => {
-    if (!selectedDate || selectedTimeSlots.length === 0) {
-      toast.error('Please select date and time slots');
+    // Check if at least one day and time slot is selected
+    if (Object.keys(selectedTimeSlots).length === 0) {
+      toast.error('Please select at least one day and time slot');
       return;
     }
 
     // Update the dish's availability
     const updatedDishes = dishes.map(dish => {
       if (dish.id === currentDish.id) {
-        const existingDateIndex = dish.availableDates.findIndex(
-          ad => format(ad.date, 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd')
-        );
-
-        const newAvailableDates = [...dish.availableDates];
-        
-        if (existingDateIndex >= 0) {
-          newAvailableDates[existingDateIndex].timeSlots = selectedTimeSlots;
-        } else {
-          newAvailableDates.push({
-            date: selectedDate,
-            timeSlots: selectedTimeSlots
-          });
-        }
-
         return {
           ...dish,
-          availableDates: newAvailableDates
+          availability: selectedTimeSlots
         };
       }
       return dish;
@@ -160,12 +150,27 @@ const DishManagement = () => {
     toast.success('Dish availability updated!');
   };
 
-  const toggleTimeSlot = (timeSlot: string) => {
-    if (selectedTimeSlots.includes(timeSlot)) {
-      setSelectedTimeSlots(selectedTimeSlots.filter(ts => ts !== timeSlot));
-    } else {
-      setSelectedTimeSlots([...selectedTimeSlots, timeSlot]);
-    }
+  const toggleTimeSlot = (day: string, timeSlot: string) => {
+    setSelectedTimeSlots(prev => {
+      const updatedTimeSlots = { ...prev };
+      
+      if (!updatedTimeSlots[day]) {
+        updatedTimeSlots[day] = [timeSlot];
+      } else if (updatedTimeSlots[day].includes(timeSlot)) {
+        updatedTimeSlots[day] = updatedTimeSlots[day].filter(ts => ts !== timeSlot);
+        if (updatedTimeSlots[day].length === 0) {
+          delete updatedTimeSlots[day];
+        }
+      } else {
+        updatedTimeSlots[day] = [...updatedTimeSlots[day], timeSlot];
+      }
+      
+      return updatedTimeSlots;
+    });
+  };
+
+  const isTimeSlotSelected = (day: string, timeSlot: string) => {
+    return selectedTimeSlots[day]?.includes(timeSlot) || false;
   };
 
   return (
@@ -230,16 +235,16 @@ const DishManagement = () => {
                   <TableCell>{dish.category}</TableCell>
                   <TableCell>${dish.price.toFixed(2)}</TableCell>
                   <TableCell>
-                    {dish.availableDates && dish.availableDates.length > 0 ? (
+                    {dish.availability && Object.keys(dish.availability).length > 0 ? (
                       <div className="flex flex-wrap gap-1">
-                        {dish.availableDates.slice(0, 2).map((ad, idx) => (
-                          <Badge key={idx} variant="outline" className="flex items-center gap-1">
+                        {Object.keys(dish.availability).slice(0, 2).map((day) => (
+                          <Badge key={day} variant="outline" className="flex items-center gap-1">
                             <CalendarIcon className="h-3 w-3" />
-                            {format(ad.date, "MMM d")}
+                            {day}
                           </Badge>
                         ))}
-                        {dish.availableDates.length > 2 && (
-                          <Badge variant="outline">+{dish.availableDates.length - 2} more</Badge>
+                        {Object.keys(dish.availability).length > 2 && (
+                          <Badge variant="outline">+{Object.keys(dish.availability).length - 2} more</Badge>
                         )}
                       </div>
                     ) : (
@@ -253,7 +258,7 @@ const DishManagement = () => {
                         size="sm" 
                         onClick={() => handleEditAvailability(dish)}
                       >
-                        <Calendar className="h-3.5 w-3.5 mr-1" />
+                        <Clock className="h-3.5 w-3.5 mr-1" />
                         Set Times
                       </Button>
                       <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700 hover:bg-red-100">
@@ -269,42 +274,83 @@ const DishManagement = () => {
       </Card>
 
       <Dialog open={isEditAvailabilityOpen} onOpenChange={setIsEditAvailabilityOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>
               Set Availability for {currentDish?.name}
             </DialogTitle>
           </DialogHeader>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-            <div>
-              <Label className="mb-2 block">Select Date</Label>
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                className="p-3 pointer-events-auto"
-                disabled={(date) => date < new Date()}
-              />
+          <div className="grid grid-cols-1 gap-6 pt-4">
+            <div className="flex flex-wrap gap-2 mb-4">
+              {DAYS_OF_WEEK.map((day) => (
+                <Button
+                  key={day}
+                  variant={selectedDay === day ? "default" : "outline"}
+                  onClick={() => setSelectedDay(day)}
+                  className="text-sm"
+                >
+                  {day.substring(0, 3)}
+                  {selectedTimeSlots[day]?.length > 0 && (
+                    <div className="ml-1 w-2 h-2 bg-green-500 rounded-full"></div>
+                  )}
+                </Button>
+              ))}
             </div>
             
             <div>
-              <Label className="mb-2 block">Select Time Slots</Label>
-              <div className="space-y-3 mt-4">
-                {availableTimeSlots.map((timeSlot) => (
+              <div className="flex justify-between items-center mb-2">
+                <Label className="text-base font-medium">Time Slots for {selectedDay}</Label>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+                {TIME_SLOTS.map((timeSlot) => (
                   <div
                     key={timeSlot}
                     className={`flex items-center p-3 border rounded-md cursor-pointer transition-colors ${
-                      selectedTimeSlots.includes(timeSlot)
+                      isTimeSlotSelected(selectedDay, timeSlot)
                         ? "bg-primary/10 border-primary"
                         : "hover:border-primary/50"
                     }`}
-                    onClick={() => toggleTimeSlot(timeSlot)}
+                    onClick={() => toggleTimeSlot(selectedDay, timeSlot)}
                   >
-                    <Clock className="h-4 w-4 mr-2" />
+                    <div className="mr-2">
+                      {isTimeSlotSelected(selectedDay, timeSlot) ? (
+                        <div className="h-4 w-4 rounded-sm bg-primary flex items-center justify-center">
+                          <Check className="h-3 w-3 text-white" />
+                        </div>
+                      ) : (
+                        <div className="h-4 w-4 rounded-sm border border-primary/50"></div>
+                      )}
+                    </div>
+                    <Clock className="h-4 w-4 mr-2 text-gray-500" />
                     <span>{timeSlot}</span>
                   </div>
                 ))}
+              </div>
+
+              <div className="mt-6">
+                <h3 className="text-sm font-medium mb-2">Summary of Selected Times</h3>
+                <div className="bg-gray-50 p-3 rounded-md max-h-[120px] overflow-y-auto">
+                  {Object.keys(selectedTimeSlots).length > 0 ? (
+                    <div className="space-y-2">
+                      {Object.entries(selectedTimeSlots).map(([day, slots]) => (
+                        <div key={day} className="flex items-start">
+                          <span className="font-medium min-w-[100px]">{day}:</span>
+                          <div className="flex flex-wrap gap-1">
+                            {slots.map(slot => (
+                              <Badge key={`${day}-${slot}`} variant="outline" className="text-xs">
+                                {slot}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500">No time slots selected yet</p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
