@@ -83,6 +83,7 @@ const DateCalendarWidget = ({
           isLoading={isLoading}
           getItemCountForDate={getItemCountForDate}
           modifiersStyles={modifiersStyles}
+          currentMonth={currentMonth}
         />
         
         <CalendarLegend />

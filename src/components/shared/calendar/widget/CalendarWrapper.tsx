@@ -13,6 +13,7 @@ interface CalendarWrapperProps {
   isLoading: boolean;
   getItemCountForDate: (date: Date) => number;
   modifiersStyles: Record<string, React.CSSProperties>;
+  currentMonth: Date;
 }
 
 const CalendarWrapper = ({
@@ -22,7 +23,8 @@ const CalendarWrapper = ({
   datesWithItems,
   isLoading,
   getItemCountForDate,
-  modifiersStyles
+  modifiersStyles,
+  currentMonth
 }: CalendarWrapperProps) => {
   const isMobile = useIsMobile();
 
@@ -72,6 +74,8 @@ const CalendarWrapper = ({
         selected={selectedDate}
         onSelect={onDateSelect}
         onMonthChange={onMonthChange}
+        defaultMonth={currentMonth}
+        month={currentMonth}
         className="rounded-md border shadow-sm bg-white dark:bg-card pointer-events-auto"
         modifiers={{
           hasItems: datesWithItems,
