@@ -1,6 +1,6 @@
 import { DishAvailability, DishCreateRequest, RestaurantMenu, AvailabilityUpdateRequest, TimeSlotUpdateRequest, Order, OrderDate, OrdersResponse, OrderDatesResponse } from "@/types/restaurant";
 import { MenuItem } from "@/types";
-import { addDays, format, parseISO, subDays } from "date-fns";
+import { addDays, format, parseISO, subDays, startOfMonth, endOfMonth } from "date-fns";
 import { OrderItem } from "@/types/restaurant";
 
 // Default time slots
@@ -225,9 +225,20 @@ export const restaurantService = {
   getOrderDates: async (startDate?: string, endDate?: string): Promise<OrderDatesResponse> => {
     await delay(600);
     
-    // Default to current month if no dates provided
-    const start = startDate ? parseISO(startDate) : subDays(new Date(), 15);
-    const end = endDate ? parseISO(endDate) : addDays(new Date(), 15);
+    // If no dates provided, default to current month
+    let start: Date;
+    let end: Date;
+    
+    if (startDate && endDate) {
+      // Use the provided date range
+      start = parseISO(startDate);
+      end = parseISO(endDate);
+    } else {
+      // Default to current month if no specific dates
+      const today = new Date();
+      start = startOfMonth(today);
+      end = endOfMonth(today);
+    }
     
     // Filter orders within the date range
     const filteredOrders = mockOrders.filter(order => {
@@ -256,14 +267,49 @@ export const restaurantService = {
   },
   
   // Get orders for a specific date
-  getOrdersByDate: async (date: string): Promise<OrdersResponse> => {
+  getOrdersByDate: async (date: string, status?: string): Promise<OrdersResponse> => {
     await delay(700);
     
     // Filter orders for the specified date
-    const orders = mockOrders.filter(order => order.date === date);
+    let orders = mockOrders.filter(order => order.date === date);
+    
+    // Apply status filter if provided
+    if (status && status !== 'all') {
+      orders = orders.filter(order => order.status === status);
+    }
     
     // Sort by time
     orders.sort((a, b) => a.time.localeCompare(b.time));
+    
+    return {
+      orders,
+      total: orders.length
+    };
+  },
+  
+  // Get orders for a date range
+  getOrdersByDateRange: async (startDate: string, endDate: string, status?: string): Promise<OrdersResponse> => {
+    await delay(800);
+    
+    const start = parseISO(startDate);
+    const end = parseISO(endDate);
+    
+    // Filter orders within the date range
+    let orders = mockOrders.filter(order => {
+      const orderDate = parseISO(order.date);
+      return orderDate >= start && orderDate <= end;
+    });
+    
+    // Apply status filter if provided
+    if (status && status !== 'all') {
+      orders = orders.filter(order => order.status === status);
+    }
+    
+    // Sort by date then time
+    orders.sort((a, b) => {
+      const dateComparison = a.date.localeCompare(b.date);
+      return dateComparison !== 0 ? dateComparison : a.time.localeCompare(b.time);
+    });
     
     return {
       orders,

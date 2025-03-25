@@ -10,6 +10,7 @@ import { OrderDate } from "@/types/restaurant";
 interface CalendarWidgetProps {
   selectedDate: Date | undefined;
   onDateSelect: (date: Date | undefined) => void;
+  onMonthChange: (month: Date) => void;
   orderDates: OrderDate[] | undefined;
   isLoading: boolean;
 }
@@ -17,6 +18,7 @@ interface CalendarWidgetProps {
 const CalendarWidget = ({ 
   selectedDate, 
   onDateSelect, 
+  onMonthChange,
   orderDates, 
   isLoading 
 }: CalendarWidgetProps) => {
@@ -47,6 +49,7 @@ const CalendarWidget = ({
             mode="single"
             selected={selectedDate}
             onSelect={onDateSelect}
+            onMonthChange={onMonthChange}
             className="p-3 pointer-events-auto rounded-md border"
             modifiers={{
               booked: getDatesWithOrders(),

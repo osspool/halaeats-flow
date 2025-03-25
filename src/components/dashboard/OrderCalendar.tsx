@@ -1,11 +1,8 @@
 
 import React, { useState } from "react";
-import { format, isToday } from "date-fns";
-import { useQuery } from "@tanstack/react-query";
-import { restaurantService } from "@/services/restaurantService";
+import { format, isToday, startOfMonth, endOfMonth } from "date-fns";
 import { Order } from "@/types/restaurant";
 import { useIsMobile } from "@/hooks/use-mobile";
-
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -15,8 +12,12 @@ import OrderCalendarStats from "./orders/OrderCalendarStats";
 import OrdersList from "./orders/OrdersList";
 import OrderDetailsDialog from "./orders/OrderDetailsDialog";
 
+// Import updated hooks
+import { useOrderDatesForMonth, useOrdersByDate } from "@/hooks/useRestaurantApi";
+
 const OrderCalendar = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [currentMonth, setCurrentMonth] = useState<Date>(new Date()); // Track current month for calendar
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -27,23 +28,14 @@ const OrderCalendar = () => {
     ? format(selectedDate, 'yyyy-MM-dd') 
     : format(new Date(), 'yyyy-MM-dd');
 
-  // Query to fetch dates with orders
-  const orderDatesQuery = useQuery({
-    queryKey: ['order-dates'],
-    queryFn: () => restaurantService.getOrderDates(),
-  });
+  // Query to fetch dates with orders for the current month view
+  const orderDatesQuery = useOrderDatesForMonth(currentMonth);
 
-  // Query to fetch orders for selected date
-  const ordersQuery = useQuery({
-    queryKey: ['orders', formattedDate],
-    queryFn: () => restaurantService.getOrdersByDate(formattedDate),
-    enabled: !!formattedDate,
-  });
-
-  // Filter orders by status if a filter is active
-  const filteredOrders = ordersQuery.data?.orders.filter(order => 
-    statusFilter ? order.status === statusFilter : true
-  ) || [];
+  // Query to fetch orders for selected date with optional status filter
+  const ordersQuery = useOrdersByDate(
+    formattedDate, 
+    statusFilter || undefined
+  );
 
   // Count orders by status
   const orderCounts = {
@@ -51,17 +43,16 @@ const OrderCalendar = () => {
     pending: ordersQuery.data?.orders.filter(order => order.status === 'pending').length || 0,
     confirmed: ordersQuery.data?.orders.filter(order => order.status === 'confirmed').length || 0,
     completed: ordersQuery.data?.orders.filter(order => order.status === 'completed').length || 0,
-    cancelled: ordersQuery.data?.orders.filter(order => order.status === 'cancelled').length || 0,
   };
 
   // Handle date selection
   const handleDateSelect = (date: Date | undefined) => {
     setSelectedDate(date);
-    
-    if (date) {
-      // Reset status filter when selecting a new date
-      setStatusFilter(null);
-    }
+  };
+
+  // Handle month change in calendar
+  const handleMonthChange = (month: Date) => {
+    setCurrentMonth(month);
   };
 
   // Open dialog with order details
@@ -77,6 +68,7 @@ const OrderCalendar = () => {
         <CalendarWidget 
           selectedDate={selectedDate}
           onDateSelect={handleDateSelect}
+          onMonthChange={handleMonthChange}
           orderDates={orderDatesQuery.data?.dates}
           isLoading={orderDatesQuery.isLoading}
         />
@@ -138,7 +130,7 @@ const OrderCalendar = () => {
             
             {/* Orders Table */}
             <OrdersList 
-              orders={filteredOrders}
+              orders={ordersQuery.data?.orders || []}
               onViewDetails={handleViewDetails}
               isLoading={ordersQuery.isLoading}
             />

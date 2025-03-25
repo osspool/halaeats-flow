@@ -1,9 +1,9 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { restaurantService } from "@/services/restaurantService";
 import { AvailabilityUpdateRequest, DishCreateRequest, TimeSlotUpdateRequest } from "@/types/restaurant";
 import { MenuItem } from "@/types";
 import { toast } from "sonner";
+import { startOfMonth, endOfMonth, format } from "date-fns";
 
 // Key constants for React Query
 const MENU_QUERY_KEY = "restaurant-menu";
@@ -11,6 +11,7 @@ const AVAILABILITY_KEY = "dish-availability";
 const TIME_SLOTS_KEY = "time-slots";
 const ORDER_DATES_KEY = "order-dates";
 const ORDERS_KEY = "orders";
+const ORDERS_RANGE_KEY = "orders-range";
 
 /**
  * Hook for fetching restaurant menu data
@@ -31,7 +32,6 @@ export const useAddDish = () => {
   return useMutation({
     mutationFn: (newDish: DishCreateRequest) => restaurantService.addDish(newDish),
     onSuccess: () => {
-      // Invalidate the menu query to refetch with the new dish
       queryClient.invalidateQueries({ queryKey: [MENU_QUERY_KEY] });
       toast.success("New dish added successfully!");
     },
@@ -98,9 +98,12 @@ export const useUpdateTimeSlots = () => {
 };
 
 /**
- * Hook for fetching order dates
+ * Hook for fetching order dates for a specific month
  */
-export const useOrderDates = (startDate?: string, endDate?: string) => {
+export const useOrderDatesForMonth = (date: Date) => {
+  const startDate = format(startOfMonth(date), 'yyyy-MM-dd');
+  const endDate = format(endOfMonth(date), 'yyyy-MM-dd');
+
   return useQuery({
     queryKey: [ORDER_DATES_KEY, startDate, endDate],
     queryFn: () => restaurantService.getOrderDates(startDate, endDate),
@@ -108,12 +111,23 @@ export const useOrderDates = (startDate?: string, endDate?: string) => {
 };
 
 /**
- * Hook for fetching orders by date
+ * Hook for fetching orders by date with optional status filter
  */
-export const useOrdersByDate = (date: string) => {
+export const useOrdersByDate = (date: string, status?: string) => {
   return useQuery({
-    queryKey: [ORDERS_KEY, date],
-    queryFn: () => restaurantService.getOrdersByDate(date),
+    queryKey: [ORDERS_KEY, date, status],
+    queryFn: () => restaurantService.getOrdersByDate(date, status),
     enabled: !!date, // Only run query if date is provided
+  });
+};
+
+/**
+ * Hook for fetching orders by date range with optional status filter
+ */
+export const useOrdersByDateRange = (startDate: string, endDate: string, status?: string) => {
+  return useQuery({
+    queryKey: [ORDERS_RANGE_KEY, startDate, endDate, status],
+    queryFn: () => restaurantService.getOrdersByDateRange(startDate, endDate, status),
+    enabled: !!(startDate && endDate), // Only run query if both dates are provided
   });
 };
