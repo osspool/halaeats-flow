@@ -1,107 +1,53 @@
 
 import { useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { OrderType } from '@/types';
-import { initialCheckoutState, UseCheckoutReturn } from './types';
-import { usePaymentIntents } from './usePaymentIntents';
+import { UseCheckoutReturn } from './types';
+import { initialCheckoutState } from './types';
+import { useCheckoutForm } from './useCheckoutForm';
+import { useCheckoutPayment } from './useCheckoutPayment';
+import { useCheckoutCompletion } from './useCheckoutCompletion';
 import { useCheckoutSteps } from './useCheckoutSteps';
 
 export const useCheckout = (): UseCheckoutReturn => {
+  // Initialize state with the initial checkout state
   const [checkoutState, setCheckoutState] = useState(initialCheckoutState);
-  const { toast } = useToast();
-
-  // Form field setters
-  const setOrderType = useCallback((orderType: OrderType) => {
-    setCheckoutState(prev => ({
-      ...prev,
-      orderType,
-    }));
-  }, []);
-
-  const setSelectedAddressId = useCallback((addressId: string) => {
-    setCheckoutState(prev => ({
-      ...prev,
-      selectedAddressId: addressId,
-    }));
-  }, []);
-
-  const setSelectedPaymentMethodId = useCallback((paymentMethodId: string) => {
-    setCheckoutState(prev => ({
-      ...prev,
-      selectedPaymentMethodId: paymentMethodId,
-    }));
-  }, []);
-
-  const setDeliveryInstructions = useCallback((instructions: string) => {
-    setCheckoutState(prev => ({
-      ...prev,
-      deliveryInstructions: instructions,
-    }));
-  }, []);
-
-  const setPickupTime = useCallback((time: string) => {
-    setCheckoutState(prev => ({
-      ...prev,
-      pickupTime: time,
-    }));
-  }, []);
-
-  // Payment processing
-  const { createPaymentIntent, confirmPaymentIntent } = usePaymentIntents(
+  
+  // Use custom hooks for different parts of checkout functionality
+  const {
+    setOrderType,
+    setSelectedAddressId,
+    setSelectedPaymentMethodId,
+    setDeliveryInstructions,
+    setPickupTime,
+  } = useCheckoutForm(checkoutState);
+  
+  // Hook for payment processing
+  const {
+    createPaymentIntent,
+    confirmPaymentIntent,
+    completePayment,
+  } = useCheckoutPayment(checkoutState, setCheckoutState);
+  
+  // Hook for checkout completion
+  const { completeCheckout } = useCheckoutCompletion(
     checkoutState,
-    setCheckoutState
+    setCheckoutState,
+    completePayment
   );
-
-  // Checkout completion
-  const completeCheckout = async () => {
-    try {
-      console.log('Processing payment and creating order with:', checkoutState);
-      
-      if (!checkoutState.selectedPaymentMethodId) {
-        throw new Error('No payment method selected');
-      }
-      
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      if (checkoutState.paymentIntent?.id) {
-        await confirmPaymentIntent(
-          checkoutState.paymentIntent.id,
-          checkoutState.selectedPaymentMethodId
-        );
-      }
-      
-      setCheckoutState(prev => ({
-        ...prev,
-        step: 'confirmation',
-      }));
-      
-      toast({
-        title: "Order placed successfully!",
-        description: "Your order has been processed. Thank you for your purchase.",
-      });
-    } catch (error) {
-      console.error('Error processing order:', error);
-      toast({
-        title: "Order processing failed",
-        description: "There was an error processing your order. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Step navigation
+  
+  // Step navigation logic
   const { nextStep, previousStep } = useCheckoutSteps({
     checkoutState,
     setCheckoutState,
     completeCheckout
   });
-
+  
   // Reset checkout state
   const resetCheckout = useCallback(() => {
     setCheckoutState(initialCheckoutState);
   }, []);
-
+  
+  // Return the combined checkout hook API
   return {
     checkoutState,
     nextStep,
