@@ -1,4 +1,3 @@
-
 import React from "react";
 import { CalendarIcon } from "lucide-react";
 import { isSameMonth } from "date-fns";
@@ -6,6 +5,12 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DateWithCount } from "./types";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { 
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger 
+} from "@/components/ui/hover-card";
 
 interface DateCalendarWidgetProps {
   selectedDate: Date | undefined;
@@ -28,6 +33,8 @@ const DateCalendarWidget = ({
   title = "Select Date",
   description = "Dates with items are highlighted"
 }: DateCalendarWidgetProps) => {
+  const isMobile = useIsMobile();
+  
   // Function to identify dates with items for the calendar
   const getDatesWithItems = (): Date[] => {
     if (!datesWithItems) return [];
@@ -36,6 +43,22 @@ const DateCalendarWidget = ({
         ? new Date(dateItem.date) 
         : dateItem.date
     );
+  };
+
+  // Get item count for each date
+  const getItemCountForDate = (date: Date): number => {
+    if (!datesWithItems) return 0;
+    
+    const dateString = date.toISOString().split('T')[0];
+    const matchingDate = datesWithItems.find(item => {
+      const itemDate = typeof item.date === 'string' 
+        ? item.date.split('T')[0] 
+        : item.date.toISOString().split('T')[0];
+      
+      return itemDate === dateString;
+    });
+    
+    return matchingDate?.count || 0;
   };
 
   // Handle date selection with validation for current month
@@ -47,8 +70,55 @@ const DateCalendarWidget = ({
     onDateSelect(date);
   };
 
+  // Custom day rendering to add count indicators
+  const renderDay = (day: Date, selectedDate: Date | undefined, dayProps: Record<string, any>) => {
+    const count = getItemCountForDate(day);
+    const isSelected = selectedDate && day.getDate() === selectedDate.getDate() && 
+                       day.getMonth() === selectedDate.getMonth() && 
+                       day.getFullYear() === selectedDate.getFullYear();
+                       
+    // For mobile, keep it simple
+    if (isMobile) {
+      return (
+        <div 
+          className={`relative w-full h-full flex items-center justify-center ${
+            count > 0 ? 'font-semibold' : ''
+          }`}
+        >
+          {day.getDate()}
+          {count > 0 && (
+            <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />
+          )}
+        </div>
+      );
+    }
+
+    // For desktop, add hover card with count info
+    return (
+      <HoverCard openDelay={300} closeDelay={100}>
+        <HoverCardTrigger asChild>
+          <div 
+            className={`relative w-full h-full flex items-center justify-center ${
+              count > 0 ? 'font-semibold' : ''
+            }`}
+          >
+            {day.getDate()}
+            {count > 0 && !isSelected && (
+              <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-1 w-1 bg-primary rounded-full" />
+            )}
+          </div>
+        </HoverCardTrigger>
+        {count > 0 && (
+          <HoverCardContent className="w-auto p-2 text-xs" align="center" side="top">
+            {count} {count === 1 ? 'item' : 'items'}
+          </HoverCardContent>
+        )}
+      </HoverCard>
+    );
+  };
+
   return (
-    <Card className="md:col-span-1 overflow-hidden border-none shadow-elevation-medium">
+    <Card className={`md:col-span-1 overflow-hidden ${isMobile ? '' : 'border-none shadow-elevation-medium'}`}>
       <CardHeader className="bg-gradient-to-r from-primary/10 to-primary/5 pb-4">
         <CardTitle className="flex items-center text-xl">
           <CalendarIcon className="mr-2 h-5 w-5 text-primary" />
@@ -92,6 +162,19 @@ const DateCalendarWidget = ({
                   backgroundColor: "hsl(var(--primary))",
                   color: "hsl(var(--primary-foreground))",
                   borderRadius: "0.375rem",
+                }
+              }}
+              components={{
+                Day: ({ date, displayMonth, selected, disabled, ...props }) => {
+                  return (
+                    <button
+                      {...props}
+                      className={props.className}
+                      disabled={disabled}
+                    >
+                      {renderDay(date, selected, props)}
+                    </button>
+                  );
                 }
               }}
               fromMonth={new Date(2020, 0)}
