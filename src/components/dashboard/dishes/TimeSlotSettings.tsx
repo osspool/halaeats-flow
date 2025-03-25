@@ -4,12 +4,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Plus, X } from "lucide-react";
+import { Clock, Plus, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface TimeSlotSettingsProps {
@@ -24,20 +31,34 @@ const TimeSlotSettings = ({
   onCancel
 }: TimeSlotSettingsProps) => {
   const [slots, setSlots] = useState<string[]>(timeSlots);
-  const [newSlot, setNewSlot] = useState<string>("");
+  const [startHour, setStartHour] = useState<string>("09");
+  const [startMinute, setStartMinute] = useState<string>("00");
+  const [endHour, setEndHour] = useState<string>("11");
+  const [endMinute, setEndMinute] = useState<string>("00");
+  
+  // Generate hours and minutes for dropdowns
+  const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
+  const minutes = ['00', '15', '30', '45'];
   
   const handleAddSlot = () => {
-    if (!newSlot) return;
+    const newTimeSlot = `${startHour}:${startMinute}-${endHour}:${endMinute}`;
     
-    // Basic validation for time format (HH:MM-HH:MM)
-    const pattern = /^([0-1][0-9]|2[0-3]):([0-5][0-9])-([0-1][0-9]|2[0-3]):([0-5][0-9])$/;
-    if (!pattern.test(newSlot)) {
-      alert("Please use the format HH:MM-HH:MM (e.g., 09:00-11:00)");
+    // Validate that end time is after start time
+    const start = parseInt(startHour) * 60 + parseInt(startMinute);
+    const end = parseInt(endHour) * 60 + parseInt(endMinute);
+    
+    if (end <= start) {
+      alert("End time must be after start time");
       return;
     }
     
-    setSlots([...slots, newSlot]);
-    setNewSlot("");
+    // Check if this slot already exists
+    if (slots.includes(newTimeSlot)) {
+      alert("This time slot already exists");
+      return;
+    }
+    
+    setSlots([...slots, newTimeSlot]);
   };
   
   const handleRemoveSlot = (index: number) => {
@@ -64,18 +85,61 @@ const TimeSlotSettings = ({
       <div className="grid grid-cols-1 gap-6 pt-4">
         <div>
           <Label htmlFor="newSlot">Add New Time Slot</Label>
-          <div className="flex gap-2 mt-2">
-            <Input 
-              id="newSlot" 
-              value={newSlot} 
-              onChange={(e) => setNewSlot(e.target.value)} 
-              placeholder="HH:MM-HH:MM (e.g., 09:00-11:00)"
-            />
-            <Button onClick={handleAddSlot} type="button">
-              <Plus className="h-4 w-4 mr-1" />
-              Add
-            </Button>
+          <div className="grid grid-cols-5 gap-2 mt-2 items-center">
+            <div className="col-span-2 flex items-center gap-2">
+              <Select value={startHour} onValueChange={setStartHour}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Hour" />
+                </SelectTrigger>
+                <SelectContent>
+                  {hours.map(hour => (
+                    <SelectItem key={`start-hour-${hour}`} value={hour}>{hour}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <span>:</span>
+              <Select value={startMinute} onValueChange={setStartMinute}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Min" />
+                </SelectTrigger>
+                <SelectContent>
+                  {minutes.map(minute => (
+                    <SelectItem key={`start-min-${minute}`} value={minute}>{minute}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="text-center">to</div>
+            
+            <div className="col-span-2 flex items-center gap-2">
+              <Select value={endHour} onValueChange={setEndHour}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Hour" />
+                </SelectTrigger>
+                <SelectContent>
+                  {hours.map(hour => (
+                    <SelectItem key={`end-hour-${hour}`} value={hour}>{hour}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <span>:</span>
+              <Select value={endMinute} onValueChange={setEndMinute}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Min" />
+                </SelectTrigger>
+                <SelectContent>
+                  {minutes.map(minute => (
+                    <SelectItem key={`end-min-${minute}`} value={minute}>{minute}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
+          <Button onClick={handleAddSlot} type="button" className="mt-2">
+            <Plus className="h-4 w-4 mr-1" />
+            Add Time Slot
+          </Button>
         </div>
         
         <div>
@@ -84,6 +148,7 @@ const TimeSlotSettings = ({
             {slots.length > 0 ? (
               slots.map((slot, index) => (
                 <Badge key={index} variant="secondary" className="p-2">
+                  <Clock className="h-3 w-3 mr-1" />
                   {slot}
                   <Button 
                     variant="ghost" 
