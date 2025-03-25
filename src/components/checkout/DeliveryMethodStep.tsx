@@ -1,8 +1,9 @@
 
 import { useState, useEffect } from 'react';
+import { format } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Truck, Home, Plus } from 'lucide-react';
+import { Truck, Home, Plus, Calendar as CalendarIcon } from 'lucide-react';
 import { OrderType } from '@/types';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
@@ -11,7 +12,10 @@ import { Address } from '@/types/checkout';
 import { cn } from '@/lib/utils';
 import { mockAddresses } from '@/data/checkoutMockData';
 import { useBookTimeSlot, useRestaurantMenu } from '@/hooks/useRestaurantApi';
-import TimeSlotSelector from './TimeSlotSelector';
+import { TimeSlotSelector } from '@/components/shared/time-slots';
+import { TimeSlot } from '@/components/shared/time-slots/types';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 interface DeliveryMethodStepProps {
   orderType: OrderType;
@@ -36,7 +40,8 @@ const DeliveryMethodStep = ({
   const [addresses] = useState<Address[]>(mockAddresses);
   const [selected, setSelected] = useState<string>(selectedAddressId || addresses.find(a => a.isDefault)?.id || '');
   const [instructions, setInstructions] = useState<string>('');
-  const [pickupTime, setPickupTime] = useState<string>('');
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   
   // Fetch restaurant menu data to get time slots and capacities
   const { data: menuData, isLoading: isMenuLoading } = useRestaurantMenu();
@@ -68,9 +73,9 @@ const DeliveryMethodStep = ({
     onDeliveryInstructionsChange(e.target.value);
   };
 
-  const handlePickupTimeChange = (value: string) => {
-    setPickupTime(value);
-    onPickupTimeChange(value);
+  const handleSelectTimeSlot = (slotId: string) => {
+    setSelectedSlot(slotId);
+    onPickupTimeChange(slotId);
   };
 
   const handleContinue = (e: React.MouseEvent) => {
@@ -80,14 +85,14 @@ const DeliveryMethodStep = ({
     if (selectedType === 'delivery' && !selected) return;
     
     // Validation: Don't proceed if no time slot is selected
-    if (!pickupTime) return;
+    if (!selectedSlot) return;
     
     // Attempt to book the selected time slot
-    bookTimeSlotMutation.mutate(pickupTime, {
+    bookTimeSlotMutation.mutate(selectedSlot, {
       onSuccess: (success) => {
         if (success) {
           // Time slot was successfully booked, proceed to next step
-          console.log('Time slot booked successfully:', pickupTime);
+          console.log('Time slot booked successfully:', selectedSlot);
           onNext();
         }
         // If booking failed, the mutation will show an error toast
@@ -95,19 +100,32 @@ const DeliveryMethodStep = ({
     });
   };
 
-  // Fallback time slots if menu data is not available
-  const fallbackTimeSlots = [
-    "ASAP (15-30 min)",
-    "Today, 11:30 AM",
-    "Today, 12:00 PM",
-    "Today, 12:30 PM",
-    "Today, 1:00 PM",
-    "Today, 1:30 PM",
-  ];
+  // Get available time slots for the selected date
+  const getAvailableTimeSlotsForDate = (): TimeSlot[] => {
+    if (!selectedDate || !menuData) return [];
+    
+    const formattedDate = format(selectedDate, 'yyyy-MM-dd');
+    
+    // Get the time slots for this date from menu data
+    const dateTimeSlots = menuData.availableTimeSlots || [];
+    const capacities = menuData.timeSlotCapacities || {};
+    
+    // Convert to the format our TimeSlotSelector component expects
+    return dateTimeSlots.map(timeSlot => {
+      const capacity = capacities[timeSlot]?.capacity || 5;
+      const booked = capacities[timeSlot]?.booked || 0;
+      
+      return {
+        id: timeSlot,
+        time: timeSlot,
+        capacity,
+        booked
+      };
+    });
+  };
 
-  // Use restaurant time slots if available, fallback otherwise
-  const availableTimeSlots = menuData?.availableTimeSlots || fallbackTimeSlots;
-  const timeSlotCapacities = menuData?.timeSlotCapacities || {};
+  // Generate available time slots
+  const availableTimeSlots = getAvailableTimeSlotsForDate();
 
   return (
     <div className="space-y-6">
@@ -189,15 +207,59 @@ const DeliveryMethodStep = ({
               </RadioGroup>
             </div>
             
-            {/* Time Slot Selector */}
-            <div className="border-t pt-4">
-              <h3 className="font-medium mb-2">Delivery Time</h3>
-              <TimeSlotSelector
-                timeSlots={availableTimeSlots}
-                capacities={timeSlotCapacities}
-                selectedTimeSlot={pickupTime}
-                onSelect={handlePickupTimeChange}
-              />
+            {/* Date and Time Selection */}
+            <div className="border-t pt-4 space-y-4">
+              <div>
+                <h3 className="font-medium mb-2">Delivery Date</h3>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {selectedDate ? (
+                        format(selectedDate, 'PPP')
+                      ) : (
+                        <span>Pick a delivery date</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={setSelectedDate}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                      disabled={(date) => {
+                        // Disable past dates
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        
+                        // Disable dates more than 14 days in advance
+                        const twoWeeksFromNow = new Date();
+                        twoWeeksFromNow.setDate(twoWeeksFromNow.getDate() + 14);
+                        
+                        return date < today || date > twoWeeksFromNow;
+                      }}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              
+              <div>
+                <h3 className="font-medium mb-2">Delivery Time</h3>
+                <TimeSlotSelector
+                  slots={availableTimeSlots}
+                  selectedSlot={selectedSlot}
+                  onSelectSlot={handleSelectTimeSlot}
+                  label="Available Time Slots"
+                  showCapacity={true}
+                  layout="grid"
+                  emptyMessage="No delivery slots available for this date. Please select another date."
+                />
+              </div>
             </div>
 
             <div>
@@ -220,14 +282,59 @@ const DeliveryMethodStep = ({
               </div>
             </div>
 
-            <div>
-              <h3 className="font-medium mb-2">Pickup Time</h3>
-              <TimeSlotSelector
-                timeSlots={availableTimeSlots}
-                capacities={timeSlotCapacities}
-                selectedTimeSlot={pickupTime}
-                onSelect={handlePickupTimeChange}
-              />
+            {/* Date and Time Selection */}
+            <div className="space-y-4">
+              <div>
+                <h3 className="font-medium mb-2">Pickup Date</h3>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {selectedDate ? (
+                        format(selectedDate, 'PPP')
+                      ) : (
+                        <span>Pick a pickup date</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={setSelectedDate}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                      disabled={(date) => {
+                        // Disable past dates
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        
+                        // Disable dates more than 14 days in advance
+                        const twoWeeksFromNow = new Date();
+                        twoWeeksFromNow.setDate(twoWeeksFromNow.getDate() + 14);
+                        
+                        return date < today || date > twoWeeksFromNow;
+                      }}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              
+              <div>
+                <h3 className="font-medium mb-2">Pickup Time</h3>
+                <TimeSlotSelector
+                  slots={availableTimeSlots}
+                  selectedSlot={selectedSlot}
+                  onSelectSlot={handleSelectTimeSlot}
+                  label="Available Time Slots"
+                  showCapacity={true}
+                  layout="grid"
+                  emptyMessage="No pickup slots available for this date. Please select another date."
+                />
+              </div>
             </div>
           </TabsContent>
         </Tabs>
@@ -236,7 +343,7 @@ const DeliveryMethodStep = ({
       <Button 
         onClick={handleContinue}
         className="w-full bg-primary hover:bg-cuisine-600"
-        disabled={(selectedType === 'delivery' && !selected) || !pickupTime || bookTimeSlotMutation.isPending}
+        disabled={(selectedType === 'delivery' && !selected) || !selectedSlot || bookTimeSlotMutation.isPending}
       >
         {bookTimeSlotMutation.isPending ? "Reserving Your Slot..." : "Continue to Payment"}
       </Button>
