@@ -13,9 +13,10 @@ import { DishCreateRequest } from "@/types/restaurant";
 
 interface DishFormProps {
   onSubmit: (dish: DishCreateRequest) => void;
+  onCancel: () => void; // Added onCancel prop to the interface
 }
 
-const DishForm = ({ onSubmit }: DishFormProps) => {
+const DishForm = ({ onSubmit, onCancel }: DishFormProps) => {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -57,6 +58,7 @@ const DishForm = ({ onSubmit }: DishFormProps) => {
           <Input id="description" name="description" placeholder="Brief description of the dish" required />
         </div>
         <DialogFooter>
+          <Button type="button" variant="outline" onClick={onCancel} className="mr-2">Cancel</Button>
           <Button type="submit">Add Dish</Button>
         </DialogFooter>
       </form>

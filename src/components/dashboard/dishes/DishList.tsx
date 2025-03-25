@@ -19,14 +19,24 @@ interface DishListProps {
   availability: DishAvailability;
   onEditAvailability: (dish: MenuItem) => void;
   onDeleteDish: (dishId: string) => void;
+  isLoading?: boolean; // Made optional with default value
 }
 
 const DishList = ({ 
   dishes, 
   availability, 
   onEditAvailability, 
-  onDeleteDish 
+  onDeleteDish,
+  isLoading = false
 }: DishListProps) => {
+  if (isLoading) {
+    return (
+      <div className="text-center py-8 text-gray-500">
+        Loading dishes...
+      </div>
+    );
+  }
+
   if (dishes.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500">

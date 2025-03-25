@@ -152,7 +152,7 @@ const DishManagement = () => {
       <DishList 
         dishes={menuData?.dishes || []}
         availability={menuData?.availability || {}}
-        onDelete={handleDeleteDish}
+        onDeleteDish={handleDeleteDish}
         onEditAvailability={handleEditAvailability}
         isLoading={isMenuLoading}
       />
