@@ -1,3 +1,4 @@
+
 import { MenuItem } from "./index";
 
 export interface TimeSlotSettings {
@@ -63,6 +64,7 @@ export interface Order {
   paymentStatus: 'paid' | 'unpaid';
 }
 
+// Use the common DateWithCount interface for order dates
 export interface OrderDate {
   date: string;       // ISO date string
   orderCount: number; // Number of orders on this date
@@ -76,4 +78,10 @@ export interface OrdersResponse {
 export interface OrderDatesResponse {
   dates: OrderDate[];
   total: number;
+}
+
+// Reexport DateWithCount from our shared calendar types
+export interface DateWithCount {
+  date: string | Date;
+  count: number;
 }
