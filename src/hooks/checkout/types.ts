@@ -1,6 +1,7 @@
 
 import { CheckoutState, CheckoutStep, MockStripePaymentIntent } from '@/types/checkout';
 import { OrderType } from '@/types';
+import { DeliveryQuote, DeliveryOrder } from '@/types/delivery';
 
 // Define the return type of the useCheckout hook for better type safety
 export interface UseCheckoutReturn {
@@ -22,3 +23,9 @@ export const initialCheckoutState: CheckoutState = {
   step: 'delivery-method',
   orderType: 'delivery',
 };
+
+// Update the CheckoutState type in checkout.ts to include the delivery quote and order
+export interface CheckoutStateWithDelivery extends CheckoutState {
+  deliveryQuote?: DeliveryQuote;
+  deliveryOrder?: DeliveryOrder;
+}

@@ -7,6 +7,8 @@ import { Address, PaymentMethod } from '@/types/checkout';
 import { mockAddresses, mockPaymentMethods } from '@/data/checkoutMockData';
 import { useToast } from '@/hooks/use-toast';
 import { useCheckout } from '@/hooks/useCheckout';
+import { DeliveryQuote } from '@/types/delivery';
+import { format } from 'date-fns';
 
 interface ReviewStepProps {
   items: CartItem[];
@@ -39,6 +41,9 @@ const ReviewStep = ({
     ? mockPaymentMethods.find(pm => pm.id === selectedPaymentMethodId) 
     : undefined;
   
+  // Get delivery quote from checkout state
+  const deliveryQuote: DeliveryQuote | undefined = (checkoutState as any).deliveryQuote;
+
   useEffect(() => {
     console.log('ReviewStep - selectedPaymentMethodId:', selectedPaymentMethodId);
     console.log('ReviewStep - checkoutState:', checkoutState);
@@ -58,12 +63,17 @@ const ReviewStep = ({
     
     setIsProcessing(true);
     
-    // Implement Stripe Connect flow
     try {
-      // Step 1: Create a payment intent
-      await createPaymentIntent(orderSummary.total, items);
+      // For delivery orders, pass the delivery quote to createPaymentIntent
+      if (orderType === 'delivery' && deliveryQuote) {
+        // Create a payment intent with the delivery quote information
+        await createPaymentIntent(orderSummary.total, items, deliveryQuote);
+      } else {
+        // Regular payment intent for pickup orders
+        await createPaymentIntent(orderSummary.total, items);
+      }
       
-      // Step 2: Place the order (handled in completeCheckout)
+      // Place the order (handled in completeCheckout)
       onNext();
     } catch (error) {
       console.error('Error placing order:', error);
@@ -74,6 +84,16 @@ const ReviewStep = ({
       });
     } finally {
       setIsProcessing(false);
+    }
+  };
+  
+  // Format the estimated delivery time
+  const formatEstimatedTime = (isoString?: string) => {
+    if (!isoString) return 'Unknown';
+    try {
+      return format(new Date(isoString), 'h:mm a');
+    } catch (e) {
+      return 'Unknown';
     }
   };
 
@@ -132,6 +152,26 @@ const ReviewStep = ({
                   <p className="text-sm">{checkoutState.deliveryInstructions}</p>
                 </div>
               )}
+              
+              {/* Delivery Quote Information */}
+              {deliveryQuote && (
+                <div className="mt-3 p-2 bg-primary-50 rounded border border-primary-100">
+                  <p className="text-xs text-gray-600 font-medium mb-1">Delivery Information:</p>
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                    <span className="text-gray-500">Distance:</span>
+                    <span className="font-medium">{deliveryQuote.distance_miles.toFixed(1)} miles</span>
+                    
+                    <span className="text-gray-500">Estimated Arrival:</span>
+                    <span className="font-medium">{formatEstimatedTime(deliveryQuote.estimated_delivery_time)}</span>
+                    
+                    <span className="text-gray-500">Delivery Fee:</span>
+                    <span className="font-medium">${deliveryQuote.fee.toFixed(2)}</span>
+                  </div>
+                  <p className="text-xs mt-1 text-gray-500">
+                    Powered by our delivery service
+                  </p>
+                </div>
+              )}
             </div>
           )}
           
@@ -180,7 +220,7 @@ const ReviewStep = ({
             </div>
             <div className="flex justify-between text-sm">
               <span>Delivery Fee</span>
-              <span>${orderSummary.deliveryFee.toFixed(2)}</span>
+              <span>${(deliveryQuote?.fee || orderSummary.deliveryFee).toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span>Tax</span>
@@ -188,7 +228,12 @@ const ReviewStep = ({
             </div>
             <div className="flex justify-between font-medium pt-2 border-t border-gray-200 mt-2">
               <span>Total</span>
-              <span>${orderSummary.total.toFixed(2)}</span>
+              <span>
+                ${(orderType === 'delivery' && deliveryQuote
+                  ? orderSummary.subtotal + deliveryQuote.fee + orderSummary.tax
+                  : orderSummary.total
+                ).toFixed(2)}
+              </span>
             </div>
           </div>
         </div>
@@ -213,7 +258,10 @@ const ReviewStep = ({
           {isProcessing ? (
             <>Processing Payment...</>
           ) : (
-            <>Place Order - ${orderSummary.total.toFixed(2)}</>
+            <>Place Order - ${(orderType === 'delivery' && deliveryQuote
+              ? orderSummary.subtotal + deliveryQuote.fee + orderSummary.tax
+              : orderSummary.total
+            ).toFixed(2)}</>
           )}
         </Button>
         

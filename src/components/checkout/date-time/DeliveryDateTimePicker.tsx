@@ -4,9 +4,12 @@ import { format } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar as CalendarIcon } from 'lucide-react';
+import { Calendar as CalendarIcon, Truck } from 'lucide-react';
 import { TimeSlotSelector } from '@/components/shared/time-slots';
 import { TimeSlot } from '@/components/shared/time-slots/types';
+import { DeliveryQuote } from '@/types/delivery';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
 
 interface DeliveryDateTimePickerProps {
   orderType: 'delivery' | 'pickup';
@@ -16,6 +19,9 @@ interface DeliveryDateTimePickerProps {
   onSlotSelect: (slotId: string) => void;
   availableTimeSlots: TimeSlot[];
   isLoadingTimeSlots: boolean;
+  deliveryQuote?: DeliveryQuote | null;
+  isLoadingQuote?: boolean;
+  onRefreshQuote?: () => void;
 }
 
 const DeliveryDateTimePicker = ({
@@ -26,8 +32,20 @@ const DeliveryDateTimePicker = ({
   onSlotSelect,
   availableTimeSlots,
   isLoadingTimeSlots,
+  deliveryQuote,
+  isLoadingQuote = false,
+  onRefreshQuote,
 }: DeliveryDateTimePickerProps) => {
   const title = orderType === 'delivery' ? 'Delivery' : 'Pickup';
+  
+  // Format the estimated delivery time
+  const formatEstimatedTime = (isoString: string) => {
+    try {
+      return format(new Date(isoString), 'h:mm a');
+    } catch (e) {
+      return 'Unknown';
+    }
+  };
   
   return (
     <div className="space-y-4">
@@ -84,6 +102,61 @@ const DeliveryDateTimePicker = ({
             emptyMessage={isLoadingTimeSlots ? "Loading available slots..." : `No ${title.toLowerCase()} slots available for this date. Please select another date.`}
           />
         </div>
+      )}
+      
+      {/* Delivery Quote information (for delivery only) */}
+      {orderType === 'delivery' && deliveryQuote && (
+        <Card className="p-4 bg-primary-50 border border-primary-200">
+          <div className="flex justify-between items-start mb-2">
+            <h4 className="font-medium flex items-center">
+              <Truck className="h-4 w-4 mr-1" />
+              Delivery Quote
+            </h4>
+            <Badge 
+              variant={deliveryQuote.status === 'active' ? 'outline' : 'destructive'}
+              className={deliveryQuote.status === 'active' ? 'bg-green-100 text-green-800' : ''}
+            >
+              {deliveryQuote.status === 'active' ? 'Active' : 'Expired'}
+            </Badge>
+          </div>
+          
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Delivery Fee:</span>
+              <span className="font-medium">${deliveryQuote.fee.toFixed(2)}</span>
+            </div>
+            
+            <div className="flex justify-between">
+              <span className="text-gray-600">Est. Delivery:</span>
+              <span className="font-medium">
+                {formatEstimatedTime(deliveryQuote.estimated_delivery_time)}
+              </span>
+            </div>
+            
+            <div className="flex justify-between">
+              <span className="text-gray-600">Distance:</span>
+              <span className="font-medium">{deliveryQuote.distance_miles.toFixed(1)} miles</span>
+            </div>
+            
+            {deliveryQuote.status === 'expired' && onRefreshQuote && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="w-full mt-2"
+                onClick={onRefreshQuote}
+                disabled={isLoadingQuote}
+              >
+                {isLoadingQuote ? 'Refreshing...' : 'Refresh Quote'}
+              </Button>
+            )}
+            
+            <p className="text-xs text-gray-500 mt-1">
+              {deliveryQuote.status === 'active' 
+                ? 'This quote is valid for 5 minutes.' 
+                : 'This quote has expired. Please refresh to get updated pricing.'}
+            </p>
+          </div>
+        </Card>
       )}
     </div>
   );

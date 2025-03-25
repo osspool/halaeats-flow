@@ -3,6 +3,8 @@ import { useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { MockStripePaymentIntent } from '@/types/checkout';
 import { createMockPaymentIntent, confirmMockPaymentIntent, mockConnectedAccounts } from '@/data/checkoutMockData';
+import { createDeliveryOrder, calculatePaymentSplit } from '@/services/mockDeliveryService';
+import { mockAddresses } from '@/data/checkoutMockData';
 
 /**
  * Hook for handling payment intent creation and confirmation during checkout
@@ -13,7 +15,7 @@ export const useCheckoutPayment = (
 ) => {
   const { toast } = useToast();
 
-  const createPaymentIntent = useCallback(async (amount: number, cartItems: any[]) => {
+  const createPaymentIntent = useCallback(async (amount: number, cartItems: any[], deliveryQuote?: any) => {
     try {
       // Get the caterer ID from the cart items
       if (!cartItems.length) {
@@ -27,16 +29,45 @@ export const useCheckoutPayment = (
         throw new Error('Caterer not found in connected accounts');
       }
       
-      const paymentIntent = await createMockPaymentIntent(
-        Math.round(amount * 100),
-        'usd',
-        checkoutState.selectedPaymentMethodId,
-        { 
-          order_id: `order_${Math.random().toString(36).substring(2, 10)}`,
-          caterer_id: catererId
-        },
-        connectedAccountId
-      );
+      // If we have a delivery quote, we need to split the payment
+      let paymentIntent;
+      if (checkoutState.orderType === 'delivery' && deliveryQuote) {
+        const subtotal = cartItems.reduce((total, item) => total + item.subtotal, 0);
+        const deliveryFee = deliveryQuote.fee;
+        
+        // Calculate payment split between restaurant and delivery service
+        const paymentSplit = calculatePaymentSplit(subtotal, deliveryFee);
+        
+        console.log('Payment split:', paymentSplit);
+        
+        // For the mock, we'll create a simple payment intent for the total amount
+        // In a real implementation, this would involve creating a Stripe payment intent
+        // with instructions to split the payment between the restaurant and DoorDash
+        paymentIntent = await createMockPaymentIntent(
+          Math.round(paymentSplit.total_amount * 100),
+          'usd',
+          checkoutState.selectedPaymentMethodId,
+          { 
+            order_id: `order_${Math.random().toString(36).substring(2, 10)}`,
+            caterer_id: catererId,
+            delivery_fee: deliveryFee.toString(),
+            restaurant_amount: paymentSplit.restaurant_amount.toString(),
+          },
+          connectedAccountId
+        );
+      } else {
+        // Regular payment flow for pickup
+        paymentIntent = await createMockPaymentIntent(
+          Math.round(amount * 100),
+          'usd',
+          checkoutState.selectedPaymentMethodId,
+          { 
+            order_id: `order_${Math.random().toString(36).substring(2, 10)}`,
+            caterer_id: catererId
+          },
+          connectedAccountId
+        );
+      }
       
       setCheckoutState(prev => ({
         ...prev,
@@ -53,7 +84,7 @@ export const useCheckoutPayment = (
       });
       throw error;
     }
-  }, [checkoutState.selectedPaymentMethodId, setCheckoutState, toast]);
+  }, [checkoutState.orderType, checkoutState.selectedPaymentMethodId, setCheckoutState, toast]);
 
   const confirmPaymentIntent = useCallback(async (paymentIntentId: string, paymentMethodId: string) => {
     try {
@@ -63,6 +94,31 @@ export const useCheckoutPayment = (
         ...prev,
         paymentIntent: confirmedIntent,
       }));
+      
+      // If this is a delivery order, create the delivery order after confirming payment
+      if (checkoutState.orderType === 'delivery' && 
+          checkoutState.selectedAddressId && 
+          checkoutState.deliveryQuote) {
+        
+        const selectedAddress = mockAddresses.find(addr => addr.id === checkoutState.selectedAddressId);
+        
+        if (selectedAddress) {
+          // Create delivery order (DoorDash equivalent)
+          const deliveryOrder = await createDeliveryOrder(
+            checkoutState.deliveryQuote.id,
+            selectedAddress,
+            confirmedIntent.id
+          );
+          
+          console.log('Delivery order created:', deliveryOrder);
+          
+          // Update checkout state with delivery order
+          setCheckoutState(prev => ({
+            ...prev,
+            deliveryOrder,
+          }));
+        }
+      }
       
       return confirmedIntent;
     } catch (error) {
@@ -74,7 +130,7 @@ export const useCheckoutPayment = (
       });
       throw error;
     }
-  }, [setCheckoutState, toast]);
+  }, [checkoutState.deliveryQuote, checkoutState.orderType, checkoutState.selectedAddressId, setCheckoutState, toast]);
 
   const completePayment = useCallback(async () => {
     try {

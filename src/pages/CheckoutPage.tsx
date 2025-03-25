@@ -58,7 +58,9 @@ const CheckoutPage = () => {
   
   // Calculate order summary
   const subtotal = filteredItems.reduce((total, item) => total + item.subtotal, 0);
-  const deliveryFee = checkoutState.orderType === 'delivery' ? 3.99 : 0;
+  const deliveryFee = checkoutState.orderType === 'delivery' 
+    ? (checkoutState as any).deliveryQuote?.fee || 3.99 
+    : 0;
   const tax = subtotal * 0.08; // 8% tax rate
   const total = subtotal + deliveryFee + tax;
   

@@ -7,6 +7,8 @@ import { Truck, Home } from 'lucide-react';
 import { OrderType } from '@/types';
 import { useBookTimeSlot, useRestaurantMenu } from '@/hooks/useRestaurantApi';
 import { TimeSlot } from '@/components/shared/time-slots/types';
+import { mockAddresses } from '@/data/checkoutMockData';
+import { useDeliveryQuote } from '@/hooks/checkout/useDeliveryQuote';
 import DeliveryForm from './delivery/DeliveryForm';
 import PickupForm from './pickup/PickupForm';
 import DeliveryDateTimePicker from './date-time/DeliveryDateTimePicker';
@@ -39,6 +41,15 @@ const DeliveryMethodStep = ({
   // Fetch restaurant menu data to get time slots and capacities
   const { data: menuData, isLoading: isMenuLoading } = useRestaurantMenu();
   const bookTimeSlotMutation = useBookTimeSlot();
+  
+  // Get delivery quote if delivery is selected and an address is chosen
+  const { 
+    deliveryQuote, 
+    isLoadingQuote, 
+    fetchDeliveryQuote, 
+    isQuoteValid,
+    refreshQuote
+  } = useDeliveryQuote(selectedAddressId);
 
   const handleSelect = (value: string) => {
     const type = value as OrderType;
@@ -58,6 +69,16 @@ const DeliveryMethodStep = ({
     onPickupTimeChange('');
   };
 
+  // When address changes and delivery is selected, fetch a new delivery quote
+  useEffect(() => {
+    if (selectedType === 'delivery' && selectedAddressId) {
+      const selectedAddress = mockAddresses.find(addr => addr.id === selectedAddressId);
+      if (selectedAddress) {
+        fetchDeliveryQuote(selectedAddress);
+      }
+    }
+  }, [selectedAddressId, selectedType, fetchDeliveryQuote]);
+
   // When date changes, fetch available time slots for that date
   useEffect(() => {
     if (!selectedDate || !menuData) {
@@ -68,7 +89,6 @@ const DeliveryMethodStep = ({
     setIsLoadingTimeSlots(true);
     
     // Simulate API call to get time slots for the selected date
-    // In a real application, this would be an actual API call
     setTimeout(() => {
       const formattedDate = format(selectedDate, 'yyyy-MM-dd');
       console.log(`Fetching time slots for date: ${formattedDate}`);
@@ -95,6 +115,15 @@ const DeliveryMethodStep = ({
     }, 500); // Simulate network delay
   }, [selectedDate, menuData]);
 
+  const handleRefreshQuote = () => {
+    if (selectedAddressId) {
+      const selectedAddress = mockAddresses.find(addr => addr.id === selectedAddressId);
+      if (selectedAddress) {
+        refreshQuote(selectedAddress);
+      }
+    }
+  };
+
   const handleContinue = (e: React.MouseEvent) => {
     e.preventDefault();
     
@@ -103,6 +132,12 @@ const DeliveryMethodStep = ({
     
     // Validation: Don't proceed if no time slot is selected
     if (!selectedSlot) return;
+    
+    // For delivery, validate that the quote is valid
+    if (selectedType === 'delivery' && !isQuoteValid()) {
+      handleRefreshQuote();
+      return;
+    }
     
     // Attempt to book the selected time slot
     bookTimeSlotMutation.mutate(selectedSlot, {
@@ -159,6 +194,9 @@ const DeliveryMethodStep = ({
                 onSlotSelect={handleSelectTimeSlot}
                 availableTimeSlots={availableTimeSlots}
                 isLoadingTimeSlots={isLoadingTimeSlots}
+                deliveryQuote={deliveryQuote}
+                isLoadingQuote={isLoadingQuote}
+                onRefreshQuote={handleRefreshQuote}
               />
             </div>
           </TabsContent>
@@ -185,9 +223,18 @@ const DeliveryMethodStep = ({
       <Button 
         onClick={handleContinue}
         className="w-full bg-primary hover:bg-cuisine-600"
-        disabled={(selectedType === 'delivery' && !selectedAddressId) || !selectedSlot || bookTimeSlotMutation.isPending}
+        disabled={
+          (selectedType === 'delivery' && (!selectedAddressId || !isQuoteValid())) || 
+          !selectedSlot || 
+          bookTimeSlotMutation.isPending ||
+          isLoadingQuote
+        }
       >
-        {bookTimeSlotMutation.isPending ? "Reserving Your Slot..." : "Continue to Payment"}
+        {bookTimeSlotMutation.isPending 
+          ? "Reserving Your Slot..." 
+          : isLoadingQuote 
+            ? "Loading Delivery Quote..." 
+            : "Continue to Payment"}
       </Button>
     </div>
   );
