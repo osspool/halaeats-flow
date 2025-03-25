@@ -34,8 +34,7 @@ export const useCheckoutCompletion = (
         description: "Your order has been processed. Thank you for your purchase.",
       });
       
-      // Return void instead of boolean to match the expected return type
-      return;
+      // We won't return anything, which implicitly returns undefined (void)
     } catch (error) {
       console.error('Error processing order:', error);
       toast({
@@ -44,8 +43,7 @@ export const useCheckoutCompletion = (
         variant: "destructive",
       });
       
-      // Return void instead of boolean to match the expected return type
-      return;
+      // We won't return anything, which implicitly returns undefined (void)
     }
   }, [checkoutState, completePayment, setCheckoutState, toast]);
 

@@ -15,7 +15,7 @@ export const useCheckoutPayment = (
 ) => {
   const { toast } = useToast();
 
-  const createPaymentIntent = useCallback(async (amount: number, cartItems: any[], deliveryQuote?: any) => {
+  const createPaymentIntent = useCallback(async (amount: number, cartItems: any[]) => {
     try {
       // Get the caterer ID from the cart items
       if (!cartItems.length) {
@@ -31,9 +31,9 @@ export const useCheckoutPayment = (
       
       // If we have a delivery quote, we need to split the payment
       let paymentIntent;
-      if (checkoutState.orderType === 'delivery' && deliveryQuote) {
+      if (checkoutState.orderType === 'delivery' && checkoutState.deliveryQuote) {
         const subtotal = cartItems.reduce((total, item) => total + item.subtotal, 0);
-        const deliveryFee = deliveryQuote.fee;
+        const deliveryFee = checkoutState.deliveryQuote.fee;
         
         // Calculate payment split between restaurant and delivery service
         const paymentSplit = calculatePaymentSplit(subtotal, deliveryFee);
@@ -84,7 +84,7 @@ export const useCheckoutPayment = (
       });
       throw error;
     }
-  }, [checkoutState.orderType, checkoutState.selectedPaymentMethodId, setCheckoutState, toast]);
+  }, [checkoutState, setCheckoutState, toast]);
 
   const confirmPaymentIntent = useCallback(async (paymentIntentId: string, paymentMethodId: string) => {
     try {
