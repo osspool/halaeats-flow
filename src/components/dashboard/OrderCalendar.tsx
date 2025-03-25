@@ -5,6 +5,8 @@ import { Order } from "@/types/restaurant";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
 
 // Import the refactored components
 import CalendarWidget from "./orders/CalendarWidget";
@@ -21,6 +23,7 @@ const OrderCalendar = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const isMobile = useIsMobile();
 
   // Format selected date as ISO string for API
@@ -37,17 +40,24 @@ const OrderCalendar = () => {
     statusFilter || undefined
   );
 
-  // Count orders by status
+  // Filter orders based on customer name search
+  const filteredOrders = ordersQuery.data?.orders.filter(order => {
+    if (!searchQuery.trim()) return true;
+    return order.customer.name.toLowerCase().includes(searchQuery.toLowerCase());
+  }) || [];
+
+  // Count orders by status (using filtered orders)
   const orderCounts = {
     total: ordersQuery.data?.total || 0,
-    pending: ordersQuery.data?.orders.filter(order => order.status === 'pending').length || 0,
-    confirmed: ordersQuery.data?.orders.filter(order => order.status === 'confirmed').length || 0,
-    completed: ordersQuery.data?.orders.filter(order => order.status === 'completed').length || 0,
+    pending: filteredOrders.filter(order => order.status === 'pending').length || 0,
+    confirmed: filteredOrders.filter(order => order.status === 'confirmed').length || 0,
+    completed: filteredOrders.filter(order => order.status === 'completed').length || 0,
   };
 
   // Handle date selection
   const handleDateSelect = (date: Date | undefined) => {
     setSelectedDate(date);
+    setSearchQuery(""); // Reset search when changing date
   };
 
   // Handle month change in calendar
@@ -88,7 +98,7 @@ const OrderCalendar = () => {
                   )}
                 </CardTitle>
                 <CardDescription>
-                  {ordersQuery.data?.total} orders for this date
+                  {filteredOrders.length} {searchQuery ? "matching " : ""}orders for this date
                 </CardDescription>
               </div>
               
@@ -117,6 +127,20 @@ const OrderCalendar = () => {
                 </Button>
               </div>
             </div>
+            
+            {/* Customer Search Input */}
+            <div className="mt-4 relative">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search by customer name..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 w-full"
+                />
+              </div>
+            </div>
           </CardHeader>
           
           <CardContent className="p-0">
@@ -130,7 +154,7 @@ const OrderCalendar = () => {
             
             {/* Orders Table */}
             <OrdersList 
-              orders={ordersQuery.data?.orders || []}
+              orders={filteredOrders}
               onViewDetails={handleViewDetails}
               isLoading={ordersQuery.isLoading}
             />
