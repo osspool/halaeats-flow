@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { useStripe, useElements } from '@stripe/react-stripe-js';
+import { useStripe, useElements, CardElement } from '@stripe/react-stripe-js';
 import { Button } from '@/components/ui/button';
 import { PaymentMethod } from '@/types/checkout';
 import { ArrowLeft } from 'lucide-react';
@@ -67,10 +67,16 @@ const PaymentStep = ({
     setIsProcessing(true);
     
     try {
+      // Get card element
+      const cardElement = elements.getElement(CardElement);
+      if (!cardElement) {
+        throw new Error('Card element not found');
+      }
+      
       // In a real implementation, this would use Stripe.js to create the payment method
       const result = await stripe.createPaymentMethod({
         type: 'card',
-        card: elements.getElement(CardElement)!,
+        card: cardElement,
         billing_details: {
           name: data.cardholderName,
         },
