@@ -1,3 +1,4 @@
+
 import React from "react";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 
@@ -15,10 +16,10 @@ const CalendarDayContent = ({ day, count, isSelected, isMobile }: CalendarDayCon
       <div 
         className={`relative w-full h-full flex items-center justify-center ${
           count > 0 ? 'font-semibold' : ''
-        }`}
+        } ${isSelected ? 'text-primary-foreground' : ''}`}
       >
         {day.getDate()}
-        {count > 0 && (
+        {count > 0 && !isSelected && (
           <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />
         )}
       </div>
@@ -32,7 +33,7 @@ const CalendarDayContent = ({ day, count, isSelected, isMobile }: CalendarDayCon
         <div 
           className={`relative w-full h-full flex items-center justify-center ${
             count > 0 ? 'font-semibold' : ''
-          }`}
+          } ${isSelected ? 'text-primary-foreground' : ''}`}
         >
           {day.getDate()}
           {count > 0 && !isSelected && (

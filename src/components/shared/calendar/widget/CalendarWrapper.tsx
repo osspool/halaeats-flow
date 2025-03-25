@@ -3,7 +3,6 @@ import React from "react";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Skeleton } from "@/components/ui/skeleton";
 import CalendarDayContent from "./CalendarDayContent";
-import { DayClickEventHandler } from "react-day-picker";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface CalendarWrapperProps {
@@ -50,17 +49,14 @@ const CalendarWrapper = ({
                       date.getFullYear() === selectedDate.getFullYear();
 
     return (
-      <button
-        {...props}
-        onClick={() => onDateSelect(date)}
-      >
+      <div {...props}>
         <CalendarDayContent 
           day={date} 
           count={count} 
           isSelected={isSelected}
           isMobile={isMobile}
         />
-      </button>
+      </div>
     );
   };
 
