@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
-import PaymentStep from './PaymentStep';
+import PaymentStep from './payment/PaymentStep';
 
 // Initialize Stripe with the publishable key
 // This is a public key, it's safe to include in the code
