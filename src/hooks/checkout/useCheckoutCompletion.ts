@@ -34,7 +34,8 @@ export const useCheckoutCompletion = (
         description: "Your order has been processed. Thank you for your purchase.",
       });
       
-      return true;
+      // Return void instead of boolean to match the expected return type
+      return;
     } catch (error) {
       console.error('Error processing order:', error);
       toast({
@@ -42,7 +43,9 @@ export const useCheckoutCompletion = (
         description: "There was an error processing your order. Please try again.",
         variant: "destructive",
       });
-      return false;
+      
+      // Return void instead of boolean to match the expected return type
+      return;
     }
   }, [checkoutState, completePayment, setCheckoutState, toast]);
 

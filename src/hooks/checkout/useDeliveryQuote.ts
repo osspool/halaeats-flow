@@ -32,7 +32,7 @@ export const useDeliveryQuote = (selectedAddressId?: string) => {
           toast({
             title: "Delivery quote expiring soon",
             description: "Your delivery quote will expire in 1 minute. Please complete your order soon.",
-            variant: "warning",
+            variant: "default", // Changed from "warning" to "default"
           });
         }, warningTime);
         

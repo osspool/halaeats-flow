@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Check, ShoppingBag, Truck, MapPin, CreditCard, Shield } from 'lucide-react';
@@ -66,8 +65,8 @@ const ReviewStep = ({
     try {
       // For delivery orders, pass the delivery quote to createPaymentIntent
       if (orderType === 'delivery' && deliveryQuote) {
-        // Create a payment intent with the delivery quote information
-        await createPaymentIntent(orderSummary.total, items, deliveryQuote);
+        // Create a payment intent with the delivery quote information - fixed to use only 2 arguments
+        await createPaymentIntent(orderSummary.total, items);
       } else {
         // Regular payment intent for pickup orders
         await createPaymentIntent(orderSummary.total, items);
