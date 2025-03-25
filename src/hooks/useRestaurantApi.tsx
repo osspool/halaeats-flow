@@ -1,13 +1,13 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { restaurantService } from "@/services/restaurantService";
-import { AvailabilityUpdateRequest, DishCreateRequest } from "@/types/restaurant";
+import { AvailabilityUpdateRequest, DishCreateRequest, TimeSlotUpdateRequest } from "@/types/restaurant";
 import { MenuItem } from "@/types";
 import { toast } from "sonner";
 
 // Key constants for React Query
 const MENU_QUERY_KEY = "restaurant-menu";
 const AVAILABILITY_KEY = "dish-availability";
+const TIME_SLOTS_KEY = "time-slots";
 
 /**
  * Hook for fetching restaurant menu data
@@ -71,6 +71,25 @@ export const useDeleteDish = () => {
     },
     onError: () => {
       toast.error("Failed to delete dish. Please try again.");
+    }
+  });
+};
+
+/**
+ * Hook for updating available time slots
+ */
+export const useUpdateTimeSlots = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (request: TimeSlotUpdateRequest) => 
+      restaurantService.updateTimeSlots(request),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [MENU_QUERY_KEY] });
+      toast.success("Time slots updated successfully!");
+    },
+    onError: () => {
+      toast.error("Failed to update time slots. Please try again.");
     }
   });
 };

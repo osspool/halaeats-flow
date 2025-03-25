@@ -11,7 +11,7 @@ import {
 import { Check, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
-// Constants for days and time slots
+// Constants for days of week
 const DAYS_OF_WEEK = [
   "Monday",
   "Tuesday", 
@@ -22,13 +22,6 @@ const DAYS_OF_WEEK = [
   "Sunday"
 ];
 
-const TIME_SLOTS = [
-  "07:00-09:00",
-  "11:00-14:00", 
-  "18:00-21:00",
-  "21:00-23:00"
-];
-
 interface TimeSlotEditorProps {
   dishName: string;
   selectedTimeSlots: { [day: string]: string[] };
@@ -37,6 +30,7 @@ interface TimeSlotEditorProps {
   onToggleTimeSlot: (day: string, timeSlot: string) => void;
   selectedDay: string;
   onDayChange: (day: string) => void;
+  availableTimeSlots: string[]; // Added this prop
 }
 
 const TimeSlotEditor = ({ 
@@ -46,7 +40,8 @@ const TimeSlotEditor = ({
   onCancel,
   onToggleTimeSlot,
   selectedDay,
-  onDayChange
+  onDayChange,
+  availableTimeSlots
 }: TimeSlotEditorProps) => {
   const isTimeSlotSelected = (day: string, timeSlot: string) => {
     return selectedTimeSlots[day]?.includes(timeSlot) || false;
@@ -86,7 +81,7 @@ const TimeSlotEditor = ({
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
-            {TIME_SLOTS.map((timeSlot) => (
+            {availableTimeSlots.map((timeSlot) => (
               <div
                 key={timeSlot}
                 className={`flex items-center p-3 border rounded-md cursor-pointer transition-colors ${

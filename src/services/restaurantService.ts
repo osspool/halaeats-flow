@@ -1,6 +1,13 @@
-
-import { DishAvailability, DishCreateRequest, RestaurantMenu, AvailabilityUpdateRequest } from "@/types/restaurant";
+import { DishAvailability, DishCreateRequest, RestaurantMenu, AvailabilityUpdateRequest, TimeSlotUpdateRequest } from "@/types/restaurant";
 import { MenuItem } from "@/types";
+
+// Default time slots
+const defaultTimeSlots = [
+  "07:00-09:00",
+  "11:00-14:00", 
+  "18:00-21:00",
+  "21:00-23:00"
+];
 
 // Mock data for dishes
 const mockDishes: MenuItem[] = [
@@ -60,7 +67,8 @@ const mockAvailability: DishAvailability = {
 // Mock menu data
 let menuData: RestaurantMenu = {
   dishes: [...mockDishes],
-  availability: {...mockAvailability}
+  availability: {...mockAvailability},
+  availableTimeSlots: [...defaultTimeSlots]
 };
 
 // Simulate API delay
@@ -121,5 +129,15 @@ export const restaurantService = {
     }
     
     return true;
+  },
+  
+  // Update available time slots
+  updateTimeSlots: async (request: TimeSlotUpdateRequest): Promise<string[]> => {
+    await delay(500);
+    
+    // Update the available time slots
+    menuData.availableTimeSlots = request.timeSlots;
+    
+    return [...menuData.availableTimeSlots];
   },
 };

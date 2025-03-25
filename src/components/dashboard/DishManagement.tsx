@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Settings } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,11 +9,18 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { useRestaurantMenu, useAddDish, useUpdateAvailability, useDeleteDish } from "@/hooks/useRestaurantApi";
-import { AvailabilityUpdateRequest } from "@/types/restaurant";
+import { 
+  useRestaurantMenu, 
+  useAddDish, 
+  useUpdateAvailability, 
+  useDeleteDish,
+  useUpdateTimeSlots 
+} from "@/hooks/useRestaurantApi";
+import { AvailabilityUpdateRequest, TimeSlotUpdateRequest } from "@/types/restaurant";
 import DishList from "./dishes/DishList";
 import DishForm from "./dishes/DishForm";
 import TimeSlotEditor from "./dishes/TimeSlotEditor";
+import TimeSlotSettings from "./dishes/TimeSlotSettings";
 import { MenuItem } from "@/types";
 
 const DishManagement = () => {
@@ -21,9 +28,11 @@ const DishManagement = () => {
   const { mutate: addDish } = useAddDish();
   const { mutate: updateAvailability } = useUpdateAvailability();
   const { mutate: deleteDish } = useDeleteDish();
+  const { mutate: updateTimeSlots } = useUpdateTimeSlots();
 
   const [isAddDishOpen, setIsAddDishOpen] = useState(false);
   const [isEditAvailabilityOpen, setIsEditAvailabilityOpen] = useState(false);
+  const [isTimeSlotSettingsOpen, setIsTimeSlotSettingsOpen] = useState(false);
   const [currentDish, setCurrentDish] = useState<MenuItem | null>(null);
   const [selectedDay, setSelectedDay] = useState<string>("Monday");
   const [selectedTimeSlots, setSelectedTimeSlots] = useState<{ [day: string]: string[] }>({});
@@ -85,6 +94,14 @@ const DishManagement = () => {
     });
   };
 
+  const handleSaveTimeSlotSettings = (timeSlots: string[]) => {
+    const request: TimeSlotUpdateRequest = {
+      timeSlots: timeSlots
+    };
+    updateTimeSlots(request);
+    setIsTimeSlotSettingsOpen(false);
+  };
+
   if (isLoading) {
     return <div className="p-8 text-center">Loading menu data...</div>;
   }
@@ -93,17 +110,34 @@ const DishManagement = () => {
     <div>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold">Your Menu Items</h2>
-        <Dialog open={isAddDishOpen} onOpenChange={setIsAddDishOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add New Dish
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
-            <DishForm onSubmit={handleAddDish} />
-          </DialogContent>
-        </Dialog>
+        <div className="flex gap-2">
+          <Dialog open={isTimeSlotSettingsOpen} onOpenChange={setIsTimeSlotSettingsOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Settings className="mr-2 h-4 w-4" />
+                Time Slots
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[500px]">
+              <TimeSlotSettings 
+                timeSlots={menuData?.availableTimeSlots || []}
+                onSave={handleSaveTimeSlotSettings}
+                onCancel={() => setIsTimeSlotSettingsOpen(false)}
+              />
+            </DialogContent>
+          </Dialog>
+          <Dialog open={isAddDishOpen} onOpenChange={setIsAddDishOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add New Dish
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DishForm onSubmit={handleAddDish} />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <Card>
@@ -131,6 +165,7 @@ const DishManagement = () => {
               onToggleTimeSlot={toggleTimeSlot}
               selectedDay={selectedDay}
               onDayChange={setSelectedDay}
+              availableTimeSlots={menuData?.availableTimeSlots || []}
             />
           )}
         </DialogContent>

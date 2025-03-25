@@ -15,6 +15,7 @@ export interface DishAvailability {
 export interface RestaurantMenu {
   dishes: MenuItem[];
   availability: DishAvailability;
+  availableTimeSlots: string[]; // Added this to store custom time slots
 }
 
 export interface AvailabilityUpdateRequest {
@@ -30,4 +31,8 @@ export interface DishCreateRequest {
   description: string;
   category: string;
   dietary: string[];
+}
+
+export interface TimeSlotUpdateRequest {
+  timeSlots: string[];
 }
