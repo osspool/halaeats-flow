@@ -13,6 +13,7 @@ import CatererPage from "./pages/CatererPage";
 import DishPage from "./pages/DishPage";
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
+import RestaurantDashboard from "./pages/RestaurantDashboard";
 import NotFound from "./pages/NotFound";
 
 // Create QueryClient
@@ -116,6 +117,21 @@ const AnimatedRoutes = () => (
             transition={pageTransition}
           >
             <CheckoutPage />
+          </motion.div>
+        } 
+      />
+      <Route 
+        path="/dashboard" 
+        element={
+          <motion.div
+            key="dashboard"
+            initial="initial"
+            animate="in"
+            exit="out"
+            variants={pageVariants}
+            transition={pageTransition}
+          >
+            <RestaurantDashboard />
           </motion.div>
         } 
       />
