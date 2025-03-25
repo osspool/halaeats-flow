@@ -1,7 +1,7 @@
 
 import React from "react";
 import { CalendarIcon } from "lucide-react";
-import { parseISO, format } from "date-fns";
+import { parseISO, format, isSameMonth } from "date-fns";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,6 +13,7 @@ interface CalendarWidgetProps {
   onMonthChange: (month: Date) => void;
   orderDates: OrderDate[] | undefined;
   isLoading: boolean;
+  currentMonth: Date; // Add currentMonth prop
 }
 
 const CalendarWidget = ({ 
@@ -20,12 +21,22 @@ const CalendarWidget = ({
   onDateSelect, 
   onMonthChange,
   orderDates, 
-  isLoading 
+  isLoading,
+  currentMonth // Add currentMonth to props
 }: CalendarWidgetProps) => {
   // Function to identify dates with orders for the calendar
   const getDatesWithOrders = (): Date[] => {
     if (!orderDates) return [];
     return orderDates.map(orderDate => parseISO(orderDate.date));
+  };
+
+  // Handle date selection with validation for current month
+  const handleDateSelect = (date: Date | undefined) => {
+    if (date && !isSameMonth(date, currentMonth)) {
+      // If selecting a date outside the current month, change to that month first
+      onMonthChange(date);
+    }
+    onDateSelect(date);
   };
 
   return (
@@ -49,12 +60,13 @@ const CalendarWidget = ({
             <CalendarComponent
               mode="single"
               selected={selectedDate}
-              onSelect={onDateSelect}
+              onSelect={handleDateSelect}
               onMonthChange={onMonthChange}
               className="rounded-md border shadow-sm bg-white dark:bg-card pointer-events-auto"
               modifiers={{
                 booked: getDatesWithOrders(),
-                today: [new Date()]
+                today: [new Date()],
+                outsideCurrentMonth: (date) => !isSameMonth(date, currentMonth)
               }}
               modifiersStyles={{
                 booked: {
@@ -73,8 +85,13 @@ const CalendarWidget = ({
                   backgroundColor: "hsl(var(--primary))",
                   color: "hsl(var(--primary-foreground))",
                   borderRadius: "0.375rem",
+                },
+                outsideCurrentMonth: {
+                  opacity: "0.4"
                 }
               }}
+              fromMonth={new Date(2020, 0)} // Allow selecting dates from Jan 2020
+              toMonth={new Date(2030, 11)}  // Allow selecting dates until Dec 2030
             />
           </div>
         )}
@@ -91,6 +108,10 @@ const CalendarWidget = ({
           <div className="flex items-center text-sm text-muted-foreground">
             <div className="h-3 w-3 rounded-md bg-primary border border-primary mr-2"></div>
             <span>Selected date</span>
+          </div>
+          <div className="flex items-center text-sm text-muted-foreground">
+            <div className="h-3 w-3 rounded-md bg-gray-200 border border-gray-300 mr-2"></div>
+            <span>Dates outside current month</span>
           </div>
         </div>
       </CardContent>

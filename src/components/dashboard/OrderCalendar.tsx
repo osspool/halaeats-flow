@@ -81,6 +81,7 @@ const OrderCalendar = () => {
           onMonthChange={handleMonthChange}
           orderDates={orderDatesQuery.data?.dates}
           isLoading={orderDatesQuery.isLoading}
+          currentMonth={currentMonth} // Pass currentMonth to CalendarWidget
         />
 
         {/* Orders Overview Card */}
