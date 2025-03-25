@@ -20,7 +20,7 @@ const RestaurantDashboard = () => {
       <div className="container mx-auto py-8 px-4">
         <h1 className="text-3xl font-bold mb-6">Restaurant Owner Dashboard</h1>
         
-        <Tabs defaultValue="dishes" className="w-full">
+        <Tabs defaultValue="calendar" className="w-full">
           <TabsList className="mb-4">
             <TabsTrigger value="dishes">Manage Dishes</TabsTrigger>
             <TabsTrigger value="calendar">Order Calendar</TabsTrigger>

@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { restaurantService } from "@/services/restaurantService";
 import { AvailabilityUpdateRequest, DishCreateRequest, TimeSlotUpdateRequest } from "@/types/restaurant";
@@ -8,6 +9,8 @@ import { toast } from "sonner";
 const MENU_QUERY_KEY = "restaurant-menu";
 const AVAILABILITY_KEY = "dish-availability";
 const TIME_SLOTS_KEY = "time-slots";
+const ORDER_DATES_KEY = "order-dates";
+const ORDERS_KEY = "orders";
 
 /**
  * Hook for fetching restaurant menu data
@@ -91,5 +94,26 @@ export const useUpdateTimeSlots = () => {
     onError: () => {
       toast.error("Failed to update time slots. Please try again.");
     }
+  });
+};
+
+/**
+ * Hook for fetching order dates
+ */
+export const useOrderDates = (startDate?: string, endDate?: string) => {
+  return useQuery({
+    queryKey: [ORDER_DATES_KEY, startDate, endDate],
+    queryFn: () => restaurantService.getOrderDates(startDate, endDate),
+  });
+};
+
+/**
+ * Hook for fetching orders by date
+ */
+export const useOrdersByDate = (date: string) => {
+  return useQuery({
+    queryKey: [ORDERS_KEY, date],
+    queryFn: () => restaurantService.getOrdersByDate(date),
+    enabled: !!date, // Only run query if date is provided
   });
 };
