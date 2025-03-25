@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,29 +16,55 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Clock, Plus, X } from "lucide-react";
+import { Clock, Plus, X, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { TimeSlotCapacity } from "@/types/restaurant";
 
 interface TimeSlotSettingsProps {
   timeSlots: string[];
-  onSave: (timeSlots: string[]) => void;
+  capacities: TimeSlotCapacity;
+  onSave: (timeSlots: string[], capacities: TimeSlotCapacity) => void;
   onCancel: () => void;
 }
 
 const TimeSlotSettings = ({ 
   timeSlots,
+  capacities = {},
   onSave,
   onCancel
 }: TimeSlotSettingsProps) => {
   const [slots, setSlots] = useState<string[]>(timeSlots);
+  const [slotCapacities, setSlotCapacities] = useState<TimeSlotCapacity>(capacities);
   const [startHour, setStartHour] = useState<string>("09");
   const [startMinute, setStartMinute] = useState<string>("00");
   const [endHour, setEndHour] = useState<string>("11");
   const [endMinute, setEndMinute] = useState<string>("00");
+  const [defaultCapacity, setDefaultCapacity] = useState<number>(5);
   
   // Generate hours and minutes for dropdowns
   const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
   const minutes = ['00', '15', '30', '45'];
+  
+  // Initialize capacities when component loads or slots change
+  useEffect(() => {
+    const updatedCapacities = { ...slotCapacities };
+    
+    // Ensure all slots have capacity information
+    slots.forEach(slot => {
+      if (!updatedCapacities[slot]) {
+        updatedCapacities[slot] = { capacity: defaultCapacity, booked: 0 };
+      }
+    });
+    
+    // Remove capacities for slots that no longer exist
+    Object.keys(updatedCapacities).forEach(slot => {
+      if (!slots.includes(slot)) {
+        delete updatedCapacities[slot];
+      }
+    });
+    
+    setSlotCapacities(updatedCapacities);
+  }, [slots]);
   
   const handleAddSlot = () => {
     const newTimeSlot = `${startHour}:${startMinute}-${endHour}:${endMinute}`;
@@ -58,17 +84,35 @@ const TimeSlotSettings = ({
       return;
     }
     
+    // Add the new slot and its capacity
     setSlots([...slots, newTimeSlot]);
+    setSlotCapacities({
+      ...slotCapacities,
+      [newTimeSlot]: { capacity: defaultCapacity, booked: 0 }
+    });
   };
   
   const handleRemoveSlot = (index: number) => {
+    const slotToRemove = slots[index];
     const updatedSlots = [...slots];
     updatedSlots.splice(index, 1);
     setSlots(updatedSlots);
+    
+    // Also remove capacity info for this slot
+    const updatedCapacities = { ...slotCapacities };
+    delete updatedCapacities[slotToRemove];
+    setSlotCapacities(updatedCapacities);
+  };
+  
+  const handleCapacityChange = (slot: string, capacity: number) => {
+    setSlotCapacities({
+      ...slotCapacities,
+      [slot]: { ...slotCapacities[slot], capacity }
+    });
   };
   
   const handleSave = () => {
-    onSave(slots);
+    onSave(slots, slotCapacities);
   };
 
   return (
@@ -78,12 +122,29 @@ const TimeSlotSettings = ({
           Manage Available Time Slots
         </DialogTitle>
         <DialogDescription>
-          Configure the time slots that will be available for all dishes in your restaurant.
+          Configure the time slots and their capacities for your restaurant.
         </DialogDescription>
       </DialogHeader>
       
       <div className="grid grid-cols-1 gap-6 pt-4">
         <div>
+          <div className="flex flex-wrap gap-4 items-center mb-4">
+            <div className="flex-grow">
+              <Label htmlFor="defaultCapacity">Default Capacity for New Slots</Label>
+              <div className="flex items-center mt-1 gap-2">
+                <Input
+                  id="defaultCapacity"
+                  type="number"
+                  min="1"
+                  value={defaultCapacity}
+                  onChange={(e) => setDefaultCapacity(parseInt(e.target.value) || 5)}
+                  className="w-24"
+                />
+                <span className="text-sm text-muted-foreground">orders per slot</span>
+              </div>
+            </div>
+          </div>
+          
           <Label htmlFor="newSlot">Add New Time Slot</Label>
           <div className="grid grid-cols-5 gap-2 mt-2 items-center">
             <div className="col-span-2 flex items-center gap-2">
@@ -144,24 +205,58 @@ const TimeSlotSettings = ({
         
         <div>
           <Label>Current Time Slots</Label>
-          <div className="flex flex-wrap gap-2 mt-2 p-3 border rounded-md">
+          <div className="overflow-hidden rounded-md border border-gray-200 mt-2">
             {slots.length > 0 ? (
-              slots.map((slot, index) => (
-                <Badge key={index} variant="secondary" className="p-2">
-                  <Clock className="h-3 w-3 mr-1" />
-                  {slot}
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="h-4 w-4 p-0 ml-2"
-                    onClick={() => handleRemoveSlot(index)}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </Badge>
-              ))
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-muted/50">
+                    <th className="px-4 py-2 text-left font-medium text-sm">Time Slot</th>
+                    <th className="px-4 py-2 text-left font-medium text-sm">Capacity (Orders)</th>
+                    <th className="px-4 py-2 text-left font-medium text-sm">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {slots.map((slot, index) => (
+                    <tr key={index} className={index % 2 === 0 ? "" : "bg-muted/30"}>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center">
+                          <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
+                          <span>{slot}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="number"
+                            min="1"
+                            value={slotCapacities[slot]?.capacity || defaultCapacity}
+                            onChange={(e) => handleCapacityChange(slot, parseInt(e.target.value) || 5)}
+                            className="w-20"
+                          />
+                          <Users className="h-4 w-4 text-muted-foreground" />
+                          {slotCapacities[slot]?.booked > 0 && (
+                            <Badge variant="outline" className="ml-2">
+                              {slotCapacities[slot]?.booked} booked
+                            </Badge>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleRemoveSlot(index)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             ) : (
-              <p className="text-sm text-gray-500">No time slots defined yet.</p>
+              <p className="p-4 text-sm text-gray-500">No time slots defined yet.</p>
             )}
           </div>
         </div>

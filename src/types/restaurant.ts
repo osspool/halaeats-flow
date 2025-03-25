@@ -12,10 +12,18 @@ export interface DishAvailability {
   };
 }
 
+export interface TimeSlotCapacity {
+  [timeSlot: string]: {
+    capacity: number;
+    booked: number;
+  };
+}
+
 export interface RestaurantMenu {
   dishes: MenuItem[];
   availability: DishAvailability;
-  availableTimeSlots: string[]; // Added this to store custom time slots
+  availableTimeSlots: string[]; // Available time slots
+  timeSlotCapacities: TimeSlotCapacity; // Added capacity information
 }
 
 export interface AvailabilityUpdateRequest {
@@ -35,6 +43,7 @@ export interface DishCreateRequest {
 
 export interface TimeSlotUpdateRequest {
   timeSlots: string[];
+  capacities?: TimeSlotCapacity; // Added capacities field
 }
 
 // Order related types

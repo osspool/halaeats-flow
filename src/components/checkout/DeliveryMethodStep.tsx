@@ -10,13 +10,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Address } from '@/types/checkout';
 import { cn } from '@/lib/utils';
 import { mockAddresses } from '@/data/checkoutMockData';
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { useBookTimeSlot, useRestaurantMenu } from '@/hooks/useRestaurantApi';
+import TimeSlotSelector from './TimeSlotSelector';
 
 interface DeliveryMethodStepProps {
   orderType: OrderType;
@@ -42,7 +37,11 @@ const DeliveryMethodStep = ({
   const [selected, setSelected] = useState<string>(selectedAddressId || addresses.find(a => a.isDefault)?.id || '');
   const [instructions, setInstructions] = useState<string>('');
   const [pickupTime, setPickupTime] = useState<string>('');
-
+  
+  // Fetch restaurant menu data to get time slots and capacities
+  const { data: menuData, isLoading: isMenuLoading } = useRestaurantMenu();
+  const bookTimeSlotMutation = useBookTimeSlot();
+  
   // Set initial values when component mounts
   useEffect(() => {
     // Set default address if none is selected
@@ -52,15 +51,6 @@ const DeliveryMethodStep = ({
       onAddressSelect(defaultAddress);
     }
   }, [addresses, selected, onAddressSelect]);
-
-  const timeSlots = [
-    "ASAP (15-30 min)",
-    "Today, 11:30 AM",
-    "Today, 12:00 PM",
-    "Today, 12:30 PM",
-    "Today, 1:00 PM",
-    "Today, 1:30 PM",
-  ];
 
   const handleSelect = (value: string) => {
     const type = value as OrderType;
@@ -89,18 +79,35 @@ const DeliveryMethodStep = ({
     // Validation: Don't proceed if delivery is selected but no address is chosen
     if (selectedType === 'delivery' && !selected) return;
     
-    // Set default pickup time if not selected for pickup
-    if (selectedType === 'pickup' && !pickupTime) {
-      handlePickupTimeChange(timeSlots[0]);
-    }
+    // Validation: Don't proceed if no time slot is selected
+    if (!pickupTime) return;
     
-    // Debugging
-    console.log('Continue button clicked, navigating to next step');
-    console.log('Current selection:', { selectedType, selected, pickupTime });
-    
-    // Call the onNext function to proceed to the next step
-    onNext();
+    // Attempt to book the selected time slot
+    bookTimeSlotMutation.mutate(pickupTime, {
+      onSuccess: (success) => {
+        if (success) {
+          // Time slot was successfully booked, proceed to next step
+          console.log('Time slot booked successfully:', pickupTime);
+          onNext();
+        }
+        // If booking failed, the mutation will show an error toast
+      }
+    });
   };
+
+  // Fallback time slots if menu data is not available
+  const fallbackTimeSlots = [
+    "ASAP (15-30 min)",
+    "Today, 11:30 AM",
+    "Today, 12:00 PM",
+    "Today, 12:30 PM",
+    "Today, 1:00 PM",
+    "Today, 1:30 PM",
+  ];
+
+  // Use restaurant time slots if available, fallback otherwise
+  const availableTimeSlots = menuData?.availableTimeSlots || fallbackTimeSlots;
+  const timeSlotCapacities = menuData?.timeSlotCapacities || {};
 
   return (
     <div className="space-y-6">
@@ -181,6 +188,17 @@ const DeliveryMethodStep = ({
                 </Button>
               </RadioGroup>
             </div>
+            
+            {/* Time Slot Selector */}
+            <div className="border-t pt-4">
+              <h3 className="font-medium mb-2">Delivery Time</h3>
+              <TimeSlotSelector
+                timeSlots={availableTimeSlots}
+                capacities={timeSlotCapacities}
+                selectedTimeSlot={pickupTime}
+                onSelect={handlePickupTimeChange}
+              />
+            </div>
 
             <div>
               <h3 className="font-medium mb-2">Delivery Instructions (Optional)</h3>
@@ -204,22 +222,12 @@ const DeliveryMethodStep = ({
 
             <div>
               <h3 className="font-medium mb-2">Pickup Time</h3>
-              <Select 
-                value={pickupTime} 
-                onValueChange={handlePickupTimeChange} 
-                defaultValue={timeSlots[0]}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select pickup time" />
-                </SelectTrigger>
-                <SelectContent>
-                  {timeSlots.map((time) => (
-                    <SelectItem key={time} value={time}>
-                      {time}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <TimeSlotSelector
+                timeSlots={availableTimeSlots}
+                capacities={timeSlotCapacities}
+                selectedTimeSlot={pickupTime}
+                onSelect={handlePickupTimeChange}
+              />
             </div>
           </TabsContent>
         </Tabs>
@@ -228,9 +236,9 @@ const DeliveryMethodStep = ({
       <Button 
         onClick={handleContinue}
         className="w-full bg-primary hover:bg-cuisine-600"
-        disabled={selectedType === 'delivery' && !selected}
+        disabled={(selectedType === 'delivery' && !selected) || !pickupTime || bookTimeSlotMutation.isPending}
       >
-        Continue to Payment
+        {bookTimeSlotMutation.isPending ? "Reserving Your Slot..." : "Continue to Payment"}
       </Button>
     </div>
   );

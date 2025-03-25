@@ -1,4 +1,5 @@
-import { DishAvailability, DishCreateRequest, RestaurantMenu, AvailabilityUpdateRequest, TimeSlotUpdateRequest, Order, OrderDate, OrdersResponse, OrderDatesResponse } from "@/types/restaurant";
+
+import { DishAvailability, DishCreateRequest, RestaurantMenu, AvailabilityUpdateRequest, TimeSlotUpdateRequest, Order, OrderDate, OrdersResponse, OrderDatesResponse, TimeSlotCapacity } from "@/types/restaurant";
 import { MenuItem } from "@/types";
 import { addDays, format, parseISO, subDays, startOfMonth, endOfMonth } from "date-fns";
 import { OrderItem } from "@/types/restaurant";
@@ -10,6 +11,14 @@ const defaultTimeSlots = [
   "18:00-21:00",
   "21:00-23:00"
 ];
+
+// Default capacities for the time slots
+const defaultTimeSlotCapacities: TimeSlotCapacity = {
+  "07:00-09:00": { capacity: 5, booked: 0 },
+  "11:00-14:00": { capacity: 10, booked: 0 },
+  "18:00-21:00": { capacity: 8, booked: 0 },
+  "21:00-23:00": { capacity: 5, booked: 0 },
+};
 
 // Mock data for dishes
 const mockDishes: MenuItem[] = [
@@ -148,7 +157,8 @@ const mockOrders = generateMockOrders();
 let menuData: RestaurantMenu = {
   dishes: [...mockDishes],
   availability: {...mockAvailability},
-  availableTimeSlots: [...defaultTimeSlots]
+  availableTimeSlots: [...defaultTimeSlots],
+  timeSlotCapacities: {...defaultTimeSlotCapacities}
 };
 
 // Simulate API delay
@@ -212,13 +222,76 @@ export const restaurantService = {
   },
   
   // Update available time slots
-  updateTimeSlots: async (request: TimeSlotUpdateRequest): Promise<string[]> => {
+  updateTimeSlots: async (request: TimeSlotUpdateRequest): Promise<RestaurantMenu> => {
     await delay(500);
     
     // Update the available time slots
     menuData.availableTimeSlots = request.timeSlots;
     
-    return [...menuData.availableTimeSlots];
+    // Update capacities if provided
+    if (request.capacities) {
+      menuData.timeSlotCapacities = request.capacities;
+    } else {
+      // Create default capacities for new time slots
+      const newCapacities: TimeSlotCapacity = {};
+      request.timeSlots.forEach(slot => {
+        newCapacities[slot] = menuData.timeSlotCapacities[slot] || { capacity: 5, booked: 0 };
+      });
+      menuData.timeSlotCapacities = newCapacities;
+    }
+    
+    return {...menuData};
+  },
+  
+  // Update capacity for a specific time slot
+  updateTimeSlotCapacity: async (timeSlot: string, capacity: number): Promise<TimeSlotCapacity> => {
+    await delay(300);
+    
+    if (menuData.timeSlotCapacities[timeSlot]) {
+      menuData.timeSlotCapacities[timeSlot].capacity = capacity;
+    } else {
+      menuData.timeSlotCapacities[timeSlot] = { capacity, booked: 0 };
+    }
+    
+    return {...menuData.timeSlotCapacities};
+  },
+  
+  // Book a time slot (increment booked count)
+  bookTimeSlot: async (timeSlot: string): Promise<boolean> => {
+    await delay(300);
+    
+    if (!menuData.timeSlotCapacities[timeSlot]) {
+      return false;
+    }
+    
+    const slotData = menuData.timeSlotCapacities[timeSlot];
+    
+    if (slotData.booked >= slotData.capacity) {
+      return false; // Slot is fully booked
+    }
+    
+    // Increment booked count
+    slotData.booked += 1;
+    return true;
+  },
+  
+  // Cancel a booking (decrement booked count)
+  cancelBooking: async (timeSlot: string): Promise<boolean> => {
+    await delay(300);
+    
+    if (!menuData.timeSlotCapacities[timeSlot]) {
+      return false;
+    }
+    
+    const slotData = menuData.timeSlotCapacities[timeSlot];
+    
+    if (slotData.booked <= 0) {
+      return false; // No bookings to cancel
+    }
+    
+    // Decrement booked count
+    slotData.booked -= 1;
+    return true;
   },
   
   // Get dates with orders

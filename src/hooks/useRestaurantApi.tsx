@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { restaurantService } from "@/services/restaurantService";
 import { AvailabilityUpdateRequest, DishCreateRequest, TimeSlotUpdateRequest } from "@/types/restaurant";
@@ -93,6 +94,69 @@ export const useUpdateTimeSlots = () => {
     },
     onError: () => {
       toast.error("Failed to update time slots. Please try again.");
+    }
+  });
+};
+
+/**
+ * Hook for updating capacity for a specific time slot
+ */
+export const useUpdateTimeSlotCapacity = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ timeSlot, capacity }: { timeSlot: string, capacity: number }) => 
+      restaurantService.updateTimeSlotCapacity(timeSlot, capacity),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [MENU_QUERY_KEY] });
+      toast.success("Time slot capacity updated!");
+    },
+    onError: () => {
+      toast.error("Failed to update capacity. Please try again.");
+    }
+  });
+};
+
+/**
+ * Hook for booking a time slot
+ */
+export const useBookTimeSlot = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (timeSlot: string) => restaurantService.bookTimeSlot(timeSlot),
+    onSuccess: (success) => {
+      if (success) {
+        queryClient.invalidateQueries({ queryKey: [MENU_QUERY_KEY] });
+        toast.success("Booking successful!");
+      } else {
+        toast.error("This time slot is fully booked. Please select another time.");
+      }
+    },
+    onError: () => {
+      toast.error("Failed to book the time slot. Please try again.");
+    }
+  });
+};
+
+/**
+ * Hook for canceling a booking
+ */
+export const useCancelBooking = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (timeSlot: string) => restaurantService.cancelBooking(timeSlot),
+    onSuccess: (success) => {
+      if (success) {
+        queryClient.invalidateQueries({ queryKey: [MENU_QUERY_KEY] });
+        toast.success("Booking canceled successfully!");
+      } else {
+        toast.error("Could not cancel the booking.");
+      }
+    },
+    onError: () => {
+      toast.error("Failed to cancel booking. Please try again.");
     }
   });
 };

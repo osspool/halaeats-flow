@@ -1,168 +1,172 @@
 
 import React, { useState } from "react";
-import { PlusCircle, Settings } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { toast } from "sonner";
-import { 
-  useRestaurantMenu, 
-  useAddDish, 
-  useUpdateAvailability, 
-  useDeleteDish,
-  useUpdateTimeSlots 
-} from "@/hooks/useRestaurantApi";
-import { AvailabilityUpdateRequest, TimeSlotUpdateRequest } from "@/types/restaurant";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Settings, Plus } from "lucide-react";
 import DishList from "./dishes/DishList";
 import DishForm from "./dishes/DishForm";
-import TimeSlotEditor from "./dishes/TimeSlotEditor";
 import TimeSlotSettings from "./dishes/TimeSlotSettings";
+import TimeSlotEditor from "./dishes/TimeSlotEditor";
+import { useAddDish, useDeleteDish, useRestaurantMenu, useUpdateAvailability, useUpdateTimeSlots } from "@/hooks/useRestaurantApi";
+import { useToast } from "@/hooks/use-toast";
+import { DishCreateRequest, AvailabilityUpdateRequest, TimeSlotCapacity } from "@/types/restaurant";
 import { MenuItem } from "@/types";
 
 const DishManagement = () => {
-  const { data: menuData, isLoading } = useRestaurantMenu();
-  const { mutate: addDish } = useAddDish();
-  const { mutate: updateAvailability } = useUpdateAvailability();
-  const { mutate: deleteDish } = useDeleteDish();
-  const { mutate: updateTimeSlots } = useUpdateTimeSlots();
-
-  const [isAddDishOpen, setIsAddDishOpen] = useState(false);
-  const [isEditAvailabilityOpen, setIsEditAvailabilityOpen] = useState(false);
-  const [isTimeSlotSettingsOpen, setIsTimeSlotSettingsOpen] = useState(false);
-  const [currentDish, setCurrentDish] = useState<MenuItem | null>(null);
-  const [selectedDay, setSelectedDay] = useState<string>("Monday");
+  // States for dialog management
+  const [isDishDialogOpen, setIsDishDialogOpen] = useState<boolean>(false);
+  const [isTimeSlotDialogOpen, setIsTimeSlotDialogOpen] = useState<boolean>(false);
+  const [isAvailabilityDialogOpen, setIsAvailabilityDialogOpen] = useState<boolean>(false);
+  
+  // State for selected dish for availability editing
+  const [selectedDish, setSelectedDish] = useState<MenuItem | null>(null);
+  
+  // State for availability management
   const [selectedTimeSlots, setSelectedTimeSlots] = useState<{ [day: string]: string[] }>({});
-
-  const handleAddDish = (newDish) => {
-    addDish(newDish);
-    setIsAddDishOpen(false);
-  };
-
-  const handleEditAvailability = (dish: MenuItem) => {
-    setCurrentDish(dish);
-    // Load existing availability
-    const existingAvailability = menuData?.availability[dish.id] || {};
-    setSelectedTimeSlots(existingAvailability);
-    setSelectedDay("Monday");
-    setIsEditAvailabilityOpen(true);
-  };
-
-  const handleSaveAvailability = () => {
-    // Check if at least one day and time slot is selected
-    if (Object.keys(selectedTimeSlots).length === 0) {
-      toast.error('Please select at least one day and time slot');
-      return;
-    }
-
-    // Update the dish's availability via API
-    if (currentDish) {
-      const request: AvailabilityUpdateRequest = {
-        dishId: currentDish.id,
-        availability: selectedTimeSlots
-      };
-      updateAvailability(request);
-      setIsEditAvailabilityOpen(false);
-    }
-  };
-
-  const handleDeleteDish = (dishId: string) => {
-    if (confirm("Are you sure you want to delete this dish?")) {
-      deleteDish(dishId);
-    }
-  };
-
-  const toggleTimeSlot = (day: string, timeSlot: string) => {
-    setSelectedTimeSlots(prev => {
-      const updatedTimeSlots = { ...prev };
-      
-      if (!updatedTimeSlots[day]) {
-        updatedTimeSlots[day] = [timeSlot];
-      } else if (updatedTimeSlots[day].includes(timeSlot)) {
-        updatedTimeSlots[day] = updatedTimeSlots[day].filter(ts => ts !== timeSlot);
-        if (updatedTimeSlots[day].length === 0) {
-          delete updatedTimeSlots[day];
-        }
-      } else {
-        updatedTimeSlots[day] = [...updatedTimeSlots[day], timeSlot];
+  const [selectedDay, setSelectedDay] = useState<string>("Monday");
+  
+  // Fetch menu data with React Query
+  const { data: menuData, isLoading: isMenuLoading } = useRestaurantMenu();
+  
+  // Mutations for CRUD operations
+  const addDishMutation = useAddDish();
+  const deleteDishMutation = useDeleteDish();
+  const updateAvailabilityMutation = useUpdateAvailability();
+  const updateTimeSlotsMutation = useUpdateTimeSlots();
+  
+  // Toast for notifications
+  const { toast } = useToast();
+  
+  // Handler for adding a new dish
+  const handleAddDish = (data: DishCreateRequest) => {
+    addDishMutation.mutate(data, {
+      onSuccess: () => {
+        setIsDishDialogOpen(false);
       }
-      
-      return updatedTimeSlots;
     });
   };
-
-  const handleSaveTimeSlotSettings = (timeSlots: string[]) => {
-    const request: TimeSlotUpdateRequest = {
-      timeSlots: timeSlots
-    };
-    updateTimeSlots(request);
-    setIsTimeSlotSettingsOpen(false);
+  
+  // Handler for deleting a dish
+  const handleDeleteDish = (dishId: string) => {
+    deleteDishMutation.mutate(dishId);
   };
-
-  if (isLoading) {
-    return <div className="p-8 text-center">Loading menu data...</div>;
-  }
-
+  
+  // Handler for editing dish availability
+  const handleEditAvailability = (dish: MenuItem) => {
+    setSelectedDish(dish);
+    
+    // Initialize selected time slots from the dish's availability
+    const initialTimeSlots: { [day: string]: string[] } = {};
+    
+    if (menuData?.availability[dish.id]) {
+      Object.keys(menuData.availability[dish.id]).forEach(day => {
+        initialTimeSlots[day] = [...menuData.availability[dish.id][day]];
+      });
+    }
+    
+    setSelectedTimeSlots(initialTimeSlots);
+    setSelectedDay("Monday");
+    setIsAvailabilityDialogOpen(true);
+  };
+  
+  // Handler for toggling time slot selection
+  const handleToggleTimeSlot = (day: string, timeSlot: string) => {
+    const currentSlots = selectedTimeSlots[day] || [];
+    const newSlots = currentSlots.includes(timeSlot)
+      ? currentSlots.filter(slot => slot !== timeSlot)
+      : [...currentSlots, timeSlot];
+    
+    setSelectedTimeSlots({
+      ...selectedTimeSlots,
+      [day]: newSlots
+    });
+  };
+  
+  // Handler for saving dish availability
+  const handleSaveAvailability = () => {
+    if (!selectedDish) return;
+    
+    const request: AvailabilityUpdateRequest = {
+      dishId: selectedDish.id,
+      availability: { ...selectedTimeSlots }
+    };
+    
+    updateAvailabilityMutation.mutate(request, {
+      onSuccess: () => {
+        setIsAvailabilityDialogOpen(false);
+      }
+    });
+  };
+  
+  // Handler for saving time slots settings
+  const handleSaveTimeSlots = (timeSlots: string[], capacities: TimeSlotCapacity) => {
+    updateTimeSlotsMutation.mutate({
+      timeSlots,
+      capacities
+    }, {
+      onSuccess: () => {
+        setIsTimeSlotDialogOpen(false);
+      }
+    });
+  };
+  
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold">Your Menu Items</h2>
-        <div className="flex gap-2">
-          <Dialog open={isTimeSlotSettingsOpen} onOpenChange={setIsTimeSlotSettingsOpen}>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Manage Menu</h2>
+        <div className="flex space-x-3">
+          <Dialog open={isTimeSlotDialogOpen} onOpenChange={setIsTimeSlotDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline">
-                <Settings className="mr-2 h-4 w-4" />
+              <Button variant="outline" className="flex items-center">
+                <Settings className="h-4 w-4 mr-2" />
                 Time Slots
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="sm:max-w-[600px]">
               <TimeSlotSettings 
                 timeSlots={menuData?.availableTimeSlots || []}
-                onSave={handleSaveTimeSlotSettings}
-                onCancel={() => setIsTimeSlotSettingsOpen(false)}
+                capacities={menuData?.timeSlotCapacities || {}}
+                onSave={handleSaveTimeSlots}
+                onCancel={() => setIsTimeSlotDialogOpen(false)}
               />
             </DialogContent>
           </Dialog>
-          <Dialog open={isAddDishOpen} onOpenChange={setIsAddDishOpen}>
+          
+          <Dialog open={isDishDialogOpen} onOpenChange={setIsDishDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Add New Dish
+              <Button className="flex items-center">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Dish
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DishForm onSubmit={handleAddDish} />
+            <DialogContent className="sm:max-w-[550px]">
+              <DishForm 
+                onSubmit={handleAddDish} 
+                onCancel={() => setIsDishDialogOpen(false)}
+              />
             </DialogContent>
           </Dialog>
         </div>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Your Menu</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <DishList 
-            dishes={menuData?.dishes || []} 
-            availability={menuData?.availability || {}}
-            onEditAvailability={handleEditAvailability}
-            onDeleteDish={handleDeleteDish}
-          />
-        </CardContent>
-      </Card>
-
-      <Dialog open={isEditAvailabilityOpen} onOpenChange={setIsEditAvailabilityOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          {currentDish && (
-            <TimeSlotEditor 
-              dishName={currentDish.name}
+      
+      <DishList 
+        dishes={menuData?.dishes || []}
+        availability={menuData?.availability || {}}
+        onDelete={handleDeleteDish}
+        onEditAvailability={handleEditAvailability}
+        isLoading={isMenuLoading}
+      />
+      
+      {/* Dialog for editing dish availability */}
+      <Dialog open={isAvailabilityDialogOpen} onOpenChange={setIsAvailabilityDialogOpen}>
+        <DialogContent className="sm:max-w-[550px]">
+          {selectedDish && (
+            <TimeSlotEditor
+              dishName={selectedDish.name}
               selectedTimeSlots={selectedTimeSlots}
               onSave={handleSaveAvailability}
-              onCancel={() => setIsEditAvailabilityOpen(false)}
-              onToggleTimeSlot={toggleTimeSlot}
+              onCancel={() => setIsAvailabilityDialogOpen(false)}
+              onToggleTimeSlot={handleToggleTimeSlot}
               selectedDay={selectedDay}
               onDayChange={setSelectedDay}
               availableTimeSlots={menuData?.availableTimeSlots || []}
