@@ -28,10 +28,13 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useRestaurantMenu, useAddDish, useUpdateAvailability, useDeleteDish } from "@/hooks/useRestaurantApi";
+import { AvailabilityUpdateRequest, DishCreateRequest } from "@/types/restaurant";
 
 // Days of the week
 const DAYS_OF_WEEK = [
@@ -52,77 +55,39 @@ const TIME_SLOTS = [
   "21:00-23:00"
 ];
 
-// Mock data for dishes
-const mockDishes = [
-  {
-    id: "dish-001",
-    name: "Pasta Carbonara",
-    price: 14.99,
-    description: "Creamy pasta with bacon and parmesan",
-    category: "Pasta",
-    availability: {
-      Monday: ["11:00-14:00", "18:00-21:00"],
-      Wednesday: ["11:00-14:00", "18:00-21:00"],
-      Friday: ["18:00-21:00"],
-    },
-    dietary: ["Vegetarian-option"]
-  },
-  {
-    id: "dish-002",
-    name: "Margherita Pizza",
-    price: 12.99,
-    description: "Classic tomato and mozzarella pizza",
-    category: "Pizza",
-    availability: {
-      Tuesday: ["11:00-14:00", "18:00-21:00"],
-      Thursday: ["11:00-14:00", "18:00-21:00"],
-      Saturday: ["11:00-14:00", "18:00-21:00", "21:00-23:00"],
-    },
-    dietary: ["Vegetarian"]
-  },
-  {
-    id: "dish-003",
-    name: "Chicken Curry",
-    price: 16.99,
-    description: "Spicy chicken curry with basmati rice",
-    category: "Main Course",
-    availability: {
-      Wednesday: ["18:00-21:00"],
-      Sunday: ["11:00-14:00", "18:00-21:00"],
-    },
-    dietary: ["Gluten-free"]
-  }
-];
-
 const DishManagement = () => {
-  const [dishes, setDishes] = useState(mockDishes);
+  const { data: menuData, isLoading } = useRestaurantMenu();
+  const { mutate: addDish } = useAddDish();
+  const { mutate: updateAvailability } = useUpdateAvailability();
+  const { mutate: deleteDish } = useDeleteDish();
+
   const [isAddDishOpen, setIsAddDishOpen] = useState(false);
   const [isEditAvailabilityOpen, setIsEditAvailabilityOpen] = useState(false);
   const [currentDish, setCurrentDish] = useState<any>(null);
   const [selectedDay, setSelectedDay] = useState<string>("Monday");
   const [selectedTimeSlots, setSelectedTimeSlots] = useState<{ [day: string]: string[] }>({});
-  
+
   const handleAddDish = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const newDish = {
-      id: `dish-${Date.now()}`,
+    
+    const newDish: DishCreateRequest = {
       name: formData.get('name') as string,
       price: parseFloat(formData.get('price') as string),
       description: formData.get('description') as string,
       category: formData.get('category') as string,
-      availability: {},
       dietary: []
     };
     
-    setDishes([...dishes, newDish]);
+    addDish(newDish);
     setIsAddDishOpen(false);
-    toast.success('New dish added successfully!');
   };
 
   const handleEditAvailability = (dish: any) => {
     setCurrentDish(dish);
-    setSelectedTimeSlots(dish.availability || {});
+    // Load existing availability
+    const existingAvailability = menuData?.availability[dish.id] || {};
+    setSelectedTimeSlots(existingAvailability);
     setSelectedDay("Monday");
     setIsEditAvailabilityOpen(true);
   };
@@ -134,20 +99,21 @@ const DishManagement = () => {
       return;
     }
 
-    // Update the dish's availability
-    const updatedDishes = dishes.map(dish => {
-      if (dish.id === currentDish.id) {
-        return {
-          ...dish,
-          availability: selectedTimeSlots
-        };
-      }
-      return dish;
-    });
+    // Update the dish's availability via API
+    if (currentDish) {
+      const request: AvailabilityUpdateRequest = {
+        dishId: currentDish.id,
+        availability: selectedTimeSlots
+      };
+      updateAvailability(request);
+      setIsEditAvailabilityOpen(false);
+    }
+  };
 
-    setDishes(updatedDishes);
-    setIsEditAvailabilityOpen(false);
-    toast.success('Dish availability updated!');
+  const handleDeleteDish = (dishId: string) => {
+    if (confirm("Are you sure you want to delete this dish?")) {
+      deleteDish(dishId);
+    }
   };
 
   const toggleTimeSlot = (day: string, timeSlot: string) => {
@@ -173,6 +139,10 @@ const DishManagement = () => {
     return selectedTimeSlots[day]?.includes(timeSlot) || false;
   };
 
+  if (isLoading) {
+    return <div className="p-8 text-center">Loading menu data...</div>;
+  }
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -187,6 +157,9 @@ const DishManagement = () => {
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>Add New Dish</DialogTitle>
+              <DialogDescription>
+                Add a new dish to your menu with pricing and category information.
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleAddDish} className="space-y-4 pt-4">
               <div className="grid w-full items-center gap-1.5">
@@ -218,58 +191,69 @@ const DishManagement = () => {
           <CardTitle>Your Menu</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Dish Name</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Availability</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {dishes.map((dish) => (
-                <TableRow key={dish.id}>
-                  <TableCell className="font-medium">{dish.name}</TableCell>
-                  <TableCell>{dish.category}</TableCell>
-                  <TableCell>${dish.price.toFixed(2)}</TableCell>
-                  <TableCell>
-                    {dish.availability && Object.keys(dish.availability).length > 0 ? (
-                      <div className="flex flex-wrap gap-1">
-                        {Object.keys(dish.availability).slice(0, 2).map((day) => (
-                          <Badge key={day} variant="outline" className="flex items-center gap-1">
-                            <CalendarIcon className="h-3 w-3" />
-                            {day}
-                          </Badge>
-                        ))}
-                        {Object.keys(dish.availability).length > 2 && (
-                          <Badge variant="outline">+{Object.keys(dish.availability).length - 2} more</Badge>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="text-gray-500 text-sm">Not scheduled</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => handleEditAvailability(dish)}
-                      >
-                        <Clock className="h-3.5 w-3.5 mr-1" />
-                        Set Times
-                      </Button>
-                      <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700 hover:bg-red-100">
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </TableCell>
+          {menuData?.dishes.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              No dishes added yet. Click "Add New Dish" to create your first menu item.
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Dish Name</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Price</TableHead>
+                  <TableHead>Availability</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {menuData?.dishes.map((dish) => (
+                  <TableRow key={dish.id}>
+                    <TableCell className="font-medium">{dish.name}</TableCell>
+                    <TableCell>{dish.category}</TableCell>
+                    <TableCell>${dish.price.toFixed(2)}</TableCell>
+                    <TableCell>
+                      {menuData.availability[dish.id] && Object.keys(menuData.availability[dish.id]).length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {Object.keys(menuData.availability[dish.id]).slice(0, 2).map((day) => (
+                            <Badge key={day} variant="outline" className="flex items-center gap-1">
+                              <CalendarIcon className="h-3 w-3" />
+                              {day}
+                            </Badge>
+                          ))}
+                          {Object.keys(menuData.availability[dish.id]).length > 2 && (
+                            <Badge variant="outline">+{Object.keys(menuData.availability[dish.id]).length - 2} more</Badge>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-gray-500 text-sm">Not scheduled</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => handleEditAvailability(dish)}
+                        >
+                          <Clock className="h-3.5 w-3.5 mr-1" />
+                          Set Times
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-red-500 hover:text-red-700 hover:bg-red-100"
+                          onClick={() => handleDeleteDish(dish.id)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 
@@ -279,6 +263,9 @@ const DishManagement = () => {
             <DialogTitle>
               Set Availability for {currentDish?.name}
             </DialogTitle>
+            <DialogDescription>
+              Select which days of the week and time slots this dish will be available.
+            </DialogDescription>
           </DialogHeader>
           
           <div className="grid grid-cols-1 gap-6 pt-4">
