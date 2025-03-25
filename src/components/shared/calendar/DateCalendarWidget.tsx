@@ -1,3 +1,4 @@
+
 import React from "react";
 import { CalendarIcon } from "lucide-react";
 import { isSameMonth } from "date-fns";
@@ -71,11 +72,11 @@ const DateCalendarWidget = ({
   };
 
   // Custom day rendering to add count indicators
-  const renderDay = (day: Date, selectedDate: Date | undefined, dayProps: Record<string, any>) => {
+  const renderDay = (day: Date, selectedDay: Date | undefined, dayProps: React.HTMLAttributes<HTMLButtonElement>) => {
     const count = getItemCountForDate(day);
-    const isSelected = selectedDate && day.getDate() === selectedDate.getDate() && 
-                       day.getMonth() === selectedDate.getMonth() && 
-                       day.getFullYear() === selectedDate.getFullYear();
+    const isSelected = selectedDay && day.getDate() === selectedDay.getDate() && 
+                       day.getMonth() === selectedDay.getMonth() && 
+                       day.getFullYear() === selectedDay.getFullYear();
                        
     // For mobile, keep it simple
     if (isMobile) {
@@ -165,14 +166,13 @@ const DateCalendarWidget = ({
                 }
               }}
               components={{
-                Day: ({ date, displayMonth, selected, disabled, ...props }) => {
+                Day: ({ date, ...props }) => {
                   return (
                     <button
                       {...props}
-                      className={props.className}
-                      disabled={disabled}
+                      disabled={props.disabled}
                     >
-                      {renderDay(date, selected, props)}
+                      {renderDay(date, selectedDate, props)}
                     </button>
                   );
                 }
@@ -184,6 +184,7 @@ const DateCalendarWidget = ({
           </div>
         )}
         
+        {/* Legend */}
         <div className="px-6 pb-6 pt-2 space-y-3">
           <div className="flex items-center text-sm text-muted-foreground">
             <div className="h-3 w-3 rounded-md bg-amber-500/20 border border-amber-500 mr-2"></div>
