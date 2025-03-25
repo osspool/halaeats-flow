@@ -1,6 +1,6 @@
 
 import React from "react";
-import { DateWithCount } from "@/types/restaurant";
+import { DateWithCount } from "@/components/shared/calendar/types";
 import { DateCalendarWidget } from "@/components/shared/calendar";
 
 interface CalendarWidgetProps {
@@ -25,7 +25,7 @@ const CalendarWidget = ({
     if (!orderDates) return [];
     return orderDates.map(date => ({
       date: date.date,
-      count: date.orderCount
+      count: date.count // Fixed: using count instead of orderCount
     }));
   };
 

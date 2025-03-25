@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { format } from "date-fns";
 import { Search } from "lucide-react";
@@ -22,7 +21,7 @@ const OrderCalendar = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
-  
+
   // Use our custom hook for date management
   const {
     currentMonth,

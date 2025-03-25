@@ -1,4 +1,3 @@
-
 import { MenuItem } from "./index";
 
 export interface TimeSlotSettings {
@@ -80,8 +79,6 @@ export interface OrderDatesResponse {
   total: number;
 }
 
-// Reexport DateWithCount from our shared calendar types
-export interface DateWithCount {
-  date: string | Date;
-  count: number;
-}
+// Reuse the DateWithCount interface from our shared calendar types
+import { DateWithCount } from "@/components/shared/calendar/types";
+export { DateWithCount };
