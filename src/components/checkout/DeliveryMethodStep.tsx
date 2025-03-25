@@ -31,8 +31,10 @@ const DeliveryMethodStep = ({
   onNext 
 }: DeliveryMethodStepProps) => {
   const [selectedType, setSelectedType] = useState<OrderType>(orderType);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  const [availableTimeSlots, setAvailableTimeSlots] = useState<TimeSlot[]>([]);
+  const [isLoadingTimeSlots, setIsLoadingTimeSlots] = useState<boolean>(false);
   
   // Fetch restaurant menu data to get time slots and capacities
   const { data: menuData, isLoading: isMenuLoading } = useRestaurantMenu();
@@ -48,6 +50,50 @@ const DeliveryMethodStep = ({
     setSelectedSlot(slotId);
     onPickupTimeChange(slotId);
   };
+
+  const handleDateChange = (date: Date | undefined) => {
+    setSelectedDate(date);
+    // Reset selected slot when date changes
+    setSelectedSlot(null);
+    onPickupTimeChange('');
+  };
+
+  // When date changes, fetch available time slots for that date
+  useEffect(() => {
+    if (!selectedDate || !menuData) {
+      setAvailableTimeSlots([]);
+      return;
+    }
+    
+    setIsLoadingTimeSlots(true);
+    
+    // Simulate API call to get time slots for the selected date
+    // In a real application, this would be an actual API call
+    setTimeout(() => {
+      const formattedDate = format(selectedDate, 'yyyy-MM-dd');
+      console.log(`Fetching time slots for date: ${formattedDate}`);
+      
+      // Get the time slots for this date from menu data
+      const dateTimeSlots = menuData.availableTimeSlots || [];
+      const capacities = menuData.timeSlotCapacities || {};
+      
+      // Convert to the format our TimeSlotSelector component expects
+      const slots = dateTimeSlots.map(timeSlot => {
+        const capacity = capacities[timeSlot]?.capacity || 5;
+        const booked = capacities[timeSlot]?.booked || 0;
+        
+        return {
+          id: timeSlot,
+          time: timeSlot,
+          capacity,
+          booked
+        };
+      });
+      
+      setAvailableTimeSlots(slots);
+      setIsLoadingTimeSlots(false);
+    }, 500); // Simulate network delay
+  }, [selectedDate, menuData]);
 
   const handleContinue = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -70,33 +116,6 @@ const DeliveryMethodStep = ({
       }
     });
   };
-
-  // Get available time slots for the selected date
-  const getAvailableTimeSlotsForDate = (): TimeSlot[] => {
-    if (!selectedDate || !menuData) return [];
-    
-    const formattedDate = format(selectedDate, 'yyyy-MM-dd');
-    
-    // Get the time slots for this date from menu data
-    const dateTimeSlots = menuData.availableTimeSlots || [];
-    const capacities = menuData.timeSlotCapacities || {};
-    
-    // Convert to the format our TimeSlotSelector component expects
-    return dateTimeSlots.map(timeSlot => {
-      const capacity = capacities[timeSlot]?.capacity || 5;
-      const booked = capacities[timeSlot]?.booked || 0;
-      
-      return {
-        id: timeSlot,
-        time: timeSlot,
-        capacity,
-        booked
-      };
-    });
-  };
-
-  // Generate available time slots
-  const availableTimeSlots = getAvailableTimeSlotsForDate();
 
   return (
     <div className="space-y-6">
@@ -135,10 +154,11 @@ const DeliveryMethodStep = ({
               <DeliveryDateTimePicker
                 orderType="delivery"
                 selectedDate={selectedDate}
-                onDateChange={setSelectedDate}
+                onDateChange={handleDateChange}
                 selectedSlot={selectedSlot}
                 onSlotSelect={handleSelectTimeSlot}
                 availableTimeSlots={availableTimeSlots}
+                isLoadingTimeSlots={isLoadingTimeSlots}
               />
             </div>
           </TabsContent>
@@ -151,10 +171,11 @@ const DeliveryMethodStep = ({
               <DeliveryDateTimePicker
                 orderType="pickup"
                 selectedDate={selectedDate}
-                onDateChange={setSelectedDate}
+                onDateChange={handleDateChange}
                 selectedSlot={selectedSlot}
                 onSlotSelect={handleSelectTimeSlot}
                 availableTimeSlots={availableTimeSlots}
+                isLoadingTimeSlots={isLoadingTimeSlots}
               />
             </div>
           </TabsContent>

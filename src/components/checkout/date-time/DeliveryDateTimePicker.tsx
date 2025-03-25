@@ -15,6 +15,7 @@ interface DeliveryDateTimePickerProps {
   selectedSlot: string | null;
   onSlotSelect: (slotId: string) => void;
   availableTimeSlots: TimeSlot[];
+  isLoadingTimeSlots: boolean;
 }
 
 const DeliveryDateTimePicker = ({
@@ -24,6 +25,7 @@ const DeliveryDateTimePicker = ({
   selectedSlot,
   onSlotSelect,
   availableTimeSlots,
+  isLoadingTimeSlots,
 }: DeliveryDateTimePickerProps) => {
   const title = orderType === 'delivery' ? 'Delivery' : 'Pickup';
   
@@ -68,18 +70,21 @@ const DeliveryDateTimePicker = ({
         </Popover>
       </div>
       
-      <div>
-        <h3 className="font-medium mb-2">{title} Time</h3>
-        <TimeSlotSelector
-          slots={availableTimeSlots}
-          selectedSlot={selectedSlot}
-          onSelectSlot={onSlotSelect}
-          label={`Available Time Slots`}
-          showCapacity={true}
-          layout="grid"
-          emptyMessage={`No ${title.toLowerCase()} slots available for this date. Please select another date.`}
-        />
-      </div>
+      {/* Only show time slots if a date is selected */}
+      {selectedDate && (
+        <div>
+          <h3 className="font-medium mb-2">{title} Time</h3>
+          <TimeSlotSelector
+            slots={availableTimeSlots}
+            selectedSlot={selectedSlot}
+            onSelectSlot={onSlotSelect}
+            label={`Available Time Slots for ${format(selectedDate, 'MMMM d, yyyy')}`}
+            showCapacity={true}
+            layout="grid"
+            emptyMessage={isLoadingTimeSlots ? "Loading available slots..." : `No ${title.toLowerCase()} slots available for this date. Please select another date.`}
+          />
+        </div>
+      )}
     </div>
   );
 };
