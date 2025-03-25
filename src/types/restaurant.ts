@@ -1,4 +1,3 @@
-
 import { MenuItem } from "./index";
 
 export interface TimeSlotSettings {

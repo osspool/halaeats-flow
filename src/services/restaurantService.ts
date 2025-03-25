@@ -1,7 +1,7 @@
-
 import { DishAvailability, DishCreateRequest, RestaurantMenu, AvailabilityUpdateRequest, TimeSlotUpdateRequest, Order, OrderDate, OrdersResponse, OrderDatesResponse } from "@/types/restaurant";
 import { MenuItem } from "@/types";
 import { addDays, format, parseISO, subDays } from "date-fns";
+import { OrderItem } from "@/types/restaurant";
 
 // Default time slots
 const defaultTimeSlots = [
