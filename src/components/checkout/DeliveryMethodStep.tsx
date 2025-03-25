@@ -126,30 +126,46 @@ const DeliveryMethodStep = ({
 
   const handleContinue = (e: React.MouseEvent) => {
     e.preventDefault();
+    console.log('Continue button clicked');
+    console.log('Current validation state:', {
+      selectedType,
+      selectedAddressId,
+      selectedSlot,
+      isQuoteValid: selectedType === 'delivery' ? isQuoteValid() : true
+    });
     
-    // Validation: Don't proceed if delivery is selected but no address is chosen
-    if (selectedType === 'delivery' && !selectedAddressId) return;
-    
-    // Validation: Don't proceed if no time slot is selected
-    if (!selectedSlot) return;
-    
-    // For delivery, validate that the quote is valid
-    if (selectedType === 'delivery' && !isQuoteValid()) {
-      handleRefreshQuote();
+    // For pickup orders, we only need a selected slot
+    if (selectedType === 'pickup' && selectedSlot) {
+      // We can skip the quote validation for pickup
+      console.log('Pickup order is valid, proceeding to next step');
+      onNext();
       return;
     }
     
-    // Attempt to book the selected time slot
-    bookTimeSlotMutation.mutate(selectedSlot, {
-      onSuccess: (success) => {
-        if (success) {
-          // Time slot was successfully booked, proceed to next step
-          console.log('Time slot booked successfully:', selectedSlot);
-          onNext();
-        }
-        // If booking failed, the mutation will show an error toast
+    // For delivery orders
+    if (selectedType === 'delivery') {
+      // Validate delivery requirements
+      if (!selectedAddressId) {
+        console.log('No address selected for delivery');
+        return;
       }
-    });
+      
+      if (!selectedSlot) {
+        console.log('No time slot selected for delivery');
+        return;
+      }
+      
+      // Check quote validity
+      if (!isQuoteValid()) {
+        console.log('Delivery quote is not valid, refreshing...');
+        handleRefreshQuote();
+        return;
+      }
+      
+      console.log('Delivery order is valid, proceeding to next step');
+      onNext();
+      return;
+    }
   };
 
   return (
@@ -224,8 +240,8 @@ const DeliveryMethodStep = ({
         onClick={handleContinue}
         className="w-full bg-primary hover:bg-cuisine-600"
         disabled={
-          (selectedType === 'delivery' && (!selectedAddressId || !isQuoteValid())) || 
-          !selectedSlot || 
+          (selectedType === 'delivery' && (!selectedAddressId || !isQuoteValid() || !selectedSlot)) || 
+          (selectedType === 'pickup' && !selectedSlot) ||
           bookTimeSlotMutation.isPending ||
           isLoadingQuote
         }

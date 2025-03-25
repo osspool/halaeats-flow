@@ -12,7 +12,7 @@ export const useCheckoutCompletion = (
 ) => {
   const { toast } = useToast();
 
-  const completeCheckout = useCallback(async () => {
+  const completeCheckout = useCallback(async (): Promise<void> => {
     try {
       console.log('Processing order with:', checkoutState);
       
@@ -34,7 +34,7 @@ export const useCheckoutCompletion = (
         description: "Your order has been processed. Thank you for your purchase.",
       });
       
-      // We won't return anything, which implicitly returns undefined (void)
+      // No explicit return needed for void return type
     } catch (error) {
       console.error('Error processing order:', error);
       toast({
@@ -43,7 +43,7 @@ export const useCheckoutCompletion = (
         variant: "destructive",
       });
       
-      // We won't return anything, which implicitly returns undefined (void)
+      // No explicit return needed for void return type
     }
   }, [checkoutState, completePayment, setCheckoutState, toast]);
 

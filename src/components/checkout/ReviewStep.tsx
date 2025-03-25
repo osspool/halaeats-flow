@@ -40,7 +40,6 @@ const ReviewStep = ({
     ? mockPaymentMethods.find(pm => pm.id === selectedPaymentMethodId) 
     : undefined;
   
-  // Get delivery quote from checkout state
   const deliveryQuote: DeliveryQuote | undefined = (checkoutState as any).deliveryQuote;
 
   useEffect(() => {
@@ -63,16 +62,8 @@ const ReviewStep = ({
     setIsProcessing(true);
     
     try {
-      // For delivery orders, pass the delivery quote to createPaymentIntent
-      if (orderType === 'delivery' && deliveryQuote) {
-        // Create a payment intent with the delivery quote information - fixed to use only 2 arguments
-        await createPaymentIntent(orderSummary.total, items);
-      } else {
-        // Regular payment intent for pickup orders
-        await createPaymentIntent(orderSummary.total, items);
-      }
+      await createPaymentIntent(orderSummary.total, items);
       
-      // Place the order (handled in completeCheckout)
       onNext();
     } catch (error) {
       console.error('Error placing order:', error);
@@ -86,7 +77,6 @@ const ReviewStep = ({
     }
   };
   
-  // Format the estimated delivery time
   const formatEstimatedTime = (isoString?: string) => {
     if (!isoString) return 'Unknown';
     try {
@@ -104,7 +94,6 @@ const ReviewStep = ({
       </p>
 
       <div className="space-y-6">
-        {/* Order Items */}
         <div className="bg-gray-50 p-4 rounded-lg">
           <h3 className="font-medium flex items-center mb-3">
             <ShoppingBag className="h-4 w-4 mr-2 text-primary" />
@@ -124,7 +113,6 @@ const ReviewStep = ({
           </div>
         </div>
         
-        {/* Delivery Method */}
         <div className="bg-gray-50 p-4 rounded-lg">
           <h3 className="font-medium flex items-center mb-3">
             <Truck className="h-4 w-4 mr-2 text-primary" />
@@ -152,7 +140,6 @@ const ReviewStep = ({
                 </div>
               )}
               
-              {/* Delivery Quote Information */}
               {deliveryQuote && (
                 <div className="mt-3 p-2 bg-primary-50 rounded border border-primary-100">
                   <p className="text-xs text-gray-600 font-medium mb-1">Delivery Information:</p>
@@ -185,7 +172,6 @@ const ReviewStep = ({
           )}
         </div>
         
-        {/* Payment Method */}
         <div className="bg-gray-50 p-4 rounded-lg">
           <h3 className="font-medium flex items-center mb-3">
             <CreditCard className="h-4 w-4 mr-2 text-primary" />
@@ -208,7 +194,6 @@ const ReviewStep = ({
           )}
         </div>
         
-        {/* Order Summary */}
         <div className="bg-gray-50 p-4 rounded-lg">
           <h3 className="font-medium mb-3">Order Summary</h3>
           
