@@ -31,15 +31,6 @@ const CalendarWidget = ({
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = React.useState(false);
   
-  // Map order dates to the format expected by DateCalendarWidget
-  const mapOrderDates = () => {
-    if (!orderDates) return [];
-    return orderDates.map(date => ({
-      date: date.date,
-      count: date.count
-    }));
-  };
-
   // For mobile, we'll wrap the calendar in a collapsible component
   if (isMobile) {
     return (
@@ -66,7 +57,7 @@ const CalendarWidget = ({
               selectedDate={selectedDate}
               onDateSelect={onDateSelect}
               onMonthChange={onMonthChange}
-              datesWithItems={mapOrderDates()}
+              datesWithItems={orderDates}
               isLoading={isLoading}
               currentMonth={currentMonth}
               title="Select Date"
@@ -84,7 +75,7 @@ const CalendarWidget = ({
       selectedDate={selectedDate}
       onDateSelect={onDateSelect}
       onMonthChange={onMonthChange}
-      datesWithItems={mapOrderDates()}
+      datesWithItems={orderDates}
       isLoading={isLoading}
       currentMonth={currentMonth}
       title="Select Date"
