@@ -34,6 +34,7 @@ const DeliveryMethodStep = ({
 }: DeliveryMethodStepProps) => {
   const [selectedType, setSelectedType] = useState<OrderType>(orderType);
   const [currentAddressId, setCurrentAddressId] = useState<string | undefined>(selectedAddressId);
+  const [shouldRefreshQuote, setShouldRefreshQuote] = useState(false);
   
   // Fetch restaurant menu data to get time slots and capacities
   const { data: menuData, isLoading: isMenuLoading } = useRestaurantMenu();
@@ -69,25 +70,7 @@ const DeliveryMethodStep = ({
     console.log('Address selected in DeliveryMethodStep:', addressId);
     setCurrentAddressId(addressId);
     onAddressSelect(addressId);
-    
-    // Fetch delivery quote when address changes
-    if (selectedType === 'delivery') {
-      const selectedAddress = mockAddresses.find(addr => addr.id === addressId);
-      if (selectedAddress) {
-        console.log('Fetching delivery quote for address:', selectedAddress);
-        fetchDeliveryQuote(selectedAddress)
-          .then(quote => {
-            console.log('Received quote:', quote);
-            if (!quote || quote.status !== 'active') {
-              toast.error('Could not get a valid delivery quote. Please try again.');
-            }
-          })
-          .catch(err => {
-            console.error('Error fetching quote:', err);
-            toast.error('Error getting delivery quote. Please try again.');
-          });
-      }
-    }
+    setShouldRefreshQuote(true);
   };
 
   // Update pickup time when slot changes
@@ -97,6 +80,11 @@ const DeliveryMethodStep = ({
   };
 
   const handleRefreshQuote = () => {
+    if (isLoadingQuote) {
+      console.log('Quote refresh already in progress, skipping');
+      return;
+    }
+    
     const selectedAddress = mockAddresses.find(addr => addr.id === currentAddressId);
     if (selectedAddress) {
       toast.promise(refreshQuote(selectedAddress), {

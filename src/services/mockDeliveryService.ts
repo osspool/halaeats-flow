@@ -41,23 +41,30 @@ const calculateEstimatedDeliveryTime = (timeSlot?: string): string => {
     return formatISO(addMinutes(new Date(), randomMinutes));
   }
   
-  // Parse the time slot format (e.g., "18:00-21:00")
-  const [startTime] = timeSlot.split('-');
-  const [hours, minutes] = startTime.split(':').map(Number);
-  
-  // Create a date object for today with the start time from the slot
-  const today = new Date();
-  const deliveryDate = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate(),
-    hours,
-    minutes
-  );
-  
-  // Add 15-30 minutes for delivery within the time slot
-  const additionalMinutes = Math.floor(Math.random() * 16) + 15; // 15-30 minutes
-  return formatISO(addMinutes(deliveryDate, additionalMinutes));
+  try {
+    // Parse the time slot format (e.g., "18:00-21:00")
+    const [startTime] = timeSlot.split('-');
+    const [hours, minutes] = startTime.split(':').map(Number);
+    
+    // Create a date object for today with the start time from the slot
+    const today = new Date();
+    const deliveryDate = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate(),
+      hours,
+      minutes
+    );
+    
+    // Add 15-30 minutes for delivery within the time slot
+    const additionalMinutes = Math.floor(Math.random() * 16) + 15; // 15-30 minutes
+    return formatISO(addMinutes(deliveryDate, additionalMinutes));
+  } catch (error) {
+    console.error('Error parsing time slot:', timeSlot, error);
+    // Fallback to default behavior
+    const randomMinutes = Math.floor(Math.random() * 21) + 20; // 20-40 minutes
+    return formatISO(addMinutes(new Date(), randomMinutes));
+  }
 };
 
 // Calculate distance in miles (mock)

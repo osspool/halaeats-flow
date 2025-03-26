@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import DeliveryForm from '../delivery/DeliveryForm';
 import TimeSlotSection from './TimeSlotSection';
 import { TimeSlot } from '@/components/shared/time-slots/types';
@@ -34,13 +34,23 @@ const DeliveryTabContent = ({
   isLoadingQuote,
   onRefreshQuote
 }: DeliveryTabContentProps) => {
-  // When time slot or address changes, we need to refresh the quote
+  const prevAddressRef = useRef(selectedAddressId);
+  const prevSlotRef = useRef(selectedSlot);
+  
+  // Only refresh quote when both address and slot are selected AND one of them has changed
   useEffect(() => {
-    if (selectedAddressId && selectedSlot) {
-      console.log('Address and time slot both selected, should refresh quote');
+    if (selectedAddressId && 
+        selectedSlot && 
+        (prevAddressRef.current !== selectedAddressId || prevSlotRef.current !== selectedSlot) && 
+        !isLoadingQuote) {
+      console.log('Address or time slot changed, refreshing quote');
       onRefreshQuote();
+      
+      // Update refs to current values
+      prevAddressRef.current = selectedAddressId;
+      prevSlotRef.current = selectedSlot;
     }
-  }, [selectedAddressId, selectedSlot, onRefreshQuote]);
+  }, [selectedAddressId, selectedSlot, onRefreshQuote, isLoadingQuote]);
 
   const handleAddressSelect = (addressId: string) => {
     console.log('Address selected in DeliveryTabContent:', addressId);
