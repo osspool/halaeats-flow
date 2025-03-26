@@ -35,7 +35,7 @@ const DeliveryTabContent = ({
   onRefreshQuote
 }: DeliveryTabContentProps) => {
   return (
-    <div className="p-4 bg-halaeats-50 rounded-lg space-y-6">
+    <div>
       <DeliveryForm
         selectedAddressId={selectedAddressId}
         onAddressSelect={onAddressSelect}

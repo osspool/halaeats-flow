@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { TabsContent } from '@/components/ui/tabs';
 import { OrderType } from '@/types';
 import { useBookTimeSlot, useRestaurantMenu } from '@/hooks/useRestaurantApi';
 import { TimeSlot } from '@/components/shared/time-slots/types';
@@ -189,6 +188,35 @@ const DeliveryMethodStep = ({
     }
   };
 
+  // Create content components for delivery and pickup tabs
+  const deliveryContent = (
+    <DeliveryTabContent 
+      selectedAddressId={selectedAddressId}
+      onAddressSelect={onAddressSelect}
+      onDeliveryInstructionsChange={onDeliveryInstructionsChange}
+      selectedDate={selectedDate}
+      onDateChange={handleDateChange}
+      selectedSlot={selectedSlot}
+      onSlotSelect={handleSelectTimeSlot}
+      availableTimeSlots={availableTimeSlots}
+      isLoadingTimeSlots={isLoadingTimeSlots}
+      deliveryQuote={deliveryQuote}
+      isLoadingQuote={isLoadingQuote}
+      onRefreshQuote={handleRefreshQuote}
+    />
+  );
+
+  const pickupContent = (
+    <PickupTabContent
+      selectedDate={selectedDate}
+      onDateChange={handleDateChange}
+      selectedSlot={selectedSlot}
+      onSlotSelect={handleSelectTimeSlot}
+      availableTimeSlots={availableTimeSlots}
+      isLoadingTimeSlots={isLoadingTimeSlots}
+    />
+  );
+
   return (
     <div className="space-y-6">
       <div>
@@ -200,36 +228,9 @@ const DeliveryMethodStep = ({
         <OrderTypeSelector
           selectedType={selectedType}
           onOrderTypeChange={handleOrderTypeChange}
+          deliveryContent={deliveryContent}
+          pickupContent={pickupContent}
         />
-        
-        {/* Inject content into the tabs */}
-        <TabsContent value="delivery">
-          <DeliveryTabContent 
-            selectedAddressId={selectedAddressId}
-            onAddressSelect={onAddressSelect}
-            onDeliveryInstructionsChange={onDeliveryInstructionsChange}
-            selectedDate={selectedDate}
-            onDateChange={handleDateChange}
-            selectedSlot={selectedSlot}
-            onSlotSelect={handleSelectTimeSlot}
-            availableTimeSlots={availableTimeSlots}
-            isLoadingTimeSlots={isLoadingTimeSlots}
-            deliveryQuote={deliveryQuote}
-            isLoadingQuote={isLoadingQuote}
-            onRefreshQuote={handleRefreshQuote}
-          />
-        </TabsContent>
-        
-        <TabsContent value="pickup">
-          <PickupTabContent
-            selectedDate={selectedDate}
-            onDateChange={handleDateChange}
-            selectedSlot={selectedSlot}
-            onSlotSelect={handleSelectTimeSlot}
-            availableTimeSlots={availableTimeSlots}
-            isLoadingTimeSlots={isLoadingTimeSlots}
-          />
-        </TabsContent>
       </div>
       
       <ContinueButton 

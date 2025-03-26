@@ -7,9 +7,16 @@ import { OrderType } from '@/types';
 interface OrderTypeSelectorProps {
   selectedType: OrderType;
   onOrderTypeChange: (type: OrderType) => void;
+  deliveryContent: React.ReactNode;
+  pickupContent: React.ReactNode;
 }
 
-const OrderTypeSelector = ({ selectedType, onOrderTypeChange }: OrderTypeSelectorProps) => {
+const OrderTypeSelector = ({ 
+  selectedType, 
+  onOrderTypeChange,
+  deliveryContent,
+  pickupContent
+}: OrderTypeSelectorProps) => {
   const handleSelect = (value: string) => {
     const type = value as OrderType;
     onOrderTypeChange(type);
@@ -33,11 +40,11 @@ const OrderTypeSelector = ({ selectedType, onOrderTypeChange }: OrderTypeSelecto
       </TabsList>
       
       <TabsContent value="delivery" className="p-4 bg-halaeats-50 rounded-lg space-y-6">
-        {/* Content will be injected by parent */}
+        {deliveryContent}
       </TabsContent>
       
       <TabsContent value="pickup" className="p-4 bg-halaeats-50 rounded-lg space-y-6">
-        {/* Content will be injected by parent */}
+        {pickupContent}
       </TabsContent>
     </Tabs>
   );
