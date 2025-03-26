@@ -1,4 +1,6 @@
 
+import { DeliveryQuote } from './delivery';
+
 export interface Address {
   id: string;
   name: string;
@@ -40,13 +42,15 @@ export interface MockStripePaymentIntent {
 }
 
 export type CheckoutStep = 'delivery-method' | 'payment' | 'review' | 'confirmation';
+export type OrderType = 'delivery' | 'pickup';
 
 export interface CheckoutState {
   step: CheckoutStep;
-  orderType: 'delivery' | 'pickup';
+  orderType: OrderType;
   selectedAddressId?: string;
   selectedPaymentMethodId?: string;
   deliveryInstructions?: string;
   pickupTime?: string;
   paymentIntent?: MockStripePaymentIntent;
+  deliveryQuote?: DeliveryQuote | null;
 }

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import PaymentStep from './payment/PaymentStep';
+import { useCheckout } from '@/hooks/useCheckout';
 
 // Initialize Stripe with the publishable key
 // This is a public key, it's safe to include in the code
@@ -22,6 +23,7 @@ const StripePaymentWrapper = ({
   onPrevious,
 }: StripePaymentWrapperProps) => {
   const [clientSecret, setClientSecret] = useState('');
+  const { checkoutState } = useCheckout();
   
   useEffect(() => {
     // In a real app, you would fetch this from your server
@@ -29,6 +31,12 @@ const StripePaymentWrapper = ({
     const mockClientSecret = `seti_${Math.random().toString(36).substring(2)}_secret_${Math.random().toString(36).substring(2)}`;
     setClientSecret(mockClientSecret);
   }, []);
+  
+  // Handle payment method selection
+  const handlePaymentMethodSelect = (paymentMethodId: string) => {
+    console.log('Payment method selected in StripePaymentWrapper:', paymentMethodId);
+    onPaymentMethodSelect(paymentMethodId);
+  };
   
   return (
     <div>
@@ -46,8 +54,8 @@ const StripePaymentWrapper = ({
           }}
         >
           <PaymentStep
-            selectedPaymentMethodId={selectedPaymentMethodId}
-            onPaymentMethodSelect={onPaymentMethodSelect}
+            selectedPaymentMethodId={selectedPaymentMethodId || checkoutState.selectedPaymentMethodId}
+            onPaymentMethodSelect={handlePaymentMethodSelect}
             onNext={onNext}
             onPrevious={onPrevious}
           />

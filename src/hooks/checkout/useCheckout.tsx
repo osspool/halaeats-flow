@@ -19,7 +19,8 @@ export const useCheckout = (): UseCheckoutReturn => {
     setSelectedPaymentMethodId,
     setDeliveryInstructions,
     setPickupTime,
-  } = useCheckoutForm(checkoutState);
+    setDeliveryQuote,
+  } = useCheckoutForm(checkoutState, setCheckoutState);
   
   // Hook for payment processing
   const {
@@ -57,6 +58,7 @@ export const useCheckout = (): UseCheckoutReturn => {
     setSelectedPaymentMethodId,
     setDeliveryInstructions,
     setPickupTime,
+    setDeliveryQuote,
     createPaymentIntent,
     confirmPaymentIntent,
     resetCheckout,

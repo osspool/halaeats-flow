@@ -32,25 +32,30 @@ const ReviewStep = ({
   const { toast } = useToast();
   const { createPaymentIntent, checkoutState } = useCheckout();
   
-  const selectedAddress = selectedAddressId 
-    ? mockAddresses.find(addr => addr.id === selectedAddressId) 
+  const effectivePaymentMethodId = selectedPaymentMethodId || checkoutState.selectedPaymentMethodId;
+  const effectiveAddressId = selectedAddressId || checkoutState.selectedAddressId;
+  
+  const selectedAddress = effectiveAddressId 
+    ? mockAddresses.find(addr => addr.id === effectiveAddressId) 
     : undefined;
     
-  const selectedPaymentMethod = selectedPaymentMethodId 
-    ? mockPaymentMethods.find(pm => pm.id === selectedPaymentMethodId) 
+  const selectedPaymentMethod = effectivePaymentMethodId 
+    ? mockPaymentMethods.find(pm => pm.id === effectivePaymentMethodId) 
     : undefined;
   
-  const deliveryQuote: DeliveryQuote | undefined = (checkoutState as any).deliveryQuote;
+  const deliveryQuote: DeliveryQuote | undefined = checkoutState.deliveryQuote;
 
   useEffect(() => {
-    console.log('ReviewStep - selectedPaymentMethodId:', selectedPaymentMethodId);
+    console.log('ReviewStep - selectedPaymentMethodId prop:', selectedPaymentMethodId);
     console.log('ReviewStep - checkoutState:', checkoutState);
-  }, [selectedPaymentMethodId, checkoutState]);
+    console.log('ReviewStep - effective payment method ID:', effectivePaymentMethodId);
+    console.log('ReviewStep - selected payment method:', selectedPaymentMethod);
+  }, [selectedPaymentMethodId, checkoutState, effectivePaymentMethodId, selectedPaymentMethod]);
   
   const handlePlaceOrder = async () => {
-    console.log('Placing order with payment method:', selectedPaymentMethodId);
+    console.log('Placing order with payment method:', effectivePaymentMethodId);
     
-    if (!selectedPaymentMethodId && !checkoutState.selectedPaymentMethodId) {
+    if (!effectivePaymentMethodId) {
       toast({
         title: "Payment required",
         description: "Please select a payment method before placing your order.",
@@ -178,7 +183,7 @@ const ReviewStep = ({
             Payment Method
           </h3>
           
-          {selectedPaymentMethod && (
+          {selectedPaymentMethod ? (
             <div>
               <p className="text-sm font-medium">
                 {selectedPaymentMethod.brand.charAt(0).toUpperCase() + selectedPaymentMethod.brand.slice(1)}
@@ -191,6 +196,8 @@ const ReviewStep = ({
                 <span>Payment processed securely via Stripe</span>
               </div>
             </div>
+          ) : (
+            <p className="text-sm text-red-500">No payment method selected. Please go back and select one.</p>
           )}
         </div>
         
@@ -237,7 +244,7 @@ const ReviewStep = ({
         <Button 
           onClick={handlePlaceOrder}
           className="w-full bg-primary hover:bg-primary/90 h-12"
-          disabled={isProcessing}
+          disabled={isProcessing || !selectedPaymentMethod}
         >
           {isProcessing ? (
             <>Processing Payment...</>

@@ -137,9 +137,9 @@ const PaymentStep = ({
       return;
     }
     
-    // In a real implementation, this would create a SetupIntent or PaymentIntent
-    // with Stripe, depending on the checkout flow
-
+    // Make sure to call onPaymentMethodSelect before proceeding
+    onPaymentMethodSelect(selected);
+    
     // Mock a successful payment setup
     setIsProcessing(true);
     setTimeout(() => {

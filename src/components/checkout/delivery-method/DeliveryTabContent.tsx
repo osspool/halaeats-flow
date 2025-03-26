@@ -57,6 +57,11 @@ const DeliveryTabContent = ({
     onAddressSelect(addressId);
   };
 
+  const handleSlotSelect = (slotId: string) => {
+    console.log('Slot selected in DeliveryTabContent:', slotId);
+    onSlotSelect(slotId);
+  };
+
   return (
     <div>
       <DeliveryForm
@@ -70,7 +75,7 @@ const DeliveryTabContent = ({
         selectedDate={selectedDate}
         onDateChange={onDateChange}
         selectedSlot={selectedSlot}
-        onSlotSelect={onSlotSelect}
+        onSlotSelect={handleSlotSelect}
         availableTimeSlots={availableTimeSlots}
         isLoadingTimeSlots={isLoadingTimeSlots}
         deliveryQuote={deliveryQuote}

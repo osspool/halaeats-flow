@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { OrderType } from '@/types';
 import { useBookTimeSlot, useRestaurantMenu } from '@/hooks/useRestaurantApi';
 import { mockAddresses } from '@/data/checkoutMockData';
@@ -59,6 +59,16 @@ const DeliveryMethodStep = ({
     isQuoteValid,
     refreshQuote
   } = useDeliveryQuote();
+
+  // Import setDeliveryQuote from useCheckout
+  const { setDeliveryQuote } = useCheckout();
+
+  // Update checkout state with the delivery quote when it changes
+  useEffect(() => {
+    if (deliveryQuote) {
+      setDeliveryQuote(deliveryQuote);
+    }
+  }, [deliveryQuote, setDeliveryQuote]);
 
   const handleOrderTypeChange = (type: OrderType) => {
     console.log("Setting order type to:", type);
@@ -154,5 +164,8 @@ const DeliveryMethodStep = ({
     </div>
   );
 };
+
+// Add missing import
+import { useCheckout } from '@/hooks/useCheckout';
 
 export default DeliveryMethodStep;
