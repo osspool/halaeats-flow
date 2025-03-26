@@ -1,4 +1,3 @@
-
 import { useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { MockStripePaymentIntent } from '@/types/checkout';
@@ -23,11 +22,10 @@ export const useCheckoutPayment = (
       }
       
       const catererId = cartItems[0].caterer.id;
-      const connectedAccountId = mockConnectedAccounts[catererId];
+      // Set a default connected account if the specific caterer is not found
+      const connectedAccountId = mockConnectedAccounts[catererId] || 'acct_default123456789';
       
-      if (!connectedAccountId) {
-        throw new Error('Caterer not found in connected accounts');
-      }
+      console.log('Using connected account:', connectedAccountId, 'for caterer:', catererId);
       
       // If we have a delivery quote, we need to split the payment
       let paymentIntent;

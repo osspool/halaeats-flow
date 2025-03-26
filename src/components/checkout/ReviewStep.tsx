@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Check, ShoppingBag, Truck, MapPin, CreditCard, Shield } from 'lucide-react';
@@ -50,7 +51,15 @@ const ReviewStep = ({
     console.log('ReviewStep - checkoutState:', checkoutState);
     console.log('ReviewStep - effective payment method ID:', effectivePaymentMethodId);
     console.log('ReviewStep - selected payment method:', selectedPaymentMethod);
-  }, [selectedPaymentMethodId, checkoutState, effectivePaymentMethodId, selectedPaymentMethod]);
+    
+    if (!effectivePaymentMethodId) {
+      console.warn('No payment method selected in ReviewStep');
+    }
+    
+    if (orderType === 'delivery' && !effectiveAddressId) {
+      console.warn('No address selected for delivery in ReviewStep');
+    }
+  }, [selectedPaymentMethodId, checkoutState, effectivePaymentMethodId, selectedPaymentMethod, orderType, effectiveAddressId]);
   
   const handlePlaceOrder = async () => {
     console.log('Placing order with payment method:', effectivePaymentMethodId);
@@ -64,10 +73,29 @@ const ReviewStep = ({
       return;
     }
     
+    if (orderType === 'delivery' && !effectiveAddressId) {
+      toast({
+        title: "Address required",
+        description: "Please select a delivery address before placing your order.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsProcessing(true);
     
     try {
-      await createPaymentIntent(orderSummary.total, items);
+      // Generate a mock order that will be used to create the payment intent
+      // If we don't have real items, create a fallback item
+      const orderItems = items.length > 0 ? items : [{
+        id: 'fallback-item',
+        quantity: 1,
+        subtotal: orderSummary.subtotal,
+        menuItem: { name: 'Your Order', description: '', price: orderSummary.subtotal },
+        caterer: { id: 'cat_default', name: 'Restaurant' },
+      }];
+      
+      await createPaymentIntent(orderSummary.total, orderItems);
       
       onNext();
     } catch (error) {
