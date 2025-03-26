@@ -27,6 +27,7 @@ const OrderTypeSelector = ({
       value={selectedType}
       onValueChange={handleValueChange}
       className="w-full"
+      defaultValue={selectedType} // Added default value to initialize properly
     >
       <TabsList className="grid w-full grid-cols-2 mb-6">
         <TabsTrigger value="delivery" className="flex items-center gap-2">

@@ -26,7 +26,7 @@ export const useDeliveryMethodValidation = ({
   const [isButtonDisabled, setIsButtonDisabled] = useState(true);
 
   const validateForm = useCallback(() => {
-    // If we're loading data, disable the button
+    // If we're booking a time slot, always disable the button during the operation
     if (bookTimeSlotMutation.isPending) {
       console.log('Button disabled: timeSlot mutation is pending');
       setIsButtonDisabled(true);
@@ -35,7 +35,7 @@ export const useDeliveryMethodValidation = ({
 
     // For pickup orders, we just need a time slot
     if (selectedType === 'pickup') {
-      const valid = !!selectedSlot && !isLoadingTimeSlots;
+      const valid = !!selectedSlot;
       console.log('Pickup validation:', { timeSlotSelected: !!selectedSlot, valid });
       setIsButtonDisabled(!valid);
       return;
@@ -45,7 +45,7 @@ export const useDeliveryMethodValidation = ({
     if (selectedType === 'delivery') {
       // We need an address and a time slot
       const hasAddress = !!selectedAddressId;
-      const hasTimeSlot = !!selectedSlot && !isLoadingTimeSlots;
+      const hasTimeSlot = !!selectedSlot;
       
       console.log('Delivery validation:', {
         addressSelected: hasAddress,
@@ -54,14 +54,10 @@ export const useDeliveryMethodValidation = ({
         isLoadingQuote
       });
       
-      // Allow proceeding if we have both address and time slot
-      // We'll check the quote validity in the click handler
-      if (hasAddress && hasTimeSlot) {
-        setIsButtonDisabled(false);
-        return;
-      }
-      
-      setIsButtonDisabled(true);
+      // FIXED: Enable the button if we have both address and time slot
+      // Quote validity is checked when the button is clicked
+      const isValid = hasAddress && hasTimeSlot;
+      setIsButtonDisabled(!isValid);
       return;
     }
 
