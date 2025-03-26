@@ -44,7 +44,7 @@ export const registerDeliveryStore = async (
     business_hours: defaultBusinessHours,
     phone_number: phoneNumber,
     email,
-    pickup_instructions,
+    pickup_instructions: pickupInstructions,
     average_preparation_time: prepTime,
     status: 'active',
     created_at: formatISO(now),
