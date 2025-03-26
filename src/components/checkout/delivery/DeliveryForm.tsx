@@ -4,10 +4,12 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Address } from '@/types/checkout';
 import { cn } from '@/lib/utils';
-import { Plus } from 'lucide-react';
+import { Plus, MapPin, Edit } from 'lucide-react';
 import { mockAddresses } from '@/data/checkoutMockData';
+import DeliveryAddressForm from './DeliveryAddressForm';
 
 interface DeliveryFormProps {
   selectedAddressId?: string;
@@ -20,9 +22,11 @@ const DeliveryForm = ({
   onAddressSelect,
   onDeliveryInstructionsChange,
 }: DeliveryFormProps) => {
-  const [addresses] = useState<Address[]>(mockAddresses);
+  const [addresses, setAddresses] = useState<Address[]>(mockAddresses);
   const [selected, setSelected] = useState<string>(selectedAddressId || '');
   const [instructions, setInstructions] = useState<string>('');
+  const [showAddressForm, setShowAddressForm] = useState(false);
+  const [addressToEdit, setAddressToEdit] = useState<Address | null>(null);
 
   // Set default address if none is selected
   useEffect(() => {
@@ -45,6 +49,47 @@ const DeliveryForm = ({
     onDeliveryInstructionsChange(e.target.value);
   };
 
+  const handleEditAddress = (address: Address) => {
+    setAddressToEdit(address);
+    setShowAddressForm(true);
+  };
+
+  const handleSaveAddress = (addressData: Partial<Address>) => {
+    if (addressToEdit) {
+      // Edit existing address
+      const updatedAddresses = addresses.map(addr => 
+        addr.id === addressToEdit.id 
+          ? { ...addr, ...addressData } 
+          : addressData.isDefault ? { ...addr, isDefault: false } : addr
+      );
+      setAddresses(updatedAddresses);
+    } else {
+      // Add new address
+      const newAddress: Address = {
+        id: `addr_${Math.random().toString(36).substring(2, 10)}`,
+        name: addressData.name || 'New Address',
+        street: addressData.street || '',
+        apt: addressData.apt,
+        city: addressData.city || '',
+        state: addressData.state || '',
+        zipCode: addressData.zipCode || '',
+        isDefault: addressData.isDefault || false,
+      };
+      
+      // If this is set as default, remove default from others
+      const updatedAddresses = addressData.isDefault 
+        ? addresses.map(addr => ({ ...addr, isDefault: false }))
+        : [...addresses];
+      
+      setAddresses([...updatedAddresses, newAddress]);
+      setSelected(newAddress.id);
+      onAddressSelect(newAddress.id);
+    }
+    
+    setShowAddressForm(false);
+    setAddressToEdit(null);
+  };
+
   return (
     <div className="space-y-4">
       <h3 className="font-medium mb-2">Delivery Address</h3>
@@ -61,7 +106,7 @@ const DeliveryForm = ({
           <div
             key={address.id}
             className={cn(
-              "flex items-start space-x-3 border rounded-lg p-4 transition-colors",
+              "flex items-start space-x-3 border rounded-lg p-4 transition-colors relative",
               selected === address.id
                 ? "border-primary bg-primary/5"
                 : "border-halaeats-200"
@@ -87,16 +132,45 @@ const DeliveryForm = ({
                 {address.city}, {address.state} {address.zipCode}
               </p>
             </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="absolute top-2 right-2 h-8 w-8 p-0"
+              onClick={() => handleEditAddress(address)}
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
           </div>
         ))}
 
-        <Button
-          variant="outline"
-          className="flex items-center w-full py-6 border-dashed"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add New Address
-        </Button>
+        <Sheet open={showAddressForm} onOpenChange={setShowAddressForm}>
+          <SheetTrigger asChild>
+            <Button
+              variant="outline"
+              className="flex items-center w-full py-6 border-dashed"
+              onClick={() => {
+                setAddressToEdit(null);
+                setShowAddressForm(true);
+              }}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add New Address
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="right" className="w-full sm:max-w-md">
+            <h3 className="text-lg font-medium mb-4">
+              {addressToEdit ? 'Edit Address' : 'Add New Address'}
+            </h3>
+            <DeliveryAddressForm
+              onSave={handleSaveAddress}
+              onCancel={() => {
+                setShowAddressForm(false);
+                setAddressToEdit(null);
+              }}
+              initialAddress={addressToEdit || undefined}
+            />
+          </SheetContent>
+        </Sheet>
       </RadioGroup>
 
       <div className="mt-4">

@@ -1,10 +1,17 @@
 
-import { DeliveryQuote, DeliveryOrder, DeliveryPaymentSplit } from '@/types/delivery';
+import { 
+  DeliveryQuote, 
+  DeliveryOrder, 
+  DeliveryPaymentSplit, 
+  DeliveryBatch 
+} from '@/types/delivery';
 import { Address } from '@/types/checkout';
 import { addMinutes, formatISO, parseISO, format } from 'date-fns';
+import { getDeliveryStoreByExternalId } from './mockStoreService';
 
-// Mock restaurant address 
-const RESTAURANT_ADDRESS = '123 Food Street, San Francisco, CA 94105';
+// In-memory storage for batches
+const deliveryBatches: Map<string, DeliveryBatch> = new Map();
+const deliveryOrders: Map<string, DeliveryOrder> = new Map();
 
 // Calculate a delivery fee based on address distance and time slot (mock implementation)
 const calculateDeliveryFee = (address: Address, timeSlot?: string): number => {
@@ -77,7 +84,11 @@ const calculateDistance = (address: Address): number => {
 /**
  * Create a delivery quote (similar to DoorDash quoting API)
  */
-export const createDeliveryQuote = async (address: Address, timeSlot?: string): Promise<DeliveryQuote> => {
+export const createDeliveryQuote = async (
+  address: Address, 
+  timeSlot?: string,
+  storeId?: string  // Optional store ID
+): Promise<DeliveryQuote> => {
   console.log('Creating delivery quote for address:', address, 'time slot:', timeSlot || 'not specified');
   
   // Simulate API delay
@@ -90,13 +101,27 @@ export const createDeliveryQuote = async (address: Address, timeSlot?: string): 
   const fee = calculateDeliveryFee(address, timeSlot);
   const distance = calculateDistance(address);
   
+  // Get pickup address from store if storeId is provided
+  let pickupAddress = '123 Food Street, San Francisco, CA 94105';
+  if (storeId) {
+    try {
+      const store = await getDeliveryStoreByExternalId(storeId);
+      if (store) {
+        const storeAddress = store.address;
+        pickupAddress = `${storeAddress.street}${storeAddress.street2 ? ', ' + storeAddress.street2 : ''}, ${storeAddress.city}, ${storeAddress.state} ${storeAddress.zip_code}`;
+      }
+    } catch (error) {
+      console.error('Error fetching store:', error);
+    }
+  }
+  
   const quote = {
     id: `dq_${Math.random().toString(36).substring(2, 10)}`,
     fee,
     estimated_delivery_time: calculateEstimatedDeliveryTime(timeSlot),
     expires_at: formatISO(expiresAt),
     status: 'active' as const,
-    pickup_address: RESTAURANT_ADDRESS,
+    pickup_address: pickupAddress,
     delivery_address: addressString,
     distance_miles: distance,
     created_at: formatISO(now),
@@ -113,15 +138,13 @@ export const createDeliveryQuote = async (address: Address, timeSlot?: string): 
 export const createDeliveryOrder = async (
   quoteId: string, 
   address: Address,
-  paymentIntentId: string
+  paymentIntentId: string,
+  storeId?: string
 ): Promise<DeliveryOrder> => {
   console.log('Creating delivery order with quote ID:', quoteId);
   
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 1200));
-  
-  // Validate that the quote exists and is active
-  // In a real implementation, you would check this with the actual service
   
   const now = new Date();
   
@@ -134,8 +157,73 @@ export const createDeliveryOrder = async (
     updated_at: formatISO(now),
   };
   
+  // Store the order in our mock database
+  deliveryOrders.set(order.id, order);
+  
   console.log('Created delivery order:', order);
   return order;
+};
+
+/**
+ * Create a batch of orders for a specific time slot
+ */
+export const createDeliveryBatch = async (
+  storeId: string,
+  orderIds: string[],
+  pickupTime: string
+): Promise<DeliveryBatch> => {
+  console.log('Creating delivery batch for store:', storeId, 'with orders:', orderIds);
+  
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 1500));
+  
+  const now = new Date();
+  
+  // Collect the orders
+  const batchOrders: DeliveryOrder[] = [];
+  for (const orderId of orderIds) {
+    const order = deliveryOrders.get(orderId);
+    if (order) {
+      batchOrders.push(order);
+    }
+  }
+  
+  if (batchOrders.length === 0) {
+    throw new Error('No valid orders found for batch creation');
+  }
+  
+  const batch: DeliveryBatch = {
+    id: `batch_${Math.random().toString(36).substring(2, 10)}`,
+    store_id: storeId,
+    orders: batchOrders,
+    status: 'pending',
+    pickup_time: pickupTime,
+    created_at: formatISO(now),
+    updated_at: formatISO(now),
+  };
+  
+  // Store the batch
+  deliveryBatches.set(batch.id, batch);
+  
+  console.log('Created delivery batch:', batch);
+  return batch;
+};
+
+/**
+ * Get delivery batches for a store
+ */
+export const getDeliveryBatches = async (storeId: string): Promise<DeliveryBatch[]> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  const batches: DeliveryBatch[] = [];
+  for (const batch of deliveryBatches.values()) {
+    if (batch.store_id === storeId) {
+      batches.push(batch);
+    }
+  }
+  
+  return batches;
 };
 
 /**
