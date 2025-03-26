@@ -156,6 +156,7 @@ const DeliveryMethodStep = ({
       selectedType,
       selectedAddressId,
       selectedSlot,
+      isButtonDisabled,
       isQuoteValid: selectedType === 'delivery' ? isQuoteValid() : true
     });
     
@@ -180,11 +181,22 @@ const DeliveryMethodStep = ({
           console.log('Delivery quote is not valid, refreshing...');
           handleRefreshQuote();
           toast.error('Your delivery quote has expired. We have refreshed it for you. Please try again.');
+          return;
         }
       } else {
         console.log('Missing required fields for delivery order');
         toast.error('Please select both a delivery address and a time slot to continue.');
+        return;
       }
+    }
+    
+    // If we get here, validation failed but we need to make sure user knows why
+    if (!selectedSlot) {
+      toast.error('Please select a time slot to continue.');
+    }
+    
+    if (selectedType === 'delivery' && !selectedAddressId) {
+      toast.error('Please select a delivery address to continue.');
     }
   };
 

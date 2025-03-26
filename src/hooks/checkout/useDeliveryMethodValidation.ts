@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { OrderType } from '@/types';
 import { useDeliveryQuote } from '@/hooks/checkout/useDeliveryQuote';
 import { Address } from '@/types/checkout';
@@ -25,17 +25,18 @@ export const useDeliveryMethodValidation = ({
   const { isQuoteValid } = useDeliveryQuote();
   const [isButtonDisabled, setIsButtonDisabled] = useState(true);
 
-  // Validation logic for continue button
-  useEffect(() => {
-    // If we're loading data, disable the button
-    if (bookTimeSlotMutation.isPending || isLoadingTimeSlots) {
+  const validateForm = useCallback(() => {
+    // If we're loading data, disable the button unless we have what we need
+    if (bookTimeSlotMutation.isPending) {
       setIsButtonDisabled(true);
       return;
     }
 
     // For pickup orders, we just need a time slot
     if (selectedType === 'pickup') {
-      setIsButtonDisabled(!selectedSlot);
+      const valid = !!selectedSlot && !isLoadingTimeSlots;
+      console.log('Pickup validation:', { timeSlotSelected: !!selectedSlot, valid });
+      setIsButtonDisabled(!valid);
       return;
     }
 
@@ -43,22 +44,24 @@ export const useDeliveryMethodValidation = ({
     if (selectedType === 'delivery') {
       // We need an address, a time slot, and either a valid quote or loading quote
       const hasAddress = !!selectedAddressId;
-      const hasTimeSlot = !!selectedSlot;
+      const hasTimeSlot = !!selectedSlot && !isLoadingTimeSlots;
       const quoteValid = isQuoteValid();
       
       console.log('Delivery validation:', {
         addressSelected: hasAddress,
         timeSlotSelected: hasTimeSlot,
-        quoteValid
+        quoteValid,
+        isLoadingQuote
       });
       
-      // If we have an address and a time slot, we can enable the button even if we're still loading the quote
-      if (hasAddress && hasTimeSlot && isLoadingQuote) {
+      // If we have both address and time slot, we can enable the button
+      // We'll check the quote validity in the click handler
+      if (hasAddress && hasTimeSlot) {
         setIsButtonDisabled(false);
         return;
       }
       
-      setIsButtonDisabled(!hasAddress || !hasTimeSlot || !quoteValid);
+      setIsButtonDisabled(true);
       return;
     }
 
@@ -73,6 +76,11 @@ export const useDeliveryMethodValidation = ({
     isQuoteValid
   ]);
 
+  // Validation logic for continue button
+  useEffect(() => {
+    validateForm();
+  }, [validateForm]);
+
   // Helper function to get selected address object
   const getSelectedAddress = (): Address | undefined => {
     if (selectedAddressId) {
@@ -83,6 +91,7 @@ export const useDeliveryMethodValidation = ({
 
   return {
     isButtonDisabled,
-    getSelectedAddress
+    getSelectedAddress,
+    validateForm
   };
 };
