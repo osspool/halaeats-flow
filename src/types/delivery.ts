@@ -1,4 +1,3 @@
-
 export interface DeliveryQuote {
   id: string;
   fee: number;
@@ -21,6 +20,7 @@ export interface DeliveryOrder {
   driver_phone?: string;
   created_at: string; // ISO string
   updated_at: string; // ISO string
+  time_slot?: string | null; // Added time slot from quote
 }
 
 export interface DeliveryPaymentSplit {

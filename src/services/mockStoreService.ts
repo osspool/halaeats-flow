@@ -17,7 +17,7 @@ export const registerDeliveryStore = async (
   pickupInstructions?: string,
   prepTime: number = 30,
   businessHours?: BusinessHours[]
-): Promise<DeliveryStore> => {
+) => {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 1000));
 
@@ -61,7 +61,7 @@ export const registerDeliveryStore = async (
 /**
  * Get a registered store by its ID
  */
-export const getDeliveryStore = async (storeId: string): Promise<DeliveryStore | null> => {
+export const getDeliveryStore = async (storeId: string) => {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 300));
 
@@ -72,7 +72,7 @@ export const getDeliveryStore = async (storeId: string): Promise<DeliveryStore |
 /**
  * Get a store by the caterer's ID in your system
  */
-export const getDeliveryStoreByExternalId = async (catererId: string): Promise<DeliveryStore | null> => {
+export const getDeliveryStoreByExternalId = async (catererId: string) => {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 300));
 
@@ -91,7 +91,7 @@ export const getDeliveryStoreByExternalId = async (catererId: string): Promise<D
 export const updateDeliveryStore = async (
   storeId: string,
   updates: Partial<DeliveryStore>
-): Promise<DeliveryStore | null> => {
+) => {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 800));
 
@@ -116,7 +116,7 @@ export const updateDeliveryStore = async (
 /**
  * Deactivate a store (instead of deleting)
  */
-export const deactivateDeliveryStore = async (storeId: string): Promise<boolean> => {
+export const deactivateDeliveryStore = async (storeId: string) => {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 500));
 

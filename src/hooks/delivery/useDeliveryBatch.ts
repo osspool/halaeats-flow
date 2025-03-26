@@ -1,7 +1,12 @@
 
 import { useState, useCallback } from 'react';
 import { DeliveryBatch, DeliveryOrder } from '@/types/delivery';
-import { createDeliveryBatch, getDeliveryBatches } from '@/services/mockDeliveryService';
+import { 
+  createDeliveryBatch, 
+  getDeliveryBatches, 
+  updateDeliveryBatchStatus,
+  getAvailableOrdersForBatching
+} from '@/services/mockDeliveryService';
 import { useToast } from '@/hooks/use-toast';
 
 /**
@@ -9,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
  */
 export const useDeliveryBatch = () => {
   const [batches, setBatches] = useState<DeliveryBatch[]>([]);
+  const [availableOrders, setAvailableOrders] = useState<DeliveryOrder[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -68,28 +74,76 @@ export const useDeliveryBatch = () => {
   }, [toast]);
 
   /**
+   * Update a batch status
+   */
+  const updateBatchStatus = useCallback(async (
+    batchId: string,
+    status: 'pending' | 'in_progress' | 'completed' | 'canceled'
+  ) => {
+    try {
+      setLoading(true);
+      const updatedBatch = await updateDeliveryBatchStatus(batchId, status);
+      
+      if (updatedBatch) {
+        // Update the batch in the local state
+        setBatches(prev => prev.map(batch => 
+          batch.id === batchId ? updatedBatch : batch
+        ));
+        
+        toast({
+          title: 'Batch updated',
+          description: `Batch status changed to ${status}`,
+        });
+      }
+      
+      return updatedBatch;
+    } catch (error) {
+      console.error('Error updating batch status:', error);
+      toast({
+        title: 'Status update failed',
+        description: 'Could not update batch status',
+        variant: 'destructive',
+      });
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
+
+  /**
+   * Load all available orders that could be batched
+   */
+  const loadAvailableOrders = useCallback(async (
+    storeId: string,
+    timeSlot?: string
+  ) => {
+    try {
+      setLoading(true);
+      const orders = await getAvailableOrdersForBatching(storeId, timeSlot);
+      setAvailableOrders(orders);
+      return orders;
+    } catch (error) {
+      console.error('Error loading available orders:', error);
+      toast({
+        title: 'Could not load orders',
+        description: 'Failed to load available orders for batching',
+        variant: 'destructive',
+      });
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
+
+  /**
    * Group orders by time slot for potential batching
    */
   const groupOrdersByTimeSlot = useCallback((orders: DeliveryOrder[]) => {
     const timeSlotGroups: Record<string, DeliveryOrder[]> = {};
     
-    // This is a simplified mock implementation
-    // In a real app, you'd need to extract time slot data from orders
-    // For now, we'll use a random time slot assignment for demonstration
-    
-    const mockTimeSlots = [
-      '09:00-10:00',
-      '11:00-12:00',
-      '13:00-14:00',
-      '15:00-16:00',
-      '17:00-18:00',
-      '19:00-20:00',
-    ];
-    
     orders.forEach(order => {
-      // Randomly assign orders to time slots for demo purposes
-      const randomIndex = Math.floor(Math.random() * mockTimeSlots.length);
-      const timeSlot = mockTimeSlots[randomIndex];
+      // Extract time slot from order or use unknown
+      const timeSlot = order.time_slot || 'Unknown time slot';
       
       if (!timeSlotGroups[timeSlot]) {
         timeSlotGroups[timeSlot] = [];
@@ -103,9 +157,12 @@ export const useDeliveryBatch = () => {
 
   return {
     batches,
+    availableOrders,
     loading,
     createBatch,
     loadBatchesForStore,
+    updateBatchStatus,
+    loadAvailableOrders,
     groupOrdersByTimeSlot,
   };
 };

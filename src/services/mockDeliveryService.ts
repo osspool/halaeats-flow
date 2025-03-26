@@ -3,15 +3,17 @@ import {
   DeliveryQuote, 
   DeliveryOrder, 
   DeliveryPaymentSplit, 
-  DeliveryBatch 
+  DeliveryBatch, 
+  DeliveryStore
 } from '@/types/delivery';
 import { Address } from '@/types/checkout';
-import { addMinutes, formatISO, parseISO, format } from 'date-fns';
+import { addMinutes, formatISO, parseISO, format, isSameDay, isWithinInterval } from 'date-fns';
 import { getDeliveryStoreByExternalId } from './mockStoreService';
 
-// In-memory storage for batches
+// In-memory storage for batches, orders and quotes
 const deliveryBatches: Map<string, DeliveryBatch> = new Map();
 const deliveryOrders: Map<string, DeliveryOrder> = new Map();
+const deliveryQuotes: Map<string, DeliveryQuote> = new Map();
 
 // Calculate a delivery fee based on address distance and time slot (mock implementation)
 const calculateDeliveryFee = (address: Address, timeSlot?: string): number => {
@@ -115,8 +117,10 @@ export const createDeliveryQuote = async (
     }
   }
   
+  const quoteId = `dq_${Math.random().toString(36).substring(2, 10)}`;
+  
   const quote = {
-    id: `dq_${Math.random().toString(36).substring(2, 10)}`,
+    id: quoteId,
     fee,
     estimated_delivery_time: calculateEstimatedDeliveryTime(timeSlot),
     expires_at: formatISO(expiresAt),
@@ -127,6 +131,9 @@ export const createDeliveryQuote = async (
     created_at: formatISO(now),
     time_slot: timeSlot || null
   };
+  
+  // Store the quote in our mock database
+  deliveryQuotes.set(quoteId, quote);
   
   console.log('Created delivery quote:', quote);
   return quote;
@@ -146,22 +153,132 @@ export const createDeliveryOrder = async (
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 1200));
   
+  // Get the quote to access its time slot
+  const quote = deliveryQuotes.get(quoteId);
+  if (!quote) {
+    throw new Error(`Quote with ID ${quoteId} not found`);
+  }
+  
   const now = new Date();
+  const orderId = `do_${Math.random().toString(36).substring(2, 10)}`;
   
   const order = {
-    id: `do_${Math.random().toString(36).substring(2, 10)}`,
+    id: orderId,
     quote_id: quoteId,
     status: 'pending' as const,
     tracking_url: `https://mock-doordash.example.com/track/${quoteId}`,
     created_at: formatISO(now),
     updated_at: formatISO(now),
+    driver_name: undefined,
+    driver_phone: undefined,
+    time_slot: quote.time_slot // Copy time slot from quote
   };
   
   // Store the order in our mock database
-  deliveryOrders.set(order.id, order);
+  deliveryOrders.set(orderId, order);
+  
+  // Automatically check if this order could be batched with existing orders
+  if (storeId && order.time_slot) {
+    await tryAutoBatchOrder(orderId, storeId, order.time_slot);
+  }
   
   console.log('Created delivery order:', order);
   return order;
+};
+
+/**
+ * Try to add an order to an existing batch or create a new batch
+ * This simulates the DoorDash automatic batching system
+ */
+const tryAutoBatchOrder = async (
+  orderId: string,
+  storeId: string,
+  timeSlot: string
+): Promise<void> => {
+  const order = deliveryOrders.get(orderId);
+  if (!order) return;
+  
+  console.log(`Checking if order ${orderId} can be batched for time slot ${timeSlot}`);
+  
+  // Check if there's an existing batch for this store and time slot
+  let existingBatch: DeliveryBatch | undefined;
+  
+  for (const batch of deliveryBatches.values()) {
+    if (batch.store_id === storeId && batch.status === 'pending') {
+      // Parse the pickup time to check if it's in the same time slot
+      const pickupDate = new Date(batch.pickup_time);
+      const [startTime, endTime] = timeSlot.split('-');
+      
+      // Create date objects for the time slot boundaries
+      const today = new Date();
+      const slotStart = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate(),
+        parseInt(startTime.split(':')[0]),
+        parseInt(startTime.split(':')[1])
+      );
+      
+      const slotEnd = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate(),
+        parseInt(endTime.split(':')[0]),
+        parseInt(endTime.split(':')[1])
+      );
+      
+      // Check if the batch pickup time falls within this time slot
+      if (isSameDay(pickupDate, today) && 
+          isWithinInterval(pickupDate, { start: slotStart, end: slotEnd })) {
+        existingBatch = batch;
+        break;
+      }
+    }
+  }
+  
+  if (existingBatch) {
+    // Add this order to the existing batch
+    console.log(`Adding order ${orderId} to existing batch ${existingBatch.id}`);
+    
+    const updatedOrders = [...existingBatch.orders, order];
+    const updatedBatch = {
+      ...existingBatch,
+      orders: updatedOrders,
+      updated_at: formatISO(new Date())
+    };
+    
+    deliveryBatches.set(existingBatch.id, updatedBatch);
+  } else {
+    // Create a new batch for this order
+    console.log(`Creating new batch for order ${orderId}`);
+    
+    // Parse the time slot to get a pickup time
+    const [startTime] = timeSlot.split('-');
+    const [hours, minutes] = startTime.split(':').map(Number);
+    
+    // Create a date object for today with the start time from the slot
+    const today = new Date();
+    const pickupTime = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate(),
+      hours,
+      minutes
+    );
+    
+    const batchId = `batch_${Math.random().toString(36).substring(2, 10)}`;
+    const newBatch: DeliveryBatch = {
+      id: batchId,
+      store_id: storeId,
+      orders: [order],
+      status: 'pending',
+      pickup_time: formatISO(pickupTime),
+      created_at: formatISO(new Date()),
+      updated_at: formatISO(new Date()),
+    };
+    
+    deliveryBatches.set(batchId, newBatch);
+  }
 };
 
 /**
@@ -192,8 +309,9 @@ export const createDeliveryBatch = async (
     throw new Error('No valid orders found for batch creation');
   }
   
+  const batchId = `batch_${Math.random().toString(36).substring(2, 10)}`;
   const batch: DeliveryBatch = {
-    id: `batch_${Math.random().toString(36).substring(2, 10)}`,
+    id: batchId,
     store_id: storeId,
     orders: batchOrders,
     status: 'pending',
@@ -203,7 +321,7 @@ export const createDeliveryBatch = async (
   };
   
   // Store the batch
-  deliveryBatches.set(batch.id, batch);
+  deliveryBatches.set(batchId, batch);
   
   console.log('Created delivery batch:', batch);
   return batch;
@@ -224,6 +342,68 @@ export const getDeliveryBatches = async (storeId: string): Promise<DeliveryBatch
   }
   
   return batches;
+};
+
+/**
+ * Update a batch status
+ */
+export const updateDeliveryBatchStatus = async (
+  batchId: string,
+  status: 'pending' | 'in_progress' | 'completed' | 'canceled'
+): Promise<DeliveryBatch | null> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 800));
+  
+  const batch = deliveryBatches.get(batchId);
+  if (!batch) {
+    return null;
+  }
+  
+  const updatedBatch = {
+    ...batch,
+    status,
+    updated_at: formatISO(new Date()),
+  };
+  
+  deliveryBatches.set(batchId, updatedBatch);
+  console.log(`Updated batch ${batchId} status to ${status}`);
+  
+  return updatedBatch;
+};
+
+/**
+ * Get all available orders that could be batched
+ */
+export const getAvailableOrdersForBatching = async (
+  storeId: string,
+  timeSlot?: string
+): Promise<DeliveryOrder[]> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 600));
+  
+  const availableOrders: DeliveryOrder[] = [];
+  
+  // Find orders that aren't already in a batch
+  orderLoop: for (const order of deliveryOrders.values()) {
+    if (order.status !== 'pending') continue;
+    
+    // Check if order is already in a batch
+    for (const batch of deliveryBatches.values()) {
+      if (batch.orders.some(o => o.id === order.id)) {
+        continue orderLoop;
+      }
+    }
+    
+    // If time slot is specified, filter by that
+    if (timeSlot && order.time_slot && order.time_slot !== timeSlot) {
+      continue;
+    }
+    
+    // Add to available orders
+    availableOrders.push(order);
+  }
+  
+  return availableOrders;
 };
 
 /**
@@ -263,4 +443,43 @@ export const isDeliveryQuoteValid = (quote: DeliveryQuote | null): boolean => {
   console.log(`Quote validity check: expires at ${expiresAt}, now is ${now}, status is ${quote.status}, isValid: ${isValid}`);
   
   return isValid;
+};
+
+/**
+ * Get delivery order details
+ */
+export const getDeliveryOrder = async (orderId: string): Promise<DeliveryOrder | null> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 400));
+  
+  return deliveryOrders.get(orderId) || null;
+};
+
+/**
+ * Update order status (for driver updates)
+ */
+export const updateDeliveryOrderStatus = async (
+  orderId: string, 
+  status: 'pending' | 'accepted' | 'picked_up' | 'delivered' | 'canceled',
+  driverInfo?: { name?: string, phone?: string }
+): Promise<DeliveryOrder | null> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 700));
+  
+  const order = deliveryOrders.get(orderId);
+  if (!order) {
+    return null;
+  }
+  
+  const updatedOrder = {
+    ...order,
+    status,
+    updated_at: formatISO(new Date()),
+    driver_name: driverInfo?.name || order.driver_name,
+    driver_phone: driverInfo?.phone || order.driver_phone
+  };
+  
+  deliveryOrders.set(orderId, updatedOrder);
+  
+  return updatedOrder;
 };
