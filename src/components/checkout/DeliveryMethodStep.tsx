@@ -143,14 +143,12 @@ const DeliveryMethodStep = ({
     
     // For delivery orders
     if (selectedType === 'delivery') {
-      // Validate delivery requirements
       if (selectedAddressId && selectedSlot) {
-        // Check quote validity for delivery
         if (isQuoteValid()) {
           console.log('Delivery order is valid, proceeding to next step');
           onNext();
           return;
-        } else {
+        } else if (!isLoadingQuote) {
           console.log('Delivery quote is not valid, refreshing...');
           handleRefreshQuote();
         }
@@ -168,7 +166,7 @@ const DeliveryMethodStep = ({
       return true;
     }
 
-    // For pickup orders
+    // For pickup orders, we just need a time slot
     if (selectedType === 'pickup') {
       console.log('Pickup button state:', !selectedSlot ? 'disabled' : 'enabled');
       return !selectedSlot;
@@ -176,16 +174,18 @@ const DeliveryMethodStep = ({
 
     // For delivery orders
     if (selectedType === 'delivery') {
-      // For delivery, check that we have an address, a time slot, and a valid quote
-      const quoteValid = isQuoteValid();
+      // We need an address, a time slot, and either a valid quote or loading quote
+      const hasAddress = !!selectedAddressId;
+      const hasTimeSlot = !!selectedSlot;
+      const quoteValid = isQuoteValid() || isLoadingQuote;
+      
       console.log('Delivery validation:', {
-        addressSelected: !!selectedAddressId,
-        timeSlotSelected: !!selectedSlot,
+        addressSelected: hasAddress,
+        timeSlotSelected: hasTimeSlot,
         quoteValid
       });
       
-      // Only disable if any of these are not true
-      return !selectedAddressId || !selectedSlot || !quoteValid;
+      return !hasAddress || !hasTimeSlot || !quoteValid;
     }
 
     return true;

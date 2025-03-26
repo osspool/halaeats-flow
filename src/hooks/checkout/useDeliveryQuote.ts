@@ -34,7 +34,7 @@ export const useDeliveryQuote = (selectedAddressId?: string) => {
           toast({
             title: "Delivery quote expiring soon",
             description: "Your delivery quote will expire in 1 minute. Please complete your order soon.",
-            variant: "default", // Using "default" instead of "warning"
+            variant: "default",
           });
         }, warningTime);
         
@@ -70,10 +70,15 @@ export const useDeliveryQuote = (selectedAddressId?: string) => {
   // Check if the current quote is valid
   const isQuoteValid = useCallback(() => {
     console.log('Checking if quote is valid:', deliveryQuote);
+    // If we don't have a quote yet but we're loading one, consider it "valid" for UI purposes
+    if (!deliveryQuote && isLoadingQuote) {
+      console.log('Quote is loading, considering valid for now');
+      return true;
+    }
     const isValid = isDeliveryQuoteValid(deliveryQuote);
     console.log('Quote validity:', isValid);
     return isValid;
-  }, [deliveryQuote]);
+  }, [deliveryQuote, isLoadingQuote]);
 
   // Function to refresh an expired quote
   const refreshQuote = useCallback(async (address: Address) => {

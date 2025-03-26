@@ -1,13 +1,14 @@
 
 import { useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { CheckoutState } from '@/types/checkout';
 
 /**
  * Hook for handling checkout completion logic
  */
 export const useCheckoutCompletion = (
-  checkoutState: any,
-  setCheckoutState: React.Dispatch<React.SetStateAction<any>>,
+  checkoutState: CheckoutState,
+  setCheckoutState: React.Dispatch<React.SetStateAction<CheckoutState>>,
   completePayment: () => Promise<boolean>
 ) => {
   const { toast } = useToast();

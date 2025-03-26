@@ -33,6 +33,8 @@ const calculateDistance = (address: Address): number => {
  * Create a delivery quote (similar to DoorDash quoting API)
  */
 export const createDeliveryQuote = async (address: Address): Promise<DeliveryQuote> => {
+  console.log('Creating delivery quote for address:', address);
+  
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 800));
   
@@ -43,17 +45,20 @@ export const createDeliveryQuote = async (address: Address): Promise<DeliveryQuo
   const fee = calculateDeliveryFee(address);
   const distance = calculateDistance(address);
   
-  return {
+  const quote = {
     id: `dq_${Math.random().toString(36).substring(2, 10)}`,
     fee,
     estimated_delivery_time: calculateEstimatedDeliveryTime(),
     expires_at: formatISO(expiresAt),
-    status: 'active',
+    status: 'active' as const,
     pickup_address: RESTAURANT_ADDRESS,
     delivery_address: addressString,
     distance_miles: distance,
     created_at: formatISO(now),
   };
+  
+  console.log('Created delivery quote:', quote);
+  return quote;
 };
 
 /**
@@ -64,6 +69,8 @@ export const createDeliveryOrder = async (
   address: Address,
   paymentIntentId: string
 ): Promise<DeliveryOrder> => {
+  console.log('Creating delivery order with quote ID:', quoteId);
+  
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 1200));
   
@@ -72,14 +79,17 @@ export const createDeliveryOrder = async (
   
   const now = new Date();
   
-  return {
+  const order = {
     id: `do_${Math.random().toString(36).substring(2, 10)}`,
     quote_id: quoteId,
-    status: 'pending',
+    status: 'pending' as const,
     tracking_url: `https://mock-doordash.example.com/track/${quoteId}`,
     created_at: formatISO(now),
     updated_at: formatISO(now),
   };
+  
+  console.log('Created delivery order:', order);
+  return order;
 };
 
 /**
@@ -107,10 +117,16 @@ export const calculatePaymentSplit = (
  * Check if a delivery quote is still valid
  */
 export const isDeliveryQuoteValid = (quote: DeliveryQuote | null): boolean => {
-  if (!quote) return false;
+  if (!quote) {
+    console.log('Quote is null, not valid');
+    return false;
+  }
   
   const now = new Date();
   const expiresAt = new Date(quote.expires_at);
   
-  return expiresAt > now && quote.status === 'active';
+  const isValid = expiresAt > now && quote.status === 'active';
+  console.log(`Quote validity check: expires at ${expiresAt}, now is ${now}, status is ${quote.status}, isValid: ${isValid}`);
+  
+  return isValid;
 };
