@@ -13,6 +13,7 @@ export interface UseCheckoutReturn {
   setSelectedPaymentMethodId: (paymentMethodId: string) => void;
   setDeliveryInstructions: (instructions: string) => void;
   setPickupTime: (time: string) => void;
+  setDeliveryQuote: (quote: DeliveryQuote | null) => void;
   createPaymentIntent: (amount: number, cartItems: any[]) => Promise<MockStripePaymentIntent>;
   confirmPaymentIntent: (paymentIntentId: string, paymentMethodId: string) => Promise<MockStripePaymentIntent>;
   resetCheckout: () => void;
