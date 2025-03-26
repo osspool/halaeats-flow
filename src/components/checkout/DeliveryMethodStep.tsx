@@ -1,9 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Truck, Home } from 'lucide-react';
+import { TabsContent } from '@/components/ui/tabs';
 import { OrderType } from '@/types';
 import { useBookTimeSlot, useRestaurantMenu } from '@/hooks/useRestaurantApi';
 import { TimeSlot } from '@/components/shared/time-slots/types';
@@ -11,7 +9,11 @@ import { mockAddresses } from '@/data/checkoutMockData';
 import { useDeliveryQuote } from '@/hooks/checkout/useDeliveryQuote';
 import DeliveryForm from './delivery/DeliveryForm';
 import PickupForm from './pickup/PickupForm';
-import DeliveryDateTimePicker from './date-time/DeliveryDateTimePicker';
+import { 
+  OrderTypeSelector, 
+  TimeSlotSection,
+  ContinueButton
+} from './delivery-method';
 
 interface DeliveryMethodStepProps {
   orderType: OrderType;
@@ -51,8 +53,7 @@ const DeliveryMethodStep = ({
     refreshQuote
   } = useDeliveryQuote(selectedAddressId);
 
-  const handleSelect = (value: string) => {
-    const type = value as OrderType;
+  const handleOrderTypeChange = (type: OrderType) => {
     setSelectedType(type);
     onOrderTypeChange(type);
   };
@@ -199,77 +200,54 @@ const DeliveryMethodStep = ({
           Choose how you want to receive your order
         </p>
 
-        <Tabs 
-          defaultValue={orderType} 
-          className="w-full"
-          value={selectedType}
-          onValueChange={handleSelect}
-        >
-          <TabsList className="grid grid-cols-2 w-full mb-6">
-            <TabsTrigger value="delivery" className="flex items-center gap-2">
-              <Truck className="h-4 w-4" />
-              <span>Delivery</span>
-            </TabsTrigger>
-            <TabsTrigger value="pickup" className="flex items-center gap-2">
-              <Home className="h-4 w-4" />
-              <span>Pickup</span>
-            </TabsTrigger>
-          </TabsList>
+        <OrderTypeSelector
+          selectedType={selectedType}
+          onOrderTypeChange={handleOrderTypeChange}
+        />
+        
+        {/* Inject content into the tabs */}
+        <TabsContent value="delivery" className="p-4 bg-halaeats-50 rounded-lg space-y-6">
+          <DeliveryForm
+            selectedAddressId={selectedAddressId}
+            onAddressSelect={onAddressSelect}
+            onDeliveryInstructionsChange={onDeliveryInstructionsChange}
+          />
           
-          <TabsContent value="delivery" className="p-4 bg-halaeats-50 rounded-lg space-y-6">
-            <DeliveryForm
-              selectedAddressId={selectedAddressId}
-              onAddressSelect={onAddressSelect}
-              onDeliveryInstructionsChange={onDeliveryInstructionsChange}
-            />
-            
-            {/* Date and Time Selection */}
-            <div className="border-t pt-4">
-              <DeliveryDateTimePicker
-                orderType="delivery"
-                selectedDate={selectedDate}
-                onDateChange={handleDateChange}
-                selectedSlot={selectedSlot}
-                onSlotSelect={handleSelectTimeSlot}
-                availableTimeSlots={availableTimeSlots}
-                isLoadingTimeSlots={isLoadingTimeSlots}
-                deliveryQuote={deliveryQuote}
-                isLoadingQuote={isLoadingQuote}
-                onRefreshQuote={handleRefreshQuote}
-              />
-            </div>
-          </TabsContent>
+          <TimeSlotSection
+            orderType="delivery"
+            selectedDate={selectedDate}
+            onDateChange={handleDateChange}
+            selectedSlot={selectedSlot}
+            onSlotSelect={handleSelectTimeSlot}
+            availableTimeSlots={availableTimeSlots}
+            isLoadingTimeSlots={isLoadingTimeSlots}
+            deliveryQuote={deliveryQuote}
+            isLoadingQuote={isLoadingQuote}
+            onRefreshQuote={handleRefreshQuote}
+          />
+        </TabsContent>
+        
+        <TabsContent value="pickup" className="p-4 bg-halaeats-50 rounded-lg space-y-6">
+          <PickupForm />
           
-          <TabsContent value="pickup" className="p-4 bg-halaeats-50 rounded-lg space-y-6">
-            <PickupForm />
-            
-            {/* Date and Time Selection */}
-            <div className="space-y-4">
-              <DeliveryDateTimePicker
-                orderType="pickup"
-                selectedDate={selectedDate}
-                onDateChange={handleDateChange}
-                selectedSlot={selectedSlot}
-                onSlotSelect={handleSelectTimeSlot}
-                availableTimeSlots={availableTimeSlots}
-                isLoadingTimeSlots={isLoadingTimeSlots}
-              />
-            </div>
-          </TabsContent>
-        </Tabs>
+          <TimeSlotSection
+            orderType="pickup"
+            selectedDate={selectedDate}
+            onDateChange={handleDateChange}
+            selectedSlot={selectedSlot}
+            onSlotSelect={handleSelectTimeSlot}
+            availableTimeSlots={availableTimeSlots}
+            isLoadingTimeSlots={isLoadingTimeSlots}
+          />
+        </TabsContent>
       </div>
       
-      <Button 
+      <ContinueButton 
         onClick={handleContinue}
-        className="w-full bg-primary hover:bg-cuisine-600"
-        disabled={isContinueButtonDisabled()}
-      >
-        {bookTimeSlotMutation.isPending 
-          ? "Reserving Your Slot..." 
-          : isLoadingQuote 
-            ? "Loading Delivery Quote..." 
-            : "Continue to Payment"}
-      </Button>
+        isDisabled={isContinueButtonDisabled()}
+        isLoadingPayment={bookTimeSlotMutation.isPending}
+        isLoadingQuote={isLoadingQuote}
+      />
     </div>
   );
 };
