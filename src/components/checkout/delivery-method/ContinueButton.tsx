@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 
 interface ContinueButtonProps {
   onClick: (e: React.MouseEvent) => void;
@@ -16,6 +17,7 @@ const ContinueButton = ({
   isLoadingQuote
 }: ContinueButtonProps) => {
   let buttonText = "Continue to Payment";
+  let isLoading = isLoadingPayment || isLoadingQuote;
   
   if (isLoadingPayment) {
     buttonText = "Reserving Your Slot...";
@@ -27,8 +29,9 @@ const ContinueButton = ({
     <Button 
       onClick={onClick}
       className="w-full bg-primary hover:bg-cuisine-600"
-      disabled={isDisabled}
+      disabled={isDisabled || isLoading}
     >
+      {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
       {buttonText}
     </Button>
   );

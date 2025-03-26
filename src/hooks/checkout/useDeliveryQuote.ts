@@ -4,12 +4,13 @@ import { DeliveryQuote } from '@/types/delivery';
 import { Address } from '@/types/checkout';
 import { createDeliveryQuote, isDeliveryQuoteValid } from '@/services/mockDeliveryService';
 import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 export const useDeliveryQuote = (selectedAddressId?: string) => {
   const [deliveryQuote, setDeliveryQuote] = useState<DeliveryQuote | null>(null);
   const [isLoadingQuote, setIsLoadingQuote] = useState(false);
   const [quoteError, setQuoteError] = useState<string | null>(null);
-  const { toast } = useToast();
+  const { toast: uiToast } = useToast();
 
   // Function to fetch a delivery quote
   const fetchDeliveryQuote = useCallback(async (address: Address) => {
@@ -31,7 +32,7 @@ export const useDeliveryQuote = (selectedAddressId?: string) => {
         const warningTime = Math.max(timeUntilExpiration - 60000, 0); // 1 minute before expiration
         
         setTimeout(() => {
-          toast({
+          uiToast({
             title: "Delivery quote expiring soon",
             description: "Your delivery quote will expire in 1 minute. Please complete your order soon.",
             variant: "default",
@@ -44,10 +45,8 @@ export const useDeliveryQuote = (selectedAddressId?: string) => {
             prev ? { ...prev, status: 'expired' } : null
           );
           
-          toast({
-            title: "Delivery quote expired",
-            description: "Your delivery quote has expired. Please request a new quote to continue.",
-            variant: "destructive",
+          toast("Delivery quote expired", {
+            description: "Your delivery quote has expired. Please request a new quote to continue."
           });
         }, timeUntilExpiration);
       }
@@ -56,44 +55,45 @@ export const useDeliveryQuote = (selectedAddressId?: string) => {
     } catch (error) {
       console.error('Error fetching delivery quote:', error);
       setQuoteError('Failed to get delivery quote. Please try again.');
-      toast({
-        title: "Delivery quote error",
-        description: "Could not get a delivery quote. Please try again.",
-        variant: "destructive",
-      });
+      toast.error("Could not get a delivery quote. Please try again.");
       return null;
     } finally {
       setIsLoadingQuote(false);
     }
-  }, [toast]);
+  }, [uiToast]);
 
   // Check if the current quote is valid
   const isQuoteValid = useCallback(() => {
-    console.log('Checking if quote is valid:', deliveryQuote);
-    // If we don't have a quote yet but we're loading one, consider it "valid" for UI purposes
-    if (!deliveryQuote && isLoadingQuote) {
-      console.log('Quote is loading, considering valid for now');
+    if (isLoadingQuote) {
+      console.log('Quote is being loaded, considering valid for now');
       return true;
     }
-    const isValid = isDeliveryQuoteValid(deliveryQuote);
-    console.log('Quote validity:', isValid);
-    return isValid;
+    
+    const result = isDeliveryQuoteValid(deliveryQuote);
+    console.log('Quote validity check:', {
+      quote: deliveryQuote ? {
+        id: deliveryQuote.id,
+        status: deliveryQuote.status,
+        expires_at: deliveryQuote.expires_at
+      } : null,
+      isValid: result
+    });
+    
+    return result;
   }, [deliveryQuote, isLoadingQuote]);
 
   // Function to refresh an expired quote
   const refreshQuote = useCallback(async (address: Address) => {
-    if (isLoadingQuote) return;
+    if (isLoadingQuote) return null;
     
-    if (isQuoteValid()) {
-      toast({
-        title: "Quote still valid",
-        description: "Your current delivery quote is still valid.",
-      });
+    if (isQuoteValid() && deliveryQuote?.status === 'active') {
+      console.log('Quote is still valid, no need to refresh');
       return deliveryQuote;
     }
     
+    console.log('Refreshing delivery quote for address:', address);
     return fetchDeliveryQuote(address);
-  }, [deliveryQuote, fetchDeliveryQuote, isLoadingQuote, isQuoteValid, toast]);
+  }, [deliveryQuote, fetchDeliveryQuote, isLoadingQuote, isQuoteValid]);
 
   return {
     deliveryQuote,

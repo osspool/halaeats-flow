@@ -7,6 +7,7 @@ import { useBookTimeSlot, useRestaurantMenu } from '@/hooks/useRestaurantApi';
 import { TimeSlot } from '@/components/shared/time-slots/types';
 import { mockAddresses } from '@/data/checkoutMockData';
 import { useDeliveryQuote } from '@/hooks/checkout/useDeliveryQuote';
+import { toast } from 'sonner';
 import DeliveryForm from './delivery/DeliveryForm';
 import PickupForm from './pickup/PickupForm';
 import { 
@@ -72,10 +73,22 @@ const DeliveryMethodStep = ({
 
   // When address changes and delivery is selected, fetch a new delivery quote
   useEffect(() => {
+    console.log('Address effect running with selectedAddressId:', selectedAddressId);
     if (selectedType === 'delivery' && selectedAddressId) {
       const selectedAddress = mockAddresses.find(addr => addr.id === selectedAddressId);
       if (selectedAddress) {
-        fetchDeliveryQuote(selectedAddress);
+        console.log('Fetching delivery quote for address:', selectedAddress);
+        fetchDeliveryQuote(selectedAddress)
+          .then(quote => {
+            console.log('Received quote:', quote);
+            if (!quote || quote.status !== 'active') {
+              toast.error('Could not get a valid delivery quote. Please try again.');
+            }
+          })
+          .catch(err => {
+            console.error('Error fetching quote:', err);
+            toast.error('Error getting delivery quote. Please try again.');
+          });
       }
     }
   }, [selectedAddressId, selectedType, fetchDeliveryQuote]);
@@ -120,7 +133,11 @@ const DeliveryMethodStep = ({
     if (selectedAddressId) {
       const selectedAddress = mockAddresses.find(addr => addr.id === selectedAddressId);
       if (selectedAddress) {
-        refreshQuote(selectedAddress);
+        toast.promise(refreshQuote(selectedAddress), {
+          loading: 'Refreshing delivery quote...',
+          success: 'Delivery quote updated!',
+          error: 'Could not refresh quote. Please try again.'
+        });
       }
     }
   };
@@ -145,16 +162,21 @@ const DeliveryMethodStep = ({
     // For delivery orders
     if (selectedType === 'delivery') {
       if (selectedAddressId && selectedSlot) {
-        if (isQuoteValid()) {
+        const isValid = isQuoteValid();
+        console.log('Delivery quote validity check result:', isValid);
+        
+        if (isValid) {
           console.log('Delivery order is valid, proceeding to next step');
           onNext();
           return;
         } else if (!isLoadingQuote) {
           console.log('Delivery quote is not valid, refreshing...');
           handleRefreshQuote();
+          toast.error('Your delivery quote has expired. We have refreshed it for you. Please try again.');
         }
       } else {
         console.log('Missing required fields for delivery order');
+        toast.error('Please select both a delivery address and a time slot to continue.');
       }
     }
   };
@@ -178,13 +200,18 @@ const DeliveryMethodStep = ({
       // We need an address, a time slot, and either a valid quote or loading quote
       const hasAddress = !!selectedAddressId;
       const hasTimeSlot = !!selectedSlot;
-      const quoteValid = isQuoteValid() || isLoadingQuote;
+      const quoteValid = isQuoteValid();
       
       console.log('Delivery validation:', {
         addressSelected: hasAddress,
         timeSlotSelected: hasTimeSlot,
         quoteValid
       });
+      
+      // If we have an address and a time slot, we can enable the button even if we're still loading the quote
+      if (hasAddress && hasTimeSlot && isLoadingQuote) {
+        return false;
+      }
       
       return !hasAddress || !hasTimeSlot || !quoteValid;
     }
