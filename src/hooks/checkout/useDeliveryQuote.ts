@@ -2,7 +2,7 @@
 import { useState, useCallback } from 'react';
 import { DeliveryQuote } from '@/types/delivery';
 import { Address } from '@/types/checkout';
-import { getDeliveryQuote } from '@/services/mockDeliveryService';
+import { createDeliveryQuote } from '@/services/mockDeliveryService';
 
 export const useDeliveryQuote = (defaultAddressId?: string) => {
   const [deliveryQuote, setDeliveryQuote] = useState<DeliveryQuote | null>(null);
@@ -12,7 +12,7 @@ export const useDeliveryQuote = (defaultAddressId?: string) => {
     try {
       setIsLoadingQuote(true);
       console.log('Fetching delivery quote for address:', address);
-      const quote = await getDeliveryQuote(address);
+      const quote = await createDeliveryQuote(address);
       setDeliveryQuote(quote);
       console.log('Received delivery quote:', quote);
       return quote;
@@ -27,7 +27,7 @@ export const useDeliveryQuote = (defaultAddressId?: string) => {
   const refreshQuote = useCallback(async (address: Address): Promise<DeliveryQuote | null> => {
     try {
       setIsLoadingQuote(true);
-      const quote = await getDeliveryQuote(address);
+      const quote = await createDeliveryQuote(address);
       setDeliveryQuote(quote);
       return quote;
     } catch (error) {
