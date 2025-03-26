@@ -45,12 +45,11 @@ export const useDeliveryMethodValidation = ({
       // We need an address, a time slot, and either a valid quote or loading quote
       const hasAddress = !!selectedAddressId;
       const hasTimeSlot = !!selectedSlot && !isLoadingTimeSlots;
-      const quoteValid = isQuoteValid();
       
       console.log('Delivery validation:', {
         addressSelected: hasAddress,
         timeSlotSelected: hasTimeSlot,
-        quoteValid,
+        quoteValid: isQuoteValid(),
         isLoadingQuote
       });
       

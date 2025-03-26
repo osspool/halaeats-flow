@@ -51,7 +51,7 @@ const DeliveryMethodStep = ({
     fetchDeliveryQuote, 
     isQuoteValid,
     refreshQuote
-  } = useDeliveryQuote(selectedAddressId);
+  } = useDeliveryQuote();
 
   // Validation hook for the continue button
   const { isButtonDisabled, getSelectedAddress } = useDeliveryMethodValidation({

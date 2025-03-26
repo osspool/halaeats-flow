@@ -1,49 +1,48 @@
 
-import React from 'react';
+import { ReactNode } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Truck, Home } from 'lucide-react';
 import { OrderType } from '@/types';
+import { Truck, Store } from 'lucide-react';
 
 interface OrderTypeSelectorProps {
   selectedType: OrderType;
   onOrderTypeChange: (type: OrderType) => void;
-  deliveryContent: React.ReactNode;
-  pickupContent: React.ReactNode;
+  deliveryContent: ReactNode;
+  pickupContent: ReactNode;
 }
 
-const OrderTypeSelector = ({ 
-  selectedType, 
+const OrderTypeSelector = ({
+  selectedType,
   onOrderTypeChange,
   deliveryContent,
   pickupContent
 }: OrderTypeSelectorProps) => {
-  const handleSelect = (value: string) => {
-    const type = value as OrderType;
-    onOrderTypeChange(type);
+  const handleValueChange = (value: string) => {
+    onOrderTypeChange(value as OrderType);
   };
 
   return (
-    <Tabs 
-      value={selectedType} 
+    <Tabs
+      value={selectedType}
+      onValueChange={handleValueChange}
       className="w-full"
-      onValueChange={handleSelect}
     >
-      <TabsList className="grid grid-cols-2 w-full mb-6">
+      <TabsList className="grid w-full grid-cols-2 mb-6">
         <TabsTrigger value="delivery" className="flex items-center gap-2">
           <Truck className="h-4 w-4" />
           <span>Delivery</span>
         </TabsTrigger>
         <TabsTrigger value="pickup" className="flex items-center gap-2">
-          <Home className="h-4 w-4" />
+          <Store className="h-4 w-4" />
           <span>Pickup</span>
         </TabsTrigger>
       </TabsList>
       
-      <TabsContent value="delivery" className="p-4 bg-halaeats-50 rounded-lg space-y-6">
+      <TabsContent value="delivery" className="focus-visible:outline-none focus-visible:ring-0">
         {deliveryContent}
       </TabsContent>
       
-      <TabsContent value="pickup" className="p-4 bg-halaeats-50 rounded-lg space-y-6">
+      <TabsContent value="pickup" className="focus-visible:outline-none focus-visible:ring-0">
         {pickupContent}
       </TabsContent>
     </Tabs>
