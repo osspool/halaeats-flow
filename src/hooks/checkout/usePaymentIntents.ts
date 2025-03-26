@@ -1,28 +1,36 @@
 
-import { useState } from 'react';
-import { CheckoutState, MockStripePaymentIntent } from '@/types/checkout';
-import { createMockPaymentIntent, confirmMockPaymentIntent, mockConnectedAccounts } from '@/data/checkoutMockData';
+import { useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { MockStripePaymentIntent } from '@/types/checkout';
+import { createMockPaymentIntent, confirmMockPaymentIntent, mockConnectedAccounts } from '@/data/checkoutMockData';
 
-export const usePaymentIntents = (checkoutState: CheckoutState, setCheckoutState: React.Dispatch<React.SetStateAction<CheckoutState>>) => {
+/**
+ * Hook for handling payment intent creation and confirmation
+ */
+export const usePaymentIntents = () => {
   const { toast } = useToast();
 
-  const createPaymentIntent = async (amount: number, cartItems: any[]) => {
+  const createPaymentIntent = useCallback(async (
+    amount: number, 
+    cartItems: any[], 
+    checkoutState: any, 
+    connectedAccountId?: string
+  ) => {
     try {
       // Get the caterer ID from the cart items
-      // Since we've filtered the cart items by caterer at this point,
-      // all items should belong to the same caterer
       if (!cartItems.length) {
         throw new Error('No items in cart');
       }
       
       const catererId = cartItems[0].caterer.id;
-      const connectedAccountId = mockConnectedAccounts[catererId];
+      // Set a default connected account if the specific caterer is not found
+      const effectiveConnectedAccountId = connectedAccountId || 
+        mockConnectedAccounts[catererId] || 
+        'acct_default123456789';
       
-      if (!connectedAccountId) {
-        throw new Error('Caterer not found in connected accounts');
-      }
+      console.log('Using connected account:', effectiveConnectedAccountId, 'for caterer:', catererId);
       
+      // Create payment intent with the provided details
       const paymentIntent = await createMockPaymentIntent(
         Math.round(amount * 100),
         'usd',
@@ -31,13 +39,8 @@ export const usePaymentIntents = (checkoutState: CheckoutState, setCheckoutState
           order_id: `order_${Math.random().toString(36).substring(2, 10)}`,
           caterer_id: catererId
         },
-        connectedAccountId
+        effectiveConnectedAccountId
       );
-      
-      setCheckoutState(prev => ({
-        ...prev,
-        paymentIntent,
-      }));
       
       return paymentIntent;
     } catch (error) {
@@ -49,16 +52,17 @@ export const usePaymentIntents = (checkoutState: CheckoutState, setCheckoutState
       });
       throw error;
     }
-  };
+  }, [toast]);
 
-  const confirmPaymentIntent = async (paymentIntentId: string, paymentMethodId: string) => {
+  const confirmPaymentIntent = useCallback(async (
+    paymentIntentId: string, 
+    paymentMethodId: string
+  ) => {
     try {
-      const confirmedIntent = await confirmMockPaymentIntent(paymentIntentId, paymentMethodId);
-      
-      setCheckoutState(prev => ({
-        ...prev,
-        paymentIntent: confirmedIntent,
-      }));
+      const confirmedIntent = await confirmMockPaymentIntent(
+        paymentIntentId, 
+        paymentMethodId
+      );
       
       return confirmedIntent;
     } catch (error) {
@@ -70,7 +74,7 @@ export const usePaymentIntents = (checkoutState: CheckoutState, setCheckoutState
       });
       throw error;
     }
-  };
+  }, [toast]);
 
   return {
     createPaymentIntent,
