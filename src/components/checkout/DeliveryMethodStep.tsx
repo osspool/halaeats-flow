@@ -168,6 +168,23 @@ const DeliveryMethodStep = ({
     }
   };
 
+  // Function to determine if the Continue button should be disabled
+  const isContinueButtonDisabled = () => {
+    if (bookTimeSlotMutation.isPending || isLoadingQuote) {
+      return true;
+    }
+
+    if (selectedType === 'pickup') {
+      return !selectedSlot;
+    }
+
+    if (selectedType === 'delivery') {
+      return !selectedAddressId || !selectedSlot || !isQuoteValid();
+    }
+
+    return true;
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -239,12 +256,7 @@ const DeliveryMethodStep = ({
       <Button 
         onClick={handleContinue}
         className="w-full bg-primary hover:bg-cuisine-600"
-        disabled={
-          (selectedType === 'delivery' && (!selectedAddressId || !isQuoteValid() || !selectedSlot)) || 
-          (selectedType === 'pickup' && !selectedSlot) ||
-          bookTimeSlotMutation.isPending ||
-          isLoadingQuote
-        }
+        disabled={isContinueButtonDisabled()}
       >
         {bookTimeSlotMutation.isPending 
           ? "Reserving Your Slot..." 
