@@ -28,12 +28,14 @@ const DeliveryForm = ({
   useEffect(() => {
     if (!selected && addresses.length > 0) {
       const defaultAddress = addresses.find(a => a.isDefault)?.id || addresses[0].id;
+      console.log('Setting default address:', defaultAddress);
       setSelected(defaultAddress);
       onAddressSelect(defaultAddress);
     }
   }, [addresses, selected, onAddressSelect]);
 
   const handleAddressChange = (value: string) => {
+    console.log('Address changed to:', value);
     setSelected(value);
     onAddressSelect(value);
   };

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import DeliveryForm from '../delivery/DeliveryForm';
 import TimeSlotSection from './TimeSlotSection';
 import { TimeSlot } from '@/components/shared/time-slots/types';
@@ -34,11 +34,24 @@ const DeliveryTabContent = ({
   isLoadingQuote,
   onRefreshQuote
 }: DeliveryTabContentProps) => {
+  // Log when props change
+  useEffect(() => {
+    console.log('DeliveryTabContent props updated:', { 
+      selectedAddressId, 
+      selectedSlot 
+    });
+  }, [selectedAddressId, selectedSlot]);
+
+  const handleAddressSelect = (addressId: string) => {
+    console.log('Address selected in DeliveryTabContent:', addressId);
+    onAddressSelect(addressId);
+  };
+
   return (
     <div>
       <DeliveryForm
         selectedAddressId={selectedAddressId}
-        onAddressSelect={onAddressSelect}
+        onAddressSelect={handleAddressSelect}
         onDeliveryInstructionsChange={onDeliveryInstructionsChange}
       />
       

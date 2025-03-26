@@ -39,6 +39,7 @@ const DeliveryMethodStep = ({
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [availableTimeSlots, setAvailableTimeSlots] = useState<TimeSlot[]>([]);
   const [isLoadingTimeSlots, setIsLoadingTimeSlots] = useState<boolean>(false);
+  const [currentAddressId, setCurrentAddressId] = useState<string | undefined>(selectedAddressId);
   
   // Fetch restaurant menu data to get time slots and capacities
   const { data: menuData, isLoading: isMenuLoading } = useRestaurantMenu();
@@ -56,7 +57,7 @@ const DeliveryMethodStep = ({
   // Validation hook for the continue button - FIXED to properly handle state
   const { isButtonDisabled, getSelectedAddress } = useDeliveryMethodValidation({
     selectedType,
-    selectedAddressId,
+    selectedAddressId: currentAddressId,
     selectedSlot,
     isLoadingTimeSlots,
     isLoadingQuote,
@@ -83,11 +84,17 @@ const DeliveryMethodStep = ({
     onPickupTimeChange('');
   };
 
+  const handleAddressSelect = (addressId: string) => {
+    console.log('Address selected in DeliveryMethodStep:', addressId);
+    setCurrentAddressId(addressId);
+    onAddressSelect(addressId);
+  };
+
   // When address changes and delivery is selected, fetch a new delivery quote
   useEffect(() => {
-    console.log('Address effect running with selectedAddressId:', selectedAddressId);
-    if (selectedType === 'delivery' && selectedAddressId) {
-      const selectedAddress = mockAddresses.find(addr => addr.id === selectedAddressId);
+    console.log('Address effect running with selectedAddressId:', currentAddressId);
+    if (selectedType === 'delivery' && currentAddressId) {
+      const selectedAddress = mockAddresses.find(addr => addr.id === currentAddressId);
       if (selectedAddress) {
         console.log('Fetching delivery quote for address:', selectedAddress);
         fetchDeliveryQuote(selectedAddress)
@@ -103,7 +110,7 @@ const DeliveryMethodStep = ({
           });
       }
     }
-  }, [selectedAddressId, selectedType, fetchDeliveryQuote]);
+  }, [currentAddressId, selectedType, fetchDeliveryQuote]);
 
   // When date changes, fetch available time slots for that date
   useEffect(() => {
@@ -157,7 +164,7 @@ const DeliveryMethodStep = ({
     console.log('Continue button clicked');
     console.log('Current validation state:', {
       selectedType,
-      selectedAddressId,
+      selectedAddressId: currentAddressId,
       selectedSlot,
       isButtonDisabled,
       isQuoteValid: selectedType === 'delivery' ? isQuoteValid() : true
@@ -172,7 +179,7 @@ const DeliveryMethodStep = ({
     
     // For delivery orders
     if (selectedType === 'delivery') {
-      if (selectedAddressId && selectedSlot) {
+      if (currentAddressId && selectedSlot) {
         // FIXED: Always consider quotes valid for now to help debug
         const isValid = true; // isQuoteValid();
         console.log('Delivery quote validity check result:', isValid);
@@ -199,7 +206,7 @@ const DeliveryMethodStep = ({
       toast.error('Please select a time slot to continue.');
     }
     
-    if (selectedType === 'delivery' && !selectedAddressId) {
+    if (selectedType === 'delivery' && !currentAddressId) {
       toast.error('Please select a delivery address to continue.');
     }
   };
@@ -207,8 +214,8 @@ const DeliveryMethodStep = ({
   // Create content components for delivery and pickup tabs
   const deliveryContent = (
     <DeliveryTabContent 
-      selectedAddressId={selectedAddressId}
-      onAddressSelect={onAddressSelect}
+      selectedAddressId={currentAddressId}
+      onAddressSelect={handleAddressSelect}
       onDeliveryInstructionsChange={onDeliveryInstructionsChange}
       selectedDate={selectedDate}
       onDateChange={handleDateChange}
@@ -233,15 +240,15 @@ const DeliveryMethodStep = ({
     />
   );
 
-  // FIXED: Force the button enabled for debugging if both selections are made
+  // Force button enabled if both selections are made
   const forceButtonEnabled = (selectedType === 'pickup' && !!selectedSlot) || 
-                           (selectedType === 'delivery' && !!selectedAddressId && !!selectedSlot);
+                           (selectedType === 'delivery' && !!currentAddressId && !!selectedSlot);
   
   console.log("Final button state:", { 
     isButtonDisabled, 
     forceButtonEnabled,
     selectedType,
-    hasAddress: !!selectedAddressId,
+    hasAddress: !!currentAddressId,
     hasTimeSlot: !!selectedSlot
   });
 
