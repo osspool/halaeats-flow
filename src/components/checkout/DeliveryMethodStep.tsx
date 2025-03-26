@@ -7,13 +7,13 @@ import { useBookTimeSlot, useRestaurantMenu } from '@/hooks/useRestaurantApi';
 import { TimeSlot } from '@/components/shared/time-slots/types';
 import { mockAddresses } from '@/data/checkoutMockData';
 import { useDeliveryQuote } from '@/hooks/checkout/useDeliveryQuote';
+import { useDeliveryMethodValidation } from '@/hooks/checkout/useDeliveryMethodValidation';
 import { toast } from 'sonner';
-import DeliveryForm from './delivery/DeliveryForm';
-import PickupForm from './pickup/PickupForm';
 import { 
   OrderTypeSelector, 
-  TimeSlotSection,
-  ContinueButton
+  ContinueButton,
+  DeliveryTabContent,
+  PickupTabContent
 } from './delivery-method';
 
 interface DeliveryMethodStepProps {
@@ -53,6 +53,16 @@ const DeliveryMethodStep = ({
     isQuoteValid,
     refreshQuote
   } = useDeliveryQuote(selectedAddressId);
+
+  // Validation hook for the continue button
+  const { isButtonDisabled, getSelectedAddress } = useDeliveryMethodValidation({
+    selectedType,
+    selectedAddressId,
+    selectedSlot,
+    isLoadingTimeSlots,
+    isLoadingQuote,
+    bookTimeSlotMutation
+  });
 
   const handleOrderTypeChange = (type: OrderType) => {
     setSelectedType(type);
@@ -130,15 +140,13 @@ const DeliveryMethodStep = ({
   }, [selectedDate, menuData]);
 
   const handleRefreshQuote = () => {
-    if (selectedAddressId) {
-      const selectedAddress = mockAddresses.find(addr => addr.id === selectedAddressId);
-      if (selectedAddress) {
-        toast.promise(refreshQuote(selectedAddress), {
-          loading: 'Refreshing delivery quote...',
-          success: 'Delivery quote updated!',
-          error: 'Could not refresh quote. Please try again.'
-        });
-      }
+    const selectedAddress = getSelectedAddress();
+    if (selectedAddress) {
+      toast.promise(refreshQuote(selectedAddress), {
+        loading: 'Refreshing delivery quote...',
+        success: 'Delivery quote updated!',
+        error: 'Could not refresh quote. Please try again.'
+      });
     }
   };
 
@@ -181,44 +189,6 @@ const DeliveryMethodStep = ({
     }
   };
 
-  // Function to determine if the Continue button should be disabled
-  const isContinueButtonDisabled = () => {
-    // If we're loading data, disable the button
-    if (bookTimeSlotMutation.isPending || isLoadingTimeSlots) {
-      console.log('Button disabled: Loading data');
-      return true;
-    }
-
-    // For pickup orders, we just need a time slot
-    if (selectedType === 'pickup') {
-      console.log('Pickup button state:', !selectedSlot ? 'disabled' : 'enabled');
-      return !selectedSlot;
-    }
-
-    // For delivery orders
-    if (selectedType === 'delivery') {
-      // We need an address, a time slot, and either a valid quote or loading quote
-      const hasAddress = !!selectedAddressId;
-      const hasTimeSlot = !!selectedSlot;
-      const quoteValid = isQuoteValid();
-      
-      console.log('Delivery validation:', {
-        addressSelected: hasAddress,
-        timeSlotSelected: hasTimeSlot,
-        quoteValid
-      });
-      
-      // If we have an address and a time slot, we can enable the button even if we're still loading the quote
-      if (hasAddress && hasTimeSlot && isLoadingQuote) {
-        return false;
-      }
-      
-      return !hasAddress || !hasTimeSlot || !quoteValid;
-    }
-
-    return true;
-  };
-
   return (
     <div className="space-y-6">
       <div>
@@ -233,15 +203,11 @@ const DeliveryMethodStep = ({
         />
         
         {/* Inject content into the tabs */}
-        <TabsContent value="delivery" className="p-4 bg-halaeats-50 rounded-lg space-y-6">
-          <DeliveryForm
+        <TabsContent value="delivery">
+          <DeliveryTabContent 
             selectedAddressId={selectedAddressId}
             onAddressSelect={onAddressSelect}
             onDeliveryInstructionsChange={onDeliveryInstructionsChange}
-          />
-          
-          <TimeSlotSection
-            orderType="delivery"
             selectedDate={selectedDate}
             onDateChange={handleDateChange}
             selectedSlot={selectedSlot}
@@ -254,11 +220,8 @@ const DeliveryMethodStep = ({
           />
         </TabsContent>
         
-        <TabsContent value="pickup" className="p-4 bg-halaeats-50 rounded-lg space-y-6">
-          <PickupForm />
-          
-          <TimeSlotSection
-            orderType="pickup"
+        <TabsContent value="pickup">
+          <PickupTabContent
             selectedDate={selectedDate}
             onDateChange={handleDateChange}
             selectedSlot={selectedSlot}
@@ -271,7 +234,7 @@ const DeliveryMethodStep = ({
       
       <ContinueButton 
         onClick={handleContinue}
-        isDisabled={isContinueButtonDisabled()}
+        isDisabled={isButtonDisabled}
         isLoadingPayment={bookTimeSlotMutation.isPending}
         isLoadingQuote={isLoadingQuote}
       />
