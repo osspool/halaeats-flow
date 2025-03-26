@@ -1,4 +1,3 @@
-
 export interface DeliveryQuote {
   id: string;
   fee: number;
@@ -9,6 +8,7 @@ export interface DeliveryQuote {
   delivery_address: string;
   distance_miles: number;
   created_at: string; // ISO string
+  time_slot?: string | null; // Added time slot field
 }
 
 export interface DeliveryOrder {

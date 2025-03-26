@@ -31,6 +31,12 @@ const TimeSlotSection = ({
   isLoadingQuote,
   onRefreshQuote
 }: TimeSlotSectionProps) => {
+  
+  const handleSlotSelect = (slotId: string) => {
+    console.log(`Selected time slot: ${slotId} for ${orderType}`);
+    onSlotSelect(slotId);
+  };
+  
   return (
     <div className="border-t pt-4">
       <div className="flex justify-between items-center mb-2">
@@ -55,7 +61,7 @@ const TimeSlotSection = ({
         selectedDate={selectedDate}
         onDateChange={onDateChange}
         selectedSlot={selectedSlot}
-        onSlotSelect={onSlotSelect}
+        onSlotSelect={handleSlotSelect}
         availableTimeSlots={availableTimeSlots}
         isLoadingTimeSlots={isLoadingTimeSlots}
         deliveryQuote={deliveryQuote}

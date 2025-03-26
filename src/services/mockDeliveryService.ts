@@ -1,25 +1,63 @@
 
 import { DeliveryQuote, DeliveryOrder, DeliveryPaymentSplit } from '@/types/delivery';
 import { Address } from '@/types/checkout';
-import { addMinutes, formatISO } from 'date-fns';
+import { addMinutes, formatISO, parseISO, format } from 'date-fns';
 
 // Mock restaurant address 
 const RESTAURANT_ADDRESS = '123 Food Street, San Francisco, CA 94105';
 
-// Calculate a delivery fee based on address distance (mock implementation)
-const calculateDeliveryFee = (address: Address): number => {
+// Calculate a delivery fee based on address distance and time slot (mock implementation)
+const calculateDeliveryFee = (address: Address, timeSlot?: string): number => {
   // Simple mock calculation based on zip code
   const zipCodeLastDigit = parseInt(address.zipCode.charAt(address.zipCode.length - 1));
+  
   // Base fee + variable component based on zip code
-  return 3.99 + (zipCodeLastDigit * 0.5);
+  let fee = 3.99 + (zipCodeLastDigit * 0.5);
+  
+  // Add time-based pricing - peak hours cost more
+  if (timeSlot) {
+    if (timeSlot.includes('18:00') || timeSlot.includes('19:00')) {
+      // Dinner rush hour premium
+      fee += 1.50;
+    } else if (timeSlot.includes('12:00') || timeSlot.includes('13:00')) {
+      // Lunch rush hour premium
+      fee += 1.00;
+    } else if (timeSlot.includes('21:00') || timeSlot.includes('22:00')) {
+      // Late night premium
+      fee += 0.75;
+    }
+  }
+  
+  return parseFloat(fee.toFixed(2));
 };
 
-// Calculate estimated delivery time (20-40 mins from now)
-const calculateEstimatedDeliveryTime = (): string => {
-  const minMinutes = 20;
-  const maxMinutes = 40;
-  const randomMinutes = Math.floor(Math.random() * (maxMinutes - minMinutes + 1)) + minMinutes;
-  return formatISO(addMinutes(new Date(), randomMinutes));
+// Calculate estimated delivery time based on the selected time slot
+const calculateEstimatedDeliveryTime = (timeSlot?: string): string => {
+  if (!timeSlot) {
+    // Default: 20-40 mins from now if no time slot
+    const minMinutes = 20;
+    const maxMinutes = 40;
+    const randomMinutes = Math.floor(Math.random() * (maxMinutes - minMinutes + 1)) + minMinutes;
+    return formatISO(addMinutes(new Date(), randomMinutes));
+  }
+  
+  // Parse the time slot format (e.g., "18:00-21:00")
+  const [startTime] = timeSlot.split('-');
+  const [hours, minutes] = startTime.split(':').map(Number);
+  
+  // Create a date object for today with the start time from the slot
+  const today = new Date();
+  const deliveryDate = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate(),
+    hours,
+    minutes
+  );
+  
+  // Add 15-30 minutes for delivery within the time slot
+  const additionalMinutes = Math.floor(Math.random() * 16) + 15; // 15-30 minutes
+  return formatISO(addMinutes(deliveryDate, additionalMinutes));
 };
 
 // Calculate distance in miles (mock)
@@ -32,8 +70,8 @@ const calculateDistance = (address: Address): number => {
 /**
  * Create a delivery quote (similar to DoorDash quoting API)
  */
-export const createDeliveryQuote = async (address: Address): Promise<DeliveryQuote> => {
-  console.log('Creating delivery quote for address:', address);
+export const createDeliveryQuote = async (address: Address, timeSlot?: string): Promise<DeliveryQuote> => {
+  console.log('Creating delivery quote for address:', address, 'time slot:', timeSlot || 'not specified');
   
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 800));
@@ -42,19 +80,20 @@ export const createDeliveryQuote = async (address: Address): Promise<DeliveryQuo
   const expiresAt = addMinutes(now, 5); // Quote expires in 5 minutes
   
   const addressString = `${address.street}${address.apt ? ', ' + address.apt : ''}, ${address.city}, ${address.state} ${address.zipCode}`;
-  const fee = calculateDeliveryFee(address);
+  const fee = calculateDeliveryFee(address, timeSlot);
   const distance = calculateDistance(address);
   
   const quote = {
     id: `dq_${Math.random().toString(36).substring(2, 10)}`,
     fee,
-    estimated_delivery_time: calculateEstimatedDeliveryTime(),
+    estimated_delivery_time: calculateEstimatedDeliveryTime(timeSlot),
     expires_at: formatISO(expiresAt),
     status: 'active' as const,
     pickup_address: RESTAURANT_ADDRESS,
     delivery_address: addressString,
     distance_miles: distance,
     created_at: formatISO(now),
+    time_slot: timeSlot || null
   };
   
   console.log('Created delivery quote:', quote);

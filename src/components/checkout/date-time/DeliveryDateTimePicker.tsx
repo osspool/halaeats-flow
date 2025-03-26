@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { format } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
@@ -37,6 +37,14 @@ const DeliveryDateTimePicker = ({
   onRefreshQuote,
 }: DeliveryDateTimePickerProps) => {
   const title = orderType === 'delivery' ? 'Delivery' : 'Pickup';
+  
+  // When time slot changes, trigger quote refresh if in delivery mode
+  useEffect(() => {
+    if (orderType === 'delivery' && selectedSlot && onRefreshQuote) {
+      console.log('Time slot changed, refreshing delivery quote');
+      onRefreshQuote();
+    }
+  }, [selectedSlot, orderType, onRefreshQuote]);
   
   // Format the estimated delivery time
   const formatEstimatedTime = (isoString: string) => {

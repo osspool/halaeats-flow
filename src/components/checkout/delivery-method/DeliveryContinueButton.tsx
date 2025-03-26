@@ -29,31 +29,30 @@ const DeliveryContinueButton = ({
 }: DeliveryContinueButtonProps) => {
   const [isButtonDisabled, setIsButtonDisabled] = useState(true);
 
-  // Determine if button should be enabled
+  // Determine if button should be enabled based on selections
   useEffect(() => {
-    const forceButtonEnabled = (selectedType === 'pickup' && !!selectedSlot) || 
-                             (selectedType === 'delivery' && !!selectedAddressId && !!selectedSlot);
+    // Basic validation for pickup: just need a time slot
+    if (selectedType === 'pickup') {
+      setIsButtonDisabled(!selectedSlot);
+      return;
+    }
+    
+    // For delivery: need both address and time slot
+    const hasRequiredFields = !!selectedAddressId && !!selectedSlot;
     
     console.log("Button state calculated:", { 
-      forceButtonEnabled,
       selectedType,
       hasAddress: !!selectedAddressId,
-      hasTimeSlot: !!selectedSlot
+      hasTimeSlot: !!selectedSlot,
+      isButtonDisabled: !hasRequiredFields
     });
     
-    setIsButtonDisabled(!forceButtonEnabled);
+    setIsButtonDisabled(!hasRequiredFields);
   }, [selectedType, selectedAddressId, selectedSlot]);
 
   const handleContinue = (e: React.MouseEvent) => {
     e.preventDefault();
     console.log('Continue button clicked');
-    console.log('Current validation state:', {
-      selectedType,
-      selectedAddressId,
-      selectedSlot,
-      isButtonDisabled,
-      isQuoteValid: selectedType === 'delivery' ? isQuoteValid() : true
-    });
     
     // For pickup orders, we need a selected slot
     if (selectedType === 'pickup' && selectedSlot) {
@@ -65,11 +64,11 @@ const DeliveryContinueButton = ({
     // For delivery orders
     if (selectedType === 'delivery') {
       if (selectedAddressId && selectedSlot) {
-        // Consider quotes valid for now to help debug
-        const isValid = true; 
-        console.log('Delivery quote validity check result:', isValid);
+        // Check if the delivery quote is valid
+        const quoteValid = isQuoteValid();
+        console.log('Delivery quote validity check result:', quoteValid);
         
-        if (isValid) {
+        if (quoteValid) {
           console.log('Delivery order is valid, proceeding to next step');
           onNext();
           return;
@@ -81,18 +80,13 @@ const DeliveryContinueButton = ({
         }
       } else {
         console.log('Missing required fields for delivery order');
-        toast.error('Please select both a delivery address and a time slot to continue.');
+        if (!selectedAddressId) {
+          toast.error('Please select a delivery address to continue.');
+        } else if (!selectedSlot) {
+          toast.error('Please select a time slot to continue.');
+        }
         return;
       }
-    }
-    
-    // If we get here, validation failed but we need to make sure user knows why
-    if (!selectedSlot) {
-      toast.error('Please select a time slot to continue.');
-    }
-    
-    if (selectedType === 'delivery' && !selectedAddressId) {
-      toast.error('Please select a delivery address to continue.');
     }
   };
 

@@ -1,18 +1,23 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { DeliveryQuote } from '@/types/delivery';
 import { Address } from '@/types/checkout';
-import { createDeliveryQuote } from '@/services/mockDeliveryService';
+import { createDeliveryQuote, isDeliveryQuoteValid } from '@/services/mockDeliveryService';
 
 export const useDeliveryQuote = (defaultAddressId?: string) => {
   const [deliveryQuote, setDeliveryQuote] = useState<DeliveryQuote | null>(null);
   const [isLoadingQuote, setIsLoadingQuote] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-  const fetchDeliveryQuote = useCallback(async (address: Address): Promise<DeliveryQuote | null> => {
+  // Fetch a delivery quote when address changes
+  const fetchDeliveryQuote = useCallback(async (address: Address, timeSlot?: string): Promise<DeliveryQuote | null> => {
     try {
       setIsLoadingQuote(true);
-      console.log('Fetching delivery quote for address:', address);
-      const quote = await createDeliveryQuote(address);
+      console.log('Fetching delivery quote for address:', address, 'time slot:', timeSlot || 'not specified');
+      
+      // Pass the selected time slot to the quote creation if available
+      const quote = await createDeliveryQuote(address, timeSlot);
       setDeliveryQuote(quote);
       console.log('Received delivery quote:', quote);
       return quote;
@@ -24,10 +29,11 @@ export const useDeliveryQuote = (defaultAddressId?: string) => {
     }
   }, []);
 
+  // Refresh the quote (typically when it's expired)
   const refreshQuote = useCallback(async (address: Address): Promise<DeliveryQuote | null> => {
     try {
       setIsLoadingQuote(true);
-      const quote = await createDeliveryQuote(address);
+      const quote = await createDeliveryQuote(address, selectedSlot || undefined);
       setDeliveryQuote(quote);
       return quote;
     } catch (error) {
@@ -36,34 +42,25 @@ export const useDeliveryQuote = (defaultAddressId?: string) => {
     } finally {
       setIsLoadingQuote(false);
     }
-  }, []);
+  }, [selectedSlot]);
 
   // Check if the quote is still valid
   const isQuoteValid = useCallback(() => {
-    if (!deliveryQuote) return false;
-    
-    // Consider all quotes valid for now to help with debugging
-    return true;
-    
-    // Later we can re-enable the actual validity checks:
-    /*
-    // Check if the quote is active
-    if (deliveryQuote.status !== 'active') return false;
-    
-    // Check if the quote has expired (created more than 5 minutes ago)
-    const createdAt = new Date(deliveryQuote.created_at);
-    const now = new Date();
-    const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
-    
-    return createdAt > fiveMinutesAgo;
-    */
+    return isDeliveryQuoteValid(deliveryQuote);
   }, [deliveryQuote]);
+
+  // Update selectedSlot and selectedDate
+  const updateTimeSelection = useCallback((slot: string | null, date: Date | null) => {
+    setSelectedSlot(slot);
+    setSelectedDate(date);
+  }, []);
 
   return {
     deliveryQuote,
     isLoadingQuote,
     fetchDeliveryQuote,
     refreshQuote,
-    isQuoteValid
+    isQuoteValid,
+    updateTimeSelection
   };
 };

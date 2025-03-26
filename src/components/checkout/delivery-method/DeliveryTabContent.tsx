@@ -34,13 +34,13 @@ const DeliveryTabContent = ({
   isLoadingQuote,
   onRefreshQuote
 }: DeliveryTabContentProps) => {
-  // Log when props change
+  // When time slot or address changes, we need to refresh the quote
   useEffect(() => {
-    console.log('DeliveryTabContent props updated:', { 
-      selectedAddressId, 
-      selectedSlot 
-    });
-  }, [selectedAddressId, selectedSlot]);
+    if (selectedAddressId && selectedSlot) {
+      console.log('Address and time slot both selected, should refresh quote');
+      onRefreshQuote();
+    }
+  }, [selectedAddressId, selectedSlot, onRefreshQuote]);
 
   const handleAddressSelect = (addressId: string) => {
     console.log('Address selected in DeliveryTabContent:', addressId);
