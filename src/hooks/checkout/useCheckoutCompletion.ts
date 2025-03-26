@@ -18,6 +18,7 @@ export const useCheckoutCompletion = (
       
       // Process payment
       const paymentSuccessful = await completePayment();
+      console.log('Payment result:', paymentSuccessful);
       
       if (!paymentSuccessful) {
         throw new Error('Payment processing failed');

@@ -13,11 +13,13 @@ export const useDeliveryQuote = (selectedAddressId?: string) => {
 
   // Function to fetch a delivery quote
   const fetchDeliveryQuote = useCallback(async (address: Address) => {
+    console.log('Fetching delivery quote for address:', address);
     setIsLoadingQuote(true);
     setQuoteError(null);
     
     try {
       const quote = await createDeliveryQuote(address);
+      console.log('Received delivery quote:', quote);
       setDeliveryQuote(quote);
       
       // Setup expiration handling
@@ -67,7 +69,10 @@ export const useDeliveryQuote = (selectedAddressId?: string) => {
 
   // Check if the current quote is valid
   const isQuoteValid = useCallback(() => {
-    return isDeliveryQuoteValid(deliveryQuote);
+    console.log('Checking if quote is valid:', deliveryQuote);
+    const isValid = isDeliveryQuoteValid(deliveryQuote);
+    console.log('Quote validity:', isValid);
+    return isValid;
   }, [deliveryQuote]);
 
   // Function to refresh an expired quote

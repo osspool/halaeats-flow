@@ -14,6 +14,8 @@ export const useCheckoutSteps = ({
   setCheckoutState, 
   completeCheckout 
 }: UseCheckoutStepsProps) => {
+  const { toast } = useToast();
+
   const nextStep = useCallback(() => {
     console.log('Current step:', checkoutState.step);
     
@@ -34,13 +36,20 @@ export const useCheckoutSteps = ({
         break;
       case 'review':
         console.log('Completing checkout');
-        completeCheckout();
+        completeCheckout().catch(error => {
+          console.error('Failed to complete checkout:', error);
+          toast({
+            title: "Checkout Error",
+            description: "There was a problem completing your order. Please try again.",
+            variant: "destructive",
+          });
+        });
         break;
       default:
         console.log('Unknown step:', checkoutState.step);
         break;
     }
-  }, [checkoutState.step, completeCheckout, setCheckoutState]);
+  }, [checkoutState.step, completeCheckout, setCheckoutState, toast]);
 
   const previousStep = useCallback(() => {
     switch (checkoutState.step) {

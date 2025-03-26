@@ -134,9 +134,8 @@ const DeliveryMethodStep = ({
       isQuoteValid: selectedType === 'delivery' ? isQuoteValid() : true
     });
     
-    // For pickup orders, we only need a selected slot
+    // For pickup orders, we need a selected slot
     if (selectedType === 'pickup' && selectedSlot) {
-      // We can skip the quote validation for pickup
       console.log('Pickup order is valid, proceeding to next step');
       onNext();
       return;
@@ -145,41 +144,48 @@ const DeliveryMethodStep = ({
     // For delivery orders
     if (selectedType === 'delivery') {
       // Validate delivery requirements
-      if (!selectedAddressId) {
-        console.log('No address selected for delivery');
-        return;
+      if (selectedAddressId && selectedSlot) {
+        // Check quote validity for delivery
+        if (isQuoteValid()) {
+          console.log('Delivery order is valid, proceeding to next step');
+          onNext();
+          return;
+        } else {
+          console.log('Delivery quote is not valid, refreshing...');
+          handleRefreshQuote();
+        }
+      } else {
+        console.log('Missing required fields for delivery order');
       }
-      
-      if (!selectedSlot) {
-        console.log('No time slot selected for delivery');
-        return;
-      }
-      
-      // Check quote validity
-      if (!isQuoteValid()) {
-        console.log('Delivery quote is not valid, refreshing...');
-        handleRefreshQuote();
-        return;
-      }
-      
-      console.log('Delivery order is valid, proceeding to next step');
-      onNext();
-      return;
     }
   };
 
   // Function to determine if the Continue button should be disabled
   const isContinueButtonDisabled = () => {
-    if (bookTimeSlotMutation.isPending || isLoadingQuote) {
+    // If we're loading data, disable the button
+    if (bookTimeSlotMutation.isPending || isLoadingTimeSlots) {
+      console.log('Button disabled: Loading data');
       return true;
     }
 
+    // For pickup orders
     if (selectedType === 'pickup') {
+      console.log('Pickup button state:', !selectedSlot ? 'disabled' : 'enabled');
       return !selectedSlot;
     }
 
+    // For delivery orders
     if (selectedType === 'delivery') {
-      return !selectedAddressId || !selectedSlot || !isQuoteValid();
+      // For delivery, check that we have an address, a time slot, and a valid quote
+      const quoteValid = isQuoteValid();
+      console.log('Delivery validation:', {
+        addressSelected: !!selectedAddressId,
+        timeSlotSelected: !!selectedSlot,
+        quoteValid
+      });
+      
+      // Only disable if any of these are not true
+      return !selectedAddressId || !selectedSlot || !quoteValid;
     }
 
     return true;
