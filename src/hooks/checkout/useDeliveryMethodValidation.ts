@@ -26,8 +26,9 @@ export const useDeliveryMethodValidation = ({
   const [isButtonDisabled, setIsButtonDisabled] = useState(true);
 
   const validateForm = useCallback(() => {
-    // If we're loading data, disable the button unless we have what we need
+    // If we're loading data, disable the button
     if (bookTimeSlotMutation.isPending) {
+      console.log('Button disabled: timeSlot mutation is pending');
       setIsButtonDisabled(true);
       return;
     }
@@ -42,7 +43,7 @@ export const useDeliveryMethodValidation = ({
 
     // For delivery orders
     if (selectedType === 'delivery') {
-      // We need an address, a time slot, and either a valid quote or loading quote
+      // We need an address and a time slot
       const hasAddress = !!selectedAddressId;
       const hasTimeSlot = !!selectedSlot && !isLoadingTimeSlots;
       
@@ -53,7 +54,7 @@ export const useDeliveryMethodValidation = ({
         isLoadingQuote
       });
       
-      // If we have both address and time slot, we can enable the button
+      // Allow proceeding if we have both address and time slot
       // We'll check the quote validity in the click handler
       if (hasAddress && hasTimeSlot) {
         setIsButtonDisabled(false);
@@ -81,12 +82,12 @@ export const useDeliveryMethodValidation = ({
   }, [validateForm]);
 
   // Helper function to get selected address object
-  const getSelectedAddress = (): Address | undefined => {
+  const getSelectedAddress = useCallback((): Address | undefined => {
     if (selectedAddressId) {
       return mockAddresses.find(addr => addr.id === selectedAddressId);
     }
     return undefined;
-  };
+  }, [selectedAddressId]);
 
   return {
     isButtonDisabled,

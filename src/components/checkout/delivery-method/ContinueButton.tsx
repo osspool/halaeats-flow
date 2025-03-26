@@ -25,6 +25,8 @@ const ContinueButton = ({
     buttonText = "Loading Delivery Quote...";
   }
   
+  console.log("ContinueButton state:", { isDisabled, isLoading });
+  
   return (
     <Button 
       onClick={onClick}

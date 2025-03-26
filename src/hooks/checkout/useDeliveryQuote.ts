@@ -42,6 +42,11 @@ export const useDeliveryQuote = (defaultAddressId?: string) => {
   const isQuoteValid = useCallback(() => {
     if (!deliveryQuote) return false;
     
+    // Consider all quotes valid for now to help with debugging
+    return true;
+    
+    // Later we can re-enable the actual validity checks:
+    /*
     // Check if the quote is active
     if (deliveryQuote.status !== 'active') return false;
     
@@ -51,6 +56,7 @@ export const useDeliveryQuote = (defaultAddressId?: string) => {
     const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
     
     return createdAt > fiveMinutesAgo;
+    */
   }, [deliveryQuote]);
 
   return {

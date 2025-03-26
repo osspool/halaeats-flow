@@ -18,6 +18,7 @@ const OrderTypeSelector = ({
   pickupContent
 }: OrderTypeSelectorProps) => {
   const handleValueChange = (value: string) => {
+    console.log("OrderType changed to:", value);
     onOrderTypeChange(value as OrderType);
   };
 
