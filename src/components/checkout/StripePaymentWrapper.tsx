@@ -44,15 +44,16 @@ const StripePaymentWrapper = ({
         <Elements 
           stripe={stripePromise} 
           options={{
-            clientSecret,
             appearance: {
               theme: 'stripe',
               variables: {
                 colorPrimary: '#7c3aed',
               },
             },
-            mode: 'setup', // Add mode property - 'setup' is appropriate for saving payment methods
-            payment_method_types: ['card', 'paypal', 'us_bank_account'],
+            mode: 'setup', // 'setup' is appropriate for saving payment methods
+            paymentMethods: {
+              types: ['card', 'paypal', 'us_bank_account']
+            }
           }}
         >
           <PaymentStep
