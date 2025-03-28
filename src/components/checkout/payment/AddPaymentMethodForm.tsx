@@ -1,11 +1,11 @@
-
 import { useState } from 'react';
 import { CardElement, PaymentElement } from '@stripe/react-stripe-js';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircle, Lock, CreditCard, Paypal, Bank } from 'lucide-react';
+import { CheckCircle, Lock, CreditCard } from 'lucide-react';
+import { PaypalIcon, BankIcon } from './PaymentIcons';
 import { useForm } from 'react-hook-form';
 
 interface AddPaymentMethodFormProps {
@@ -52,11 +52,11 @@ const AddPaymentMethodForm = ({
             <span>Card</span>
           </TabsTrigger>
           <TabsTrigger value="paypal" className="flex items-center gap-2">
-            <Paypal className="h-4 w-4" />
+            <PaypalIcon className="h-4 w-4" />
             <span>PayPal</span>
           </TabsTrigger>
           <TabsTrigger value="bank" className="flex items-center gap-2">
-            <Bank className="h-4 w-4" />
+            <BankIcon className="h-4 w-4" />
             <span>Bank</span>
           </TabsTrigger>
         </TabsList>
@@ -103,7 +103,7 @@ const AddPaymentMethodForm = ({
           
           <TabsContent value="paypal" className="space-y-4">
             <div className="text-center p-6 border rounded-lg border-dashed border-gray-300">
-              <Paypal className="h-12 w-12 mx-auto text-blue-600 mb-3" />
+              <PaypalIcon className="h-12 w-12 mx-auto text-blue-600 mb-3" />
               <p className="text-gray-600">
                 You'll be redirected to PayPal to complete your payment securely.
               </p>

@@ -91,6 +91,7 @@ const PaymentStep = ({
           // In a real app, you would send this to your server to save
           const newPaymentMethod: PaymentMethod = {
             id: result.paymentMethod.id,
+            type: 'card', // Add the required type property
             brand: result.paymentMethod.card?.brand || 'unknown',
             last4: result.paymentMethod.card?.last4 || '0000',
             expiryMonth: result.paymentMethod.card?.exp_month || 1,

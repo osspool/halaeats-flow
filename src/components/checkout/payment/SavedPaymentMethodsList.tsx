@@ -1,12 +1,9 @@
-
 import { 
   CreditCard, 
   Plus, 
-  Check, 
-  Paypal, 
-  Bank, 
-  AppleIcon 
+  Check 
 } from 'lucide-react';
+import { PaypalIcon, BankIcon, AppleIcon, GooglePayIcon } from './PaymentIcons';
 import { PaymentMethod } from '@/types/checkout';
 
 interface SavedPaymentMethodsListProps {
@@ -27,13 +24,13 @@ const SavedPaymentMethodsList = ({
   const getPaymentMethodIcon = (type: string) => {
     switch (type) {
       case 'paypal':
-        return <Paypal className="h-5 w-5 text-blue-600" />;
+        return <PaypalIcon className="h-5 w-5 text-blue-600" />;
       case 'bank_transfer':
-        return <Bank className="h-5 w-5 text-green-600" />;
+        return <BankIcon className="h-5 w-5 text-green-600" />;
       case 'apple_pay':
         return <AppleIcon className="h-5 w-5 text-black" />;
       case 'google_pay':
-        return <CreditCard className="h-5 w-5 text-gray-600" />;
+        return <GooglePayIcon className="h-5 w-5 text-gray-600" />;
       case 'card':
       default:
         return <CreditCard className="h-5 w-5 text-primary" />;

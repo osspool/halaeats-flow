@@ -1,5 +1,5 @@
-
-import { CreditCard, Shield, Paypal, Bank, AppleIcon } from 'lucide-react';
+import { CreditCard, Shield } from 'lucide-react';
+import { PaypalIcon, BankIcon, AppleIcon, GooglePayIcon } from '@/components/checkout/payment/PaymentIcons';
 import { PaymentMethod } from '@/types/checkout';
 
 interface PaymentMethodSectionProps {
@@ -11,13 +11,13 @@ const PaymentMethodSection = ({ selectedPaymentMethod }: PaymentMethodSectionPro
   const getPaymentIcon = (type: string) => {
     switch (type) {
       case 'paypal':
-        return <Paypal className="h-4 w-4 mr-2 text-primary" />;
+        return <PaypalIcon className="h-4 w-4 mr-2 text-primary" />;
       case 'bank_transfer':
-        return <Bank className="h-4 w-4 mr-2 text-primary" />;
+        return <BankIcon className="h-4 w-4 mr-2 text-primary" />;
       case 'apple_pay':
         return <AppleIcon className="h-4 w-4 mr-2 text-primary" />;
       case 'google_pay':
-        return <CreditCard className="h-4 w-4 mr-2 text-primary" />;
+        return <GooglePayIcon className="h-4 w-4 mr-2 text-primary" />;
       case 'card':
       default:
         return <CreditCard className="h-4 w-4 mr-2 text-primary" />;
