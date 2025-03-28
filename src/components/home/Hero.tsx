@@ -1,12 +1,49 @@
 
 import { useState } from 'react';
-import { Search, MapPin, Calendar } from 'lucide-react';
+import { Search, MapPin, Calendar, ChevronDown } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue 
+} from '@/components/ui/select';
+
+// Cuisine categories available in the app
+const cuisineCategories = [
+  { id: 'all', name: 'All Cuisines' },
+  { id: 'indian', name: 'Indian' },
+  { id: 'north-indian', name: 'North Indian' },
+  { id: 'south-indian', name: 'South Indian' },
+  { id: 'middle-eastern', name: 'Middle Eastern' },
+  { id: 'pakistani', name: 'Pakistani' },
+  { id: 'mediterranean', name: 'Mediterranean' },
+  { id: 'chinese', name: 'Chinese' },
+  { id: 'italian', name: 'Italian' },
+  { id: 'thai', name: 'Thai' },
+  { id: 'japanese', name: 'Japanese' },
+  { id: 'mexican', name: 'Mexican' },
+  { id: 'vegetarian', name: 'Vegetarian' },
+  { id: 'halal', name: 'Halal' }
+];
 
 const Hero = () => {
   const [searchFocused, setSearchFocused] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCuisine, setSelectedCuisine] = useState('all');
+  const [location, setLocation] = useState('Current Location');
+
+  const handleSearch = () => {
+    console.log('Searching for:', {
+      query: searchQuery,
+      cuisine: selectedCuisine,
+      location: location
+    });
+    // This would typically navigate to search results page with these parameters
+  };
 
   return (
     <section className="relative min-h-[600px] pt-28 pb-20 md:min-h-[700px] flex items-center overflow-hidden">
@@ -59,20 +96,42 @@ const Hero = () => {
               )}
             >
               <div className="flex flex-col p-4">
+                {/* Search input */}
                 <div className="flex items-center border-b border-halaeats-100 pb-3 mb-3">
                   <Search className="h-5 w-5 text-halaeats-400 mr-2 flex-shrink-0" />
                   <input 
                     type="text" 
                     placeholder="Search for dishes or cuisine..." 
                     className="bg-transparent border-none outline-none flex-1 text-halaeats-900 placeholder:text-halaeats-400"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                     onFocus={() => setSearchFocused(true)}
                     onBlur={() => setSearchFocused(false)}
                   />
                 </div>
+                
+                {/* Cuisine selector */}
+                <div className="flex flex-col sm:flex-row gap-3 mb-3">
+                  <div className="flex-1">
+                    <Select value={selectedCuisine} onValueChange={setSelectedCuisine}>
+                      <SelectTrigger className="w-full border-none bg-halaeats-50 text-sm">
+                        <SelectValue placeholder="Select cuisine" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-80">
+                        {cuisineCategories.map((cuisine) => (
+                          <SelectItem key={cuisine.id} value={cuisine.id} className="cursor-pointer">
+                            {cuisine.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
                 <div className="flex flex-wrap gap-3 md:gap-4">
                   <div className="flex items-center text-sm text-halaeats-600">
                     <MapPin className="h-4 w-4 text-primary mr-1" />
-                    <span>Current Location</span>
+                    <span>{location}</span>
                   </div>
                   <div className="flex items-center text-sm text-halaeats-600">
                     <Calendar className="h-4 w-4 text-primary mr-1" />
@@ -81,10 +140,34 @@ const Hero = () => {
                 </div>
               </div>
               <div className="px-4 pb-4">
-                <Button className="w-full bg-primary hover:bg-cuisine-600 transition-gpu">
+                <Button 
+                  className="w-full bg-primary hover:bg-cuisine-600 transition-gpu"
+                  onClick={handleSearch}
+                >
                   Find Caterers
                 </Button>
               </div>
+            </div>
+
+            {/* Cuisine category chips - visible on mobile/smaller screens */}
+            <div className="mt-4 flex flex-wrap gap-2 md:hidden">
+              {cuisineCategories.slice(0, 5).map((cuisine) => (
+                <button
+                  key={cuisine.id}
+                  className={cn(
+                    "px-3 py-1 rounded-full text-sm transition-colors",
+                    selectedCuisine === cuisine.id 
+                      ? "bg-primary text-white" 
+                      : "bg-white text-halaeats-600 hover:bg-halaeats-50"
+                  )}
+                  onClick={() => setSelectedCuisine(cuisine.id)}
+                >
+                  {cuisine.name}
+                </button>
+              ))}
+              <button className="px-3 py-1 rounded-full text-sm bg-white text-halaeats-600 hover:bg-halaeats-50 flex items-center">
+                More <ChevronDown className="h-3 w-3 ml-1" />
+              </button>
             </div>
 
             {/* Trust indicators */}
