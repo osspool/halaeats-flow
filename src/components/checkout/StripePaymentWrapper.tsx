@@ -51,9 +51,7 @@ const StripePaymentWrapper = ({
               },
             },
             mode: 'setup', // 'setup' is appropriate for saving payment methods
-            paymentMethods: {
-              types: ['card', 'paypal', 'us_bank_account']
-            }
+            paymentMethodTypes: ['card', 'paypal', 'us_bank_account']
           }}
         >
           <PaymentStep
