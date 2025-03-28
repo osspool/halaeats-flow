@@ -51,8 +51,8 @@ const StripePaymentWrapper = ({
                 colorPrimary: '#7c3aed',
               },
             },
-            // Enable multiple payment methods
-            paymentMethodTypes: ['card', 'paypal', 'us_bank_account'],
+            mode: 'setup', // Add mode property - 'setup' is appropriate for saving payment methods
+            payment_method_types: ['card', 'paypal', 'us_bank_account'],
           }}
         >
           <PaymentStep
