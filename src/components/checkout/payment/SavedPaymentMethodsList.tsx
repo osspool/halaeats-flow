@@ -1,16 +1,18 @@
 
-import { useState, useEffect } from 'react';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
+import { 
+  CreditCard, 
+  Plus, 
+  Check, 
+  Paypal, 
+  Bank, 
+  AppleIcon 
+} from 'lucide-react';
 import { PaymentMethod } from '@/types/checkout';
-import { cn } from '@/lib/utils';
-import { Plus, Lock } from 'lucide-react';
 
 interface SavedPaymentMethodsListProps {
   paymentMethods: PaymentMethod[];
   selectedPaymentMethodId?: string;
-  onPaymentMethodSelect: (paymentMethodId: string) => void;
+  onPaymentMethodSelect: (id: string) => void;
   onAddNewCard: () => void;
 }
 
@@ -20,96 +22,105 @@ const SavedPaymentMethodsList = ({
   onPaymentMethodSelect,
   onAddNewCard,
 }: SavedPaymentMethodsListProps) => {
-  const [selected, setSelected] = useState<string>(
-    selectedPaymentMethodId || paymentMethods.find(p => p.isDefault)?.id || ''
-  );
-
-  useEffect(() => {
-    // Log the current selected payment method for debugging
-    console.log('SavedPaymentMethodsList - selected payment method:', selected);
-    console.log('SavedPaymentMethodsList - selectedPaymentMethodId prop:', selectedPaymentMethodId);
-    
-    // If a payment method is selected, call the parent callback
-    if (selected) {
-      onPaymentMethodSelect(selected);
-    }
-  }, [selected, selectedPaymentMethodId, onPaymentMethodSelect]);
-
-  const handlePaymentMethodChange = (value: string) => {
-    console.log('Payment method changed to:', value);
-    setSelected(value);
-    onPaymentMethodSelect(value);
-  };
-
-  const getCardIcon = (brand: string) => {
-    switch (brand.toLowerCase()) {
-      case 'visa':
-        return '💳 Visa';
-      case 'mastercard':
-        return '💳 Mastercard';
-      case 'amex':
-        return '💳 Amex';
+  
+  // Get appropriate icon for payment method type
+  const getPaymentMethodIcon = (type: string) => {
+    switch (type) {
+      case 'paypal':
+        return <Paypal className="h-5 w-5 text-blue-600" />;
+      case 'bank_transfer':
+        return <Bank className="h-5 w-5 text-green-600" />;
+      case 'apple_pay':
+        return <AppleIcon className="h-5 w-5 text-black" />;
+      case 'google_pay':
+        return <CreditCard className="h-5 w-5 text-gray-600" />;
+      case 'card':
       default:
-        return '💳 Card';
+        return <CreditCard className="h-5 w-5 text-primary" />;
     }
   };
-
+  
+  // Get display name for payment method
+  const getPaymentMethodName = (method: PaymentMethod) => {
+    switch (method.type) {
+      case 'paypal':
+        return 'PayPal';
+      case 'bank_transfer':
+        return method.bankName || 'Bank Transfer';
+      case 'apple_pay':
+        return 'Apple Pay';
+      case 'google_pay':
+        return 'Google Pay';
+      case 'card':
+        return method.brand ? 
+          `${method.brand.charAt(0).toUpperCase() + method.brand.slice(1)}` :
+          'Credit Card';
+      default:
+        return 'Payment Method';
+    }
+  };
+  
+  // Get description text for payment method
+  const getPaymentMethodDescription = (method: PaymentMethod) => {
+    switch (method.type) {
+      case 'paypal':
+        return method.email || '';
+      case 'bank_transfer':
+        return method.last4 ? `Ending in ${method.last4}` : '';
+      case 'card':
+        return method.last4 ? 
+          `Ending in ${method.last4} - Expires ${method.expiryMonth}/${method.expiryYear}` : 
+          '';
+      default:
+        return '';
+    }
+  };
+  
   return (
-    <>
-      <RadioGroup
-        value={selected}
-        onValueChange={handlePaymentMethodChange}
-        className="space-y-3"
-      >
+    <div className="space-y-4">
+      <h3 className="text-sm font-medium text-gray-700">Your saved payment methods</h3>
+      
+      <div className="border rounded-lg divide-y">
         {paymentMethods.map((method) => (
           <div
             key={method.id}
-            className={cn(
-              "flex items-start space-x-3 border rounded-lg p-4 transition-colors",
-              selected === method.id
-                ? "border-primary bg-primary/5"
-                : "border-gray-200"
-            )}
+            className={`p-4 flex justify-between items-center cursor-pointer hover:bg-gray-50 transition-colors ${
+              selectedPaymentMethodId === method.id ? 'bg-primary/5 border-l-4 border-l-primary' : ''
+            }`}
+            onClick={() => onPaymentMethodSelect(method.id)}
           >
-            <RadioGroupItem value={method.id} id={method.id} className="mt-1" />
-            <div className="flex-1">
-              <Label
-                htmlFor={method.id}
-                className="font-medium flex items-center cursor-pointer"
-              >
-                {getCardIcon(method.brand)}
-                {method.isDefault && (
-                  <span className="ml-2 bg-gray-100 text-gray-700 text-xs px-2 py-0.5 rounded-full">
-                    Default
-                  </span>
-                )}
-              </Label>
-              <p className="text-sm text-gray-600 mt-1">
-                •••• •••• •••• {method.last4}
-              </p>
-              <p className="text-xs text-gray-500">
-                Expires {method.expiryMonth}/{method.expiryYear}
-              </p>
+            <div className="flex items-center">
+              <div className="mr-3">
+                {getPaymentMethodIcon(method.type)}
+              </div>
+              <div>
+                <div className="font-medium">
+                  {getPaymentMethodName(method)}
+                  {method.isDefault && <span className="ml-2 text-xs text-primary">(Default)</span>}
+                </div>
+                <div className="text-sm text-gray-500">
+                  {getPaymentMethodDescription(method)}
+                </div>
+              </div>
             </div>
+            
+            {selectedPaymentMethodId === method.id && (
+              <Check className="h-5 w-5 text-primary" />
+            )}
           </div>
         ))}
-
-        <Button
-          variant="outline"
-          className="flex items-center w-full py-6 border-dashed"
+        
+        <div
+          className="p-4 flex items-center cursor-pointer hover:bg-gray-50 transition-colors"
           onClick={onAddNewCard}
-          type="button"
         >
-          <Plus className="h-4 w-4 mr-2" />
-          Add New Payment Method
-        </Button>
-      </RadioGroup>
-
-      <div className="flex items-center justify-center text-xs text-gray-500 gap-1 mt-2">
-        <Lock className="h-3 w-3" />
-        <span>Your payment information is secure and encrypted</span>
+          <div className="mr-3 h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
+            <Plus className="h-5 w-5 text-gray-600" />
+          </div>
+          <div className="font-medium">Add new payment method</div>
+        </div>
       </div>
-    </>
+    </div>
   );
 };
 

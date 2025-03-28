@@ -1,5 +1,5 @@
 
-import { Address, PaymentMethod, MockStripePaymentIntent } from '@/types/checkout';
+import { Address, PaymentMethod, MockStripePaymentIntent, PaymentMethodType } from '@/types/checkout';
 
 export const mockAddresses: Address[] = [
   {
@@ -36,6 +36,7 @@ export const mockAddresses: Address[] = [
 export const mockPaymentMethods: PaymentMethod[] = [
   {
     id: 'pm_1',
+    type: 'card',
     brand: 'visa',
     last4: '4242',
     expiryMonth: 12,
@@ -44,10 +45,24 @@ export const mockPaymentMethods: PaymentMethod[] = [
   },
   {
     id: 'pm_2',
+    type: 'card',
     brand: 'mastercard',
     last4: '5555',
     expiryMonth: 6,
     expiryYear: 2025,
+    isDefault: false,
+  },
+  {
+    id: 'pm_3',
+    type: 'paypal',
+    email: 'customer@example.com',
+    isDefault: false,
+  },
+  {
+    id: 'pm_4',
+    type: 'bank_transfer',
+    bankName: 'Chase',
+    last4: '6789',
     isDefault: false,
   },
 ];
@@ -75,6 +90,20 @@ export const createMockPaymentIntent = async (
   const id = `pi_${Math.random().toString(36).substring(2, 10)}`;
   const clientSecret = `${id}_secret_${Math.random().toString(36).substring(2, 10)}`;
   
+  // Get the payment method type from the payment method ID
+  let paymentMethodTypes: PaymentMethodType[] = ['card', 'paypal', 'bank_transfer'];
+  
+  if (paymentMethodId) {
+    const paymentMethod = mockPaymentMethods.find(pm => pm.id === paymentMethodId);
+    if (paymentMethod) {
+      // Move the selected payment method to the beginning of the array
+      paymentMethodTypes = [
+        paymentMethod.type,
+        ...paymentMethodTypes.filter(type => type !== paymentMethod.type)
+      ];
+    }
+  }
+  
   // Mock payment intent object
   const paymentIntent: MockStripePaymentIntent = {
     id,
@@ -87,6 +116,7 @@ export const createMockPaymentIntent = async (
     created: Math.floor(Date.now() / 1000),
     livemode: false,
     metadata,
+    payment_method_types: paymentMethodTypes,
   };
   
   // If there's a connected account, add transfer data
@@ -115,6 +145,9 @@ export const confirmMockPaymentIntent = async (
   // In a real implementation, this would make an API call to your backend
   // Your backend would then call Stripe's API to confirm the payment intent
   
+  // Find the payment method to determine its type
+  const paymentMethod = mockPaymentMethods.find(pm => pm.id === paymentMethodId);
+  
   // Mock successful confirmation
   return {
     id: paymentIntentId,
@@ -127,6 +160,7 @@ export const confirmMockPaymentIntent = async (
     created: Math.floor(Date.now() / 1000),
     livemode: false,
     metadata: {},
+    payment_method_types: paymentMethod ? [paymentMethod.type] : ['card'],
   };
 };
 

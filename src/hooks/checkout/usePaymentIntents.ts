@@ -1,7 +1,7 @@
 
 import { useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { MockStripePaymentIntent } from '@/types/checkout';
+import { MockStripePaymentIntent, PaymentMethodType } from '@/types/checkout';
 import { createMockPaymentIntent, confirmMockPaymentIntent, mockConnectedAccounts } from '@/data/checkoutMockData';
 
 /**
@@ -14,7 +14,8 @@ export const usePaymentIntents = () => {
     amount: number, 
     cartItems: any[], 
     checkoutState: any, 
-    connectedAccountId?: string
+    connectedAccountId?: string,
+    paymentMethodTypes?: PaymentMethodType[]
   ) => {
     try {
       // Get the caterer ID from the cart items

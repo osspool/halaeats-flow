@@ -1,3 +1,4 @@
+
 export interface DeliveryQuote {
   id: string;
   fee: number;
@@ -21,6 +22,7 @@ export interface DeliveryOrder {
   created_at: string; // ISO string
   updated_at: string; // ISO string
   time_slot?: string | null; // Added time slot from quote
+  payment_id?: string; // Stripe payment intent ID
 }
 
 export interface DeliveryPaymentSplit {
@@ -29,6 +31,19 @@ export interface DeliveryPaymentSplit {
   restaurant_amount: number;
   tip_amount: number;
   tax_amount: number;
+}
+
+// New types for payment processing with delivery
+export interface DeliveryPayment {
+  id: string;
+  order_id: string;
+  amount: number;
+  currency: string;
+  payment_method_id: string;
+  payment_method_type: string;
+  status: 'pending' | 'processing' | 'succeeded' | 'failed';
+  created_at: string;
+  updated_at: string;
 }
 
 // New types for store management
@@ -45,6 +60,7 @@ export interface DeliveryStore {
   status: 'active' | 'inactive' | 'pending';
   created_at: string; // ISO string
   updated_at: string; // ISO string
+  stripe_account_id?: string; // Connected Stripe account ID for payouts
 }
 
 export interface DeliveryAddress {
@@ -74,4 +90,23 @@ export interface DeliveryBatch {
   pickup_time: string; // ISO string
   created_at: string; // ISO string
   updated_at: string; // ISO string
+  payment_id?: string; // Single payment for the entire batch
+}
+
+// Type for payout information
+export interface DeliveryPayout {
+  id: string;
+  store_id: string;
+  amount: number;
+  currency: string;
+  status: 'pending' | 'in_transit' | 'paid' | 'failed';
+  payout_method: 'bank_account' | 'debit_card' | 'check';
+  payout_method_details?: {
+    bank_name?: string;
+    last4?: string;
+    routing_number?: string;
+  };
+  created_at: string;
+  arrival_date?: string;
+  orders: string[]; // Array of order IDs included in this payout
 }

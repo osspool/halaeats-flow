@@ -12,12 +12,17 @@ export interface Address {
   isDefault: boolean;
 }
 
+export type PaymentMethodType = 'card' | 'paypal' | 'apple_pay' | 'google_pay' | 'bank_transfer';
+
 export interface PaymentMethod {
   id: string;
-  brand: string;
-  last4: string;
-  expiryMonth: number;
-  expiryYear: number;
+  type: PaymentMethodType;
+  brand?: string;
+  last4?: string;
+  expiryMonth?: number;
+  expiryYear?: number;
+  email?: string; // For PayPal
+  bankName?: string; // For bank transfers
   isDefault: boolean;
 }
 
@@ -39,6 +44,7 @@ export interface MockStripePaymentIntent {
   transfer_data?: {
     destination: string; // Stripe account ID of the connected account (restaurant/caterer)
   };
+  payment_method_types?: PaymentMethodType[];
 }
 
 export type CheckoutStep = 'delivery-method' | 'payment' | 'review' | 'confirmation';
