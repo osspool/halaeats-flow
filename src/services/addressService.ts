@@ -82,11 +82,43 @@ export const getAddressFromCoordinates = async (
   // Simulate API call delay
   await new Promise(resolve => setTimeout(resolve, 1000));
   
-  // Mock response - in a real app, you'd call a geocoding API here
+  // Generate realistic-looking addresses based on the coordinates
+  // This is a mock implementation - in a real app, you'd call a geocoding API
+  
+  // Generate a pseudo-random but deterministic street number based on coordinates
+  const streetNumber = Math.abs(Math.floor((lat * 100 + lng * 100) % 999)) + 1;
+  
+  // Generate street name based on the quadrant of Toronto the coordinates fall in
+  let streetName = "Yonge";
+  let cityName = "Toronto";
+  let stateName = "ON";
+  
+  // North Toronto
+  if (lat > 43.7) {
+    streetName = "Finch";
+    if (lng < -79.4) streetName = "Keele";
+    else if (lng > -79.3) streetName = "Bayview";
+  } 
+  // Downtown
+  else if (lat > 43.65) {
+    streetName = "King";
+    if (lng < -79.4) streetName = "Queen";
+    else if (lng > -79.3) streetName = "Bloor";
+  }
+  // South Toronto
+  else {
+    streetName = "Lakeshore";
+    if (lng < -79.4) streetName = "Exhibition";
+    else if (lng > -79.3) streetName = "Parliament";
+  }
+  
+  // Generate zip code
+  const zipCode = `M${Math.floor(Math.random() * 9)}${String.fromCharCode(65 + Math.floor(Math.random() * 26))} ${Math.floor(Math.random() * 9)}${String.fromCharCode(65 + Math.floor(Math.random() * 26))}${Math.floor(Math.random() * 9)}`;
+  
   return {
-    street: `${Math.floor(Math.random() * 999)} Sample St`,
-    city: 'Toronto',
-    state: 'ON',
-    zipCode: 'M5V 2L7',
+    street: `${streetNumber} ${streetName} St`,
+    city: cityName,
+    state: stateName,
+    zipCode: zipCode,
   };
 };

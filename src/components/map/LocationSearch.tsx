@@ -47,8 +47,14 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
         setIsLoading(true);
         try {
           const locations = await searchAddress(query);
-          setResults(locations);
-          setIsOpen(locations.length > 0);
+          // Convert the locations to the correct type explicitly
+          const typedLocations = locations.map(location => ({
+            coordinates: location.coordinates as [number, number],
+            address: location.address,
+            name: location.name
+          }));
+          setResults(typedLocations);
+          setIsOpen(typedLocations.length > 0);
         } catch (error) {
           console.error('Error searching locations:', error);
           setResults([]);
@@ -74,6 +80,29 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
     setIsOpen(false);
     if (onSelectAddress && location.address) {
       onSelectAddress(location.address);
+    }
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (query.length > 2 && !isLoading) {
+      setIsLoading(true);
+      searchAddress(query)
+        .then(locations => {
+          const typedLocations = locations.map(location => ({
+            coordinates: location.coordinates as [number, number],
+            address: location.address,
+            name: location.name
+          }));
+          setResults(typedLocations);
+          setIsOpen(typedLocations.length > 0);
+        })
+        .catch(error => {
+          console.error('Error searching locations:', error);
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
     }
   };
 
@@ -105,7 +134,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
 
   return (
     <div className={`relative ${className}`} ref={searchRef}>
-      <div className="flex items-center">
+      <form onSubmit={handleSearch} className="flex items-center">
         <div className="relative flex-1">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-halaeats-400" />
           <input
@@ -130,7 +159,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
         >
           <MapPin className="h-4 w-4" />
         </Button>
-      </div>
+      </form>
       
       {isOpen && (
         <div className="absolute z-10 mt-1 w-full bg-white border border-halaeats-200 rounded-md shadow-lg max-h-60 overflow-auto">

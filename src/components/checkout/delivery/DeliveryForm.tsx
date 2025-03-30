@@ -4,7 +4,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTitle, SheetDescription, SheetTrigger } from '@/components/ui/sheet';
 import { Address } from '@/types/checkout';
 import { cn } from '@/lib/utils';
 import { Plus, MapPin, Edit } from 'lucide-react';
@@ -158,9 +158,12 @@ const DeliveryForm = ({
             </Button>
           </SheetTrigger>
           <SheetContent side="right" className="w-full sm:max-w-md">
-            <h3 className="text-lg font-medium mb-4">
+            <SheetTitle className="text-lg font-medium mb-4">
               {addressToEdit ? 'Edit Address' : 'Add New Address'}
-            </h3>
+            </SheetTitle>
+            <SheetDescription className="sr-only">
+              Enter the address details
+            </SheetDescription>
             <DeliveryAddressForm
               onSave={handleSaveAddress}
               onCancel={() => {

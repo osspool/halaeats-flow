@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { LatLngTuple } from 'leaflet';
+import { getAddressFromCoordinates } from '@/services/addressService';
 
 // Toronto coordinates as default
 const DEFAULT_COORDINATES: LatLngTuple = [43.6532, -79.3832];
@@ -35,13 +36,28 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
+        async (position) => {
           const { latitude, longitude } = position.coords;
-          setDefaultLocation([latitude, longitude]);
-          setCurrentLocation({
-            coordinates: [latitude, longitude],
-            address: 'Current Location',
-          });
+          
+          // Get address from coordinates
+          try {
+            const addressData = await getAddressFromCoordinates(latitude, longitude);
+            const formattedAddress = `${addressData.street}, ${addressData.city}, ${addressData.state} ${addressData.zipCode}`;
+            
+            setDefaultLocation([latitude, longitude]);
+            setCurrentLocation({
+              coordinates: [latitude, longitude],
+              address: formattedAddress,
+              name: 'Current Location'
+            });
+          } catch (error) {
+            // If reverse geocoding fails, just use coordinates
+            setDefaultLocation([latitude, longitude]);
+            setCurrentLocation({
+              coordinates: [latitude, longitude],
+              address: 'Current Location',
+            });
+          }
           setIsLoadingLocation(false);
         },
         (error) => {

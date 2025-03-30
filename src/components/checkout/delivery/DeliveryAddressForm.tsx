@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Address } from '@/types/checkout';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { MapPin, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -30,7 +31,8 @@ const DeliveryAddressForm = ({
   const [isDefault, setIsDefault] = useState(initialAddress?.isDefault || false);
   const [isLoading, setIsLoading] = useState(false);
   const [coordinates, setCoordinates] = useState<{lat: number, lng: number} | null>(null);
-  const [showMap, setShowMap] = useState(false);
+  // Always show map by default
+  const [showMap, setShowMap] = useState(true);
 
   // Get geolocation from browser
   const getCurrentLocation = () => {
@@ -74,7 +76,7 @@ const DeliveryAddressForm = ({
   const handleMapLocationSelect = async (location: { lat: number; lng: number; address?: string }) => {
     setCoordinates({ lat: location.lat, lng: location.lng });
     
-    if (location.address && location.address !== 'Current Location' && location.address !== 'Selected Location') {
+    if (location.address && location.address !== 'Current Location' && location.address !== 'Selected Location' && location.address !== 'Moved Location') {
       // If we got a full address from the map search, parse it
       const addressParts = location.address.split(',');
       if (addressParts.length >= 3) {
@@ -131,152 +133,131 @@ const DeliveryAddressForm = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {showMap ? (
+    <ScrollArea className="h-[calc(100vh-10rem)]">
+      <form onSubmit={handleSubmit} className="space-y-4 pr-4">
         <div className="mb-6">
           <AddressMap 
             onLocationSelect={handleMapLocationSelect}
             initialAddress={initialAddress}
             height="300px"
           />
-          <div className="flex justify-end mt-2">
-            <Button 
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowMap(false)}
-            >
-              Hide Map
-            </Button>
-          </div>
         </div>
-      ) : (
-        <div className="flex justify-end mb-2">
+
+        <div>
+          <Label htmlFor="name">Address Name (e.g., Home, Work)</Label>
+          <Input
+            id="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
+        </div>
+        
+        <div className="flex items-center space-x-2">
+          <div className="flex-1">
+            <Label htmlFor="street">Street Address</Label>
+            <Input
+              id="street"
+              value={street}
+              onChange={(e) => setStreet(e.target.value)}
+              required
+            />
+          </div>
+          
           <Button 
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setShowMap(true)}
+            type="button" 
+            variant="outline" 
+            size="icon" 
+            onClick={getCurrentLocation}
+            disabled={isLoading}
+            className="mt-7"
           >
-            Use Map
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <MapPin className="h-4 w-4" />
+            )}
           </Button>
         </div>
-      )}
-
-      <div>
-        <Label htmlFor="name">Address Name (e.g., Home, Work)</Label>
-        <Input
-          id="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-        />
-      </div>
-      
-      <div className="flex items-center space-x-2">
-        <div className="flex-1">
-          <Label htmlFor="street">Street Address</Label>
+        
+        <div>
+          <Label htmlFor="apt">Apartment, Suite, etc. (optional)</Label>
           <Input
-            id="street"
-            value={street}
-            onChange={(e) => setStreet(e.target.value)}
-            required
+            id="apt"
+            value={apt}
+            onChange={(e) => setApt(e.target.value)}
           />
         </div>
         
-        <Button 
-          type="button" 
-          variant="outline" 
-          size="icon" 
-          onClick={getCurrentLocation}
-          disabled={isLoading}
-          className="mt-7"
-        >
-          {isLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <MapPin className="h-4 w-4" />
-          )}
-        </Button>
-      </div>
-      
-      <div>
-        <Label htmlFor="apt">Apartment, Suite, etc. (optional)</Label>
-        <Input
-          id="apt"
-          value={apt}
-          onChange={(e) => setApt(e.target.value)}
-        />
-      </div>
-      
-      <div className="grid grid-cols-3 gap-4">
-        <div className="col-span-1">
-          <Label htmlFor="city">City</Label>
-          <Input
-            id="city"
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-            required
-          />
+        <div className="grid grid-cols-3 gap-4">
+          <div className="col-span-1">
+            <Label htmlFor="city">City</Label>
+            <Input
+              id="city"
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              required
+            />
+          </div>
+          
+          <div className="col-span-1">
+            <Label htmlFor="state">State</Label>
+            <Input
+              id="state"
+              value={state}
+              onChange={(e) => setState(e.target.value)}
+              required
+            />
+          </div>
+          
+          <div className="col-span-1">
+            <Label htmlFor="zipCode">ZIP Code</Label>
+            <Input
+              id="zipCode"
+              value={zipCode}
+              onChange={(e) => setZipCode(e.target.value)}
+              required
+            />
+          </div>
         </div>
         
-        <div className="col-span-1">
-          <Label htmlFor="state">State</Label>
-          <Input
-            id="state"
-            value={state}
-            onChange={(e) => setState(e.target.value)}
-            required
+        <div className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            id="isDefault"
+            checked={isDefault}
+            onChange={(e) => setIsDefault(e.target.checked)}
+            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
           />
+          <Label htmlFor="isDefault" className="text-sm font-normal">
+            Set as default address
+          </Label>
         </div>
         
-        <div className="col-span-1">
-          <Label htmlFor="zipCode">ZIP Code</Label>
-          <Input
-            id="zipCode"
-            value={zipCode}
-            onChange={(e) => setZipCode(e.target.value)}
-            required
-          />
+        {coordinates && (
+          <div className="bg-muted p-2 rounded text-sm">
+            <p>Coordinates: {coordinates.lat.toFixed(6)}, {coordinates.lng.toFixed(6)}</p>
+            <p className="text-xs text-muted-foreground">These coordinates will be sent to the delivery service</p>
+          </div>
+        )}
+        
+        <div className="flex space-x-2 pt-2 pb-8">
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              'Save Address'
+            )}
+          </Button>
         </div>
-      </div>
-      
-      <div className="flex items-center space-x-2">
-        <input
-          type="checkbox"
-          id="isDefault"
-          checked={isDefault}
-          onChange={(e) => setIsDefault(e.target.checked)}
-          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-        />
-        <Label htmlFor="isDefault" className="text-sm font-normal">
-          Set as default address
-        </Label>
-      </div>
-      
-      {coordinates && (
-        <div className="bg-muted p-2 rounded text-sm">
-          <p>Coordinates: {coordinates.lat.toFixed(6)}, {coordinates.lng.toFixed(6)}</p>
-          <p className="text-xs text-muted-foreground">These coordinates will be sent to the delivery service</p>
-        </div>
-      )}
-      
-      <div className="flex space-x-2 pt-2">
-        <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Saving...
-            </>
-          ) : (
-            'Save Address'
-          )}
-        </Button>
-      </div>
-    </form>
+      </form>
+    </ScrollArea>
   );
 };
 
