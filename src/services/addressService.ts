@@ -74,7 +74,6 @@ export const deleteAddress = async (addressId: string): Promise<boolean> => {
 };
 
 // Function to get address from coordinates (reverse geocoding)
-// In a real app, this would use a geocoding service like Google Maps, Mapbox, etc.
 export const getAddressFromCoordinates = async (
   lat: number, 
   lng: number
