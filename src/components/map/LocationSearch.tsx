@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useMap } from './MapContext';
 import SearchInput from './SearchInput';
 import LocationButton from './LocationButton';
@@ -23,6 +23,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Detect clicks outside the component to close the dropdown
   useEffect(() => {
@@ -40,8 +41,12 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
 
   // Handle search query changes
   useEffect(() => {
-    const delayDebounceFn = setTimeout(async () => {
-      if (query.length > 2) {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    if (query.length > 2) {
+      searchTimeoutRef.current = setTimeout(async () => {
         setIsLoading(true);
         try {
           const locations = await searchAddress(query);
@@ -53,13 +58,17 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
         } finally {
           setIsLoading(false);
         }
-      } else {
-        setResults([]);
-        setIsOpen(false);
-      }
-    }, 500);
+      }, 500);
+    } else {
+      setResults([]);
+      setIsOpen(false);
+    }
 
-    return () => clearTimeout(delayDebounceFn);
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
   }, [query, searchAddress]);
 
   const handleLocationClick = (location: MapLocation) => {

@@ -71,31 +71,42 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  // Mock function to search for addresses (would be replaced with a real geocoding API)
+  // Real function to search for addresses using OpenStreetMap Nominatim API
   const searchAddress = async (query: string): Promise<MapLocation[]> => {
-    // In a real implementation, this would call a geocoding API
-    // For now, just return a mock result
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        if (!query.trim()) {
-          resolve([]);
-          return;
-        }
-        
-        resolve([
-          {
-            coordinates: [defaultLocation[0] + 0.01, defaultLocation[1] + 0.01],
-            address: `${query}, Toronto, ON`,
-            name: query
-          },
-          {
-            coordinates: [defaultLocation[0] - 0.01, defaultLocation[1] - 0.01],
-            address: `${query} Avenue, Toronto, ON`,
-            name: `${query} Avenue`
+    if (!query.trim()) {
+      return [];
+    }
+    
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`,
+        {
+          headers: {
+            "User-Agent": "HalaEatsApp/1.0"
           }
-        ]);
-      }, 500);
-    });
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error(`Search failed: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (!Array.isArray(data)) {
+        return [];
+      }
+      
+      // Transform the results to our MapLocation format
+      return data.map(item => ({
+        coordinates: [parseFloat(item.lat), parseFloat(item.lon)] as LatLngTuple,
+        address: item.display_name,
+        name: item.display_name.split(',')[0]
+      }));
+    } catch (error) {
+      console.error('Error searching for location:', error);
+      return [];
+    }
   };
 
   const selectLocation = (location: MapLocation) => {
