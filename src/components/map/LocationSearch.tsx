@@ -1,8 +1,10 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useMap } from './MapContext';
-import { MapPin, Search, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import SearchInput from './SearchInput';
+import LocationButton from './LocationButton';
+import LocationSearchResults from './LocationSearchResults';
+import { MapLocation } from './MapContext';
 
 interface LocationSearchProps {
   onSelectAddress?: (address: string) => void;
@@ -17,11 +19,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
 }) => {
   const { searchAddress, selectLocation, setCurrentLocation } = useMap();
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<Array<{
-    coordinates: [number, number];
-    address?: string;
-    name?: string;
-  }>>([]);
+  const [results, setResults] = useState<Array<MapLocation>>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
@@ -47,14 +45,8 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
         setIsLoading(true);
         try {
           const locations = await searchAddress(query);
-          // Convert the locations to the correct type explicitly
-          const typedLocations = locations.map(location => ({
-            coordinates: location.coordinates as [number, number],
-            address: location.address,
-            name: location.name
-          }));
-          setResults(typedLocations);
-          setIsOpen(typedLocations.length > 0);
+          setResults(locations);
+          setIsOpen(locations.length > 0);
         } catch (error) {
           console.error('Error searching locations:', error);
           setResults([]);
@@ -70,11 +62,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
     return () => clearTimeout(delayDebounceFn);
   }, [query, searchAddress]);
 
-  const handleLocationClick = (location: {
-    coordinates: [number, number];
-    address?: string;
-    name?: string;
-  }) => {
+  const handleLocationClick = (location: MapLocation) => {
     selectLocation(location);
     setQuery(location.address || location.name || '');
     setIsOpen(false);
@@ -89,13 +77,8 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
       setIsLoading(true);
       searchAddress(query)
         .then(locations => {
-          const typedLocations = locations.map(location => ({
-            coordinates: location.coordinates as [number, number],
-            address: location.address,
-            name: location.name
-          }));
-          setResults(typedLocations);
-          setIsOpen(typedLocations.length > 0);
+          setResults(locations);
+          setIsOpen(locations.length > 0);
         })
         .catch(error => {
           console.error('Error searching locations:', error);
@@ -135,51 +118,25 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
   return (
     <div className={`relative ${className}`} ref={searchRef}>
       <form onSubmit={handleSearch} className="flex items-center">
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-halaeats-400" />
-          <input
-            type="text"
-            placeholder={placeholder}
-            className="w-full pl-9 pr-4 py-2 border border-halaeats-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onFocus={() => results.length > 0 && setIsOpen(true)}
-          />
-          {isLoading && (
-            <Loader2 className="absolute right-2.5 top-2.5 h-4 w-4 text-halaeats-400 animate-spin" />
-          )}
-        </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
+        <SearchInput 
+          query={query}
+          setQuery={setQuery}
+          isLoading={isLoading}
+          placeholder={placeholder}
+          onFocus={() => results.length > 0 && setIsOpen(true)}
+          onSubmit={handleSearch}
+        />
+        <LocationButton 
           onClick={getCurrentLocation}
-          disabled={isLoading}
-          className="ml-2"
-        >
-          <MapPin className="h-4 w-4" />
-        </Button>
+          isLoading={isLoading}
+        />
       </form>
       
-      {isOpen && (
-        <div className="absolute z-10 mt-1 w-full bg-white border border-halaeats-200 rounded-md shadow-lg max-h-60 overflow-auto">
-          {results.map((item, index) => (
-            <div
-              key={index}
-              className="p-2 hover:bg-halaeats-50 cursor-pointer flex items-start"
-              onClick={() => handleLocationClick(item)}
-            >
-              <MapPin className="h-4 w-4 text-primary mt-0.5 mr-2 flex-shrink-0" />
-              <div>
-                <div className="font-medium">{item.name}</div>
-                {item.address && item.address !== item.name && (
-                  <div className="text-sm text-halaeats-600">{item.address}</div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      <LocationSearchResults 
+        isOpen={isOpen}
+        results={results}
+        onLocationClick={handleLocationClick}
+      />
     </div>
   );
 };

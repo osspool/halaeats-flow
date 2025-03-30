@@ -102,19 +102,19 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
     setCurrentLocation(location);
   };
 
+  const value: MapContextType = {
+    currentLocation,
+    setCurrentLocation,
+    defaultLocation,
+    isLoadingLocation,
+    zoomLevel,
+    setZoomLevel,
+    searchAddress,
+    selectLocation
+  };
+
   return (
-    <MapContext.Provider
-      value={{
-        currentLocation,
-        setCurrentLocation,
-        defaultLocation,
-        isLoadingLocation,
-        zoomLevel,
-        setZoomLevel,
-        searchAddress,
-        selectLocation
-      }}
-    >
+    <MapContext.Provider value={value}>
       {children}
     </MapContext.Provider>
   );

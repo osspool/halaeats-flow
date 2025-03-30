@@ -11,6 +11,7 @@ interface AddressMapSectionProps {
 const AddressMapSection: React.FC<AddressMapSectionProps> = ({ initialAddress, onLocationSelect }) => {
   return (
     <div className="mb-6">
+      <h3 className="font-medium mb-2">Select Your Location</h3>
       <AddressMap 
         onLocationSelect={onLocationSelect}
         initialAddress={initialAddress}

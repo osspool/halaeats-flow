@@ -1,10 +1,11 @@
 
-import React, { useEffect } from 'react';
-import { MapContainer, TileLayer, useMapEvents } from 'react-leaflet';
+import React from 'react';
+import { MapContainer, TileLayer } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useMap as useMapContext } from './MapContext';
 import LocationMarker from './LocationMarker';
+import MapEvents from './MapEvents';
 
 // Fix Leaflet default icon issue
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -18,28 +19,6 @@ let DefaultIcon = L.icon({
 });
 
 L.Marker.prototype.options.icon = DefaultIcon;
-
-interface MapEventsProps {
-  onMapClick?: (latlng: L.LatLng) => void;
-}
-
-// Component to handle map events
-const MapEvents: React.FC<MapEventsProps> = ({ onMapClick }) => {
-  const { setZoomLevel } = useMapContext();
-  
-  const map = useMapEvents({
-    click: (e) => {
-      if (onMapClick) {
-        onMapClick(e.latlng);
-      }
-    },
-    zoom: () => {
-      setZoomLevel(map.getZoom());
-    }
-  });
-  
-  return null;
-};
 
 interface LeafletMapProps {
   height?: string;
@@ -106,7 +85,7 @@ const LeafletMap: React.FC<LeafletMapProps> = ({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        {interactive && <MapEvents onMapClick={handleMapClick} />}
+        <MapEvents onMapClick={handleMapClick} interactive={interactive} />
         <LocationMarker draggable={interactive} onDragEnd={handleMarkerDragEnd} />
       </MapContainer>
     </div>
