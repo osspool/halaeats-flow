@@ -4,8 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Address } from '@/types/checkout';
-import { MapPin } from 'lucide-react';
+import { MapPin, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import AddressMap from '@/components/map/AddressMap';
+import { getAddressFromCoordinates } from '@/services/addressService';
 
 interface DeliveryAddressFormProps {
   onSave: (address: Partial<Address>) => void;
@@ -27,35 +30,82 @@ const DeliveryAddressForm = ({
   const [isDefault, setIsDefault] = useState(initialAddress?.isDefault || false);
   const [isLoading, setIsLoading] = useState(false);
   const [coordinates, setCoordinates] = useState<{lat: number, lng: number} | null>(null);
+  const [showMap, setShowMap] = useState(false);
 
   // Get geolocation from browser
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
-      alert('Geolocation is not supported by your browser');
+      toast.error('Geolocation is not supported by your browser');
       return;
     }
 
     setIsLoading(true);
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const { latitude, longitude } = position.coords;
         setCoordinates({ lat: latitude, lng: longitude });
         
-        // In a real app, you would use a geocoding service to get the address from coordinates
-        // For this mock, we'll just set some demo values
-        setStreet('Current Location St');
-        setCity('San Francisco');
-        setState('CA');
-        setZipCode('94105');
-        
-        setIsLoading(false);
+        try {
+          // Get address from coordinates
+          const addressData = await getAddressFromCoordinates(latitude, longitude);
+          
+          // Update form fields
+          if (addressData.street) setStreet(addressData.street);
+          if (addressData.city) setCity(addressData.city);
+          if (addressData.state) setState(addressData.state);
+          if (addressData.zipCode) setZipCode(addressData.zipCode);
+          
+          setIsLoading(false);
+          toast.success('Current location detected');
+        } catch (error) {
+          console.error('Error getting address from coordinates:', error);
+          setIsLoading(false);
+          toast.error('Unable to get address from your location');
+        }
       },
       (error) => {
         console.error('Error getting location:', error);
-        alert('Unable to retrieve your location');
+        toast.error('Unable to retrieve your location');
         setIsLoading(false);
       }
     );
+  };
+
+  const handleMapLocationSelect = async (location: { lat: number; lng: number; address?: string }) => {
+    setCoordinates({ lat: location.lat, lng: location.lng });
+    
+    if (location.address && location.address !== 'Current Location' && location.address !== 'Selected Location') {
+      // If we got a full address from the map search, parse it
+      const addressParts = location.address.split(',');
+      if (addressParts.length >= 3) {
+        setStreet(addressParts[0].trim());
+        setCity(addressParts[1].trim());
+        
+        // Parse state and zip code
+        const stateZip = addressParts[2].trim().split(' ');
+        if (stateZip.length >= 2) {
+          setState(stateZip[0].trim());
+          setZipCode(stateZip.slice(1).join(' ').trim());
+        }
+      }
+    } else if (location.lat && location.lng) {
+      // If we only got coordinates, try to get the address
+      try {
+        setIsLoading(true);
+        const addressData = await getAddressFromCoordinates(location.lat, location.lng);
+        
+        // Update form fields
+        if (addressData.street) setStreet(addressData.street);
+        if (addressData.city) setCity(addressData.city);
+        if (addressData.state) setState(addressData.state);
+        if (addressData.zipCode) setZipCode(addressData.zipCode);
+        
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error getting address from coordinates:', error);
+        setIsLoading(false);
+      }
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -70,8 +120,6 @@ const DeliveryAddressForm = ({
       state,
       zipCode,
       isDefault,
-      // In a real implementation, you would include these coordinates in your address type
-      // and they would be sent to DoorDash
     };
     
     if (coordinates) {
@@ -84,6 +132,37 @@ const DeliveryAddressForm = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {showMap ? (
+        <div className="mb-6">
+          <AddressMap 
+            onLocationSelect={handleMapLocationSelect}
+            initialAddress={initialAddress}
+            height="300px"
+          />
+          <div className="flex justify-end mt-2">
+            <Button 
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowMap(false)}
+            >
+              Hide Map
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex justify-end mb-2">
+          <Button 
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setShowMap(true)}
+          >
+            Use Map
+          </Button>
+        </div>
+      )}
+
       <div>
         <Label htmlFor="name">Address Name (e.g., Home, Work)</Label>
         <Input
@@ -113,7 +192,11 @@ const DeliveryAddressForm = ({
           disabled={isLoading}
           className="mt-7"
         >
-          <MapPin className="h-4 w-4" />
+          {isLoading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <MapPin className="h-4 w-4" />
+          )}
         </Button>
       </div>
       
@@ -182,7 +265,16 @@ const DeliveryAddressForm = ({
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
         </Button>
-        <Button type="submit">Save Address</Button>
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            'Save Address'
+          )}
+        </Button>
       </div>
     </form>
   );

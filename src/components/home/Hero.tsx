@@ -1,6 +1,6 @@
 
-import { useState } from 'react';
-import { Search, MapPin, Calendar, ChevronDown } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, MapPin, Calendar, ChevronDown, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -35,14 +35,64 @@ const Hero = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCuisine, setSelectedCuisine] = useState('all');
   const [location, setLocation] = useState('Current Location');
+  const [showCuisineFilter, setShowCuisineFilter] = useState(false);
+  const [selectedCuisines, setSelectedCuisines] = useState<string[]>(['all']);
+
+  // Handle selecting a cuisine from the dropdown or chips
+  const handleCuisineSelect = (cuisineId: string) => {
+    if (cuisineId === 'all') {
+      // If "All Cuisines" is selected, clear all other selections
+      setSelectedCuisines(['all']);
+    } else {
+      // Remove 'all' if it's in the selections and a specific cuisine is chosen
+      const updatedSelections = selectedCuisines.includes('all')
+        ? [cuisineId]
+        : selectedCuisines.includes(cuisineId)
+          ? selectedCuisines.filter(id => id !== cuisineId) // Remove if already selected
+          : [...selectedCuisines, cuisineId]; // Add if not already selected
+      
+      // If nothing is selected, default back to "All Cuisines"
+      setSelectedCuisines(updatedSelections.length > 0 ? updatedSelections : ['all']);
+    }
+  };
+
+  // Get the current location using browser geolocation
+  const getCurrentLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          // In a real app, you would use a reverse geocoding service to get the address
+          // For now, we'll just use the coordinates
+          const { latitude, longitude } = position.coords;
+          console.log(`Got coordinates: ${latitude}, ${longitude}`);
+          setLocation('Current Location');
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+          alert('Unable to retrieve your location. Using default location instead.');
+        }
+      );
+    } else {
+      alert('Geolocation is not supported by your browser');
+    }
+  };
 
   const handleSearch = () => {
+    const cuisineFilters = selectedCuisines.includes('all') 
+      ? [] 
+      : selectedCuisines;
+      
     console.log('Searching for:', {
       query: searchQuery,
-      cuisine: selectedCuisine,
+      cuisines: cuisineFilters,
       location: location
     });
     // This would typically navigate to search results page with these parameters
+  };
+
+  // Toggle the cuisine filter dropdown
+  const toggleCuisineFilter = () => {
+    setShowCuisineFilter(!showCuisineFilter);
   };
 
   return (
@@ -88,7 +138,7 @@ const Hero = () => {
               and enjoy homemade goodness at your convenience.
             </p>
 
-            {/* Search box */}
+            {/* Enhanced Search box with cuisine filter */}
             <div 
               className={cn(
                 "w-full max-w-md bg-white rounded-xl shadow-elevation-soft transition-all duration-300",
@@ -113,26 +163,90 @@ const Hero = () => {
                 {/* Cuisine selector */}
                 <div className="flex flex-col sm:flex-row gap-3 mb-3">
                   <div className="flex-1">
-                    <Select value={selectedCuisine} onValueChange={setSelectedCuisine}>
-                      <SelectTrigger className="w-full border-none bg-halaeats-50 text-sm">
-                        <SelectValue placeholder="Select cuisine" />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-80">
-                        {cuisineCategories.map((cuisine) => (
-                          <SelectItem key={cuisine.id} value={cuisine.id} className="cursor-pointer">
-                            {cuisine.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div 
+                      className="w-full border border-halaeats-200 bg-halaeats-50 rounded-md px-3 py-2 text-sm cursor-pointer"
+                      onClick={toggleCuisineFilter}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-halaeats-700">
+                          {selectedCuisines.length === 1 && selectedCuisines[0] === 'all' 
+                            ? 'All Cuisines' 
+                            : `${selectedCuisines.length} cuisine${selectedCuisines.length !== 1 ? 's' : ''} selected`
+                          }
+                        </span>
+                        <ChevronDown className="h-4 w-4 text-halaeats-500" />
+                      </div>
+                    </div>
+                    
+                    {showCuisineFilter && (
+                      <div className="absolute z-20 mt-1 bg-white border border-halaeats-200 shadow-lg rounded-md w-full max-w-md p-3">
+                        <div className="flex justify-between items-center mb-2">
+                          <h3 className="text-sm font-medium">Filter by Cuisine</h3>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            className="h-7 w-7 p-0"
+                            onClick={() => setShowCuisineFilter(false)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          {cuisineCategories.map((cuisine) => (
+                            <div
+                              key={cuisine.id}
+                              className={cn(
+                                "px-3 py-2 rounded text-sm cursor-pointer flex items-center",
+                                selectedCuisines.includes(cuisine.id) 
+                                  ? "bg-primary text-white" 
+                                  : "bg-halaeats-50 text-halaeats-700 hover:bg-halaeats-100"
+                              )}
+                              onClick={() => handleCuisineSelect(cuisine.id)}
+                            >
+                              {cuisine.name}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
                 
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {selectedCuisines.includes('all') ? (
+                    <div className="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full flex items-center">
+                      <span>All Cuisines</span>
+                    </div>
+                  ) : (
+                    selectedCuisines.map(cuisineId => {
+                      const cuisine = cuisineCategories.find(c => c.id === cuisineId);
+                      return (
+                        <div key={cuisineId} className="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full flex items-center">
+                          <span>{cuisine?.name}</span>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="ml-1 h-4 w-4 p-0"
+                            onClick={() => handleCuisineSelect(cuisineId)}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
                 <div className="flex flex-wrap gap-3 md:gap-4">
-                  <div className="flex items-center text-sm text-halaeats-600">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="flex items-center text-sm text-halaeats-600 p-0 h-auto hover:bg-transparent hover:text-primary"
+                    onClick={getCurrentLocation}
+                  >
                     <MapPin className="h-4 w-4 text-primary mr-1" />
                     <span>{location}</span>
-                  </div>
+                  </Button>
                   <div className="flex items-center text-sm text-halaeats-600">
                     <Calendar className="h-4 w-4 text-primary mr-1" />
                     <span>Delivery: Today</span>
@@ -149,23 +263,26 @@ const Hero = () => {
               </div>
             </div>
 
-            {/* Cuisine category chips - visible on mobile/smaller screens */}
+            {/* Cuisine category chips - mobile visibility improved */}
             <div className="mt-4 flex flex-wrap gap-2 md:hidden">
               {cuisineCategories.slice(0, 5).map((cuisine) => (
                 <button
                   key={cuisine.id}
                   className={cn(
                     "px-3 py-1 rounded-full text-sm transition-colors",
-                    selectedCuisine === cuisine.id 
+                    selectedCuisines.includes(cuisine.id)
                       ? "bg-primary text-white" 
                       : "bg-white text-halaeats-600 hover:bg-halaeats-50"
                   )}
-                  onClick={() => setSelectedCuisine(cuisine.id)}
+                  onClick={() => handleCuisineSelect(cuisine.id)}
                 >
                   {cuisine.name}
                 </button>
               ))}
-              <button className="px-3 py-1 rounded-full text-sm bg-white text-halaeats-600 hover:bg-halaeats-50 flex items-center">
+              <button 
+                className="px-3 py-1 rounded-full text-sm bg-white text-halaeats-600 hover:bg-halaeats-50 flex items-center"
+                onClick={toggleCuisineFilter}
+              >
                 More <ChevronDown className="h-3 w-3 ml-1" />
               </button>
             </div>

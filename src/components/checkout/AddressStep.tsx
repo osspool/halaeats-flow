@@ -1,13 +1,14 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Address } from '@/types/checkout';
 import { cn } from '@/lib/utils';
-import { ArrowLeft, Check, Plus, MapPin } from 'lucide-react';
+import { ArrowLeft, Check, Plus, MapPin, Edit } from 'lucide-react';
 import { mockAddresses } from '@/data/checkoutMockData';
+import DeliveryAddressForm from './delivery/DeliveryAddressForm';
 
 interface AddressStepProps {
   selectedAddressId?: string;
@@ -26,9 +27,11 @@ const AddressStep = ({
   onNext,
   onPrevious,
 }: AddressStepProps) => {
-  const [addresses] = useState<Address[]>(mockAddresses);
+  const [addresses, setAddresses] = useState<Address[]>(mockAddresses);
   const [selected, setSelected] = useState<string>(selectedAddressId || addresses.find(a => a.isDefault)?.id || '');
   const [instructions, setInstructions] = useState<string>('');
+  const [showAddressForm, setShowAddressForm] = useState(false);
+  const [addressToEdit, setAddressToEdit] = useState<Address | null>(null);
 
   const handleAddressChange = (value: string) => {
     setSelected(value);
@@ -38,6 +41,49 @@ const AddressStep = ({
   const handleInstructionsChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInstructions(e.target.value);
     onDeliveryInstructionsChange(e.target.value);
+  };
+
+  const handleEditAddress = (address: Address) => {
+    setAddressToEdit(address);
+    setShowAddressForm(true);
+  };
+
+  const handleAddNewAddress = () => {
+    setAddressToEdit(null);
+    setShowAddressForm(true);
+  };
+
+  const handleSaveAddress = (addressData: Partial<Address>) => {
+    if (addressToEdit) {
+      const updatedAddresses = addresses.map(addr => 
+        addr.id === addressToEdit.id 
+          ? { ...addr, ...addressData } 
+          : addressData.isDefault ? { ...addr, isDefault: false } : addr
+      );
+      setAddresses(updatedAddresses);
+    } else {
+      const newAddress: Address = {
+        id: `addr_${Math.random().toString(36).substring(2, 10)}`,
+        name: addressData.name || 'New Address',
+        street: addressData.street || '',
+        apt: addressData.apt,
+        city: addressData.city || '',
+        state: addressData.state || '',
+        zipCode: addressData.zipCode || '',
+        isDefault: addressData.isDefault || false,
+      };
+      
+      const updatedAddresses = addressData.isDefault 
+        ? addresses.map(addr => ({ ...addr, isDefault: false }))
+        : [...addresses];
+      
+      setAddresses([...updatedAddresses, newAddress]);
+      setSelected(newAddress.id);
+      onAddressSelect(newAddress.id);
+    }
+    
+    setShowAddressForm(false);
+    setAddressToEdit(null);
   };
 
   const handleContinue = () => {
@@ -92,7 +138,7 @@ const AddressStep = ({
           <div
             key={address.id}
             className={cn(
-              "flex items-start space-x-3 border rounded-lg p-4 transition-colors",
+              "flex items-start space-x-3 border rounded-lg p-4 transition-colors relative",
               selected === address.id
                 ? "border-primary bg-primary/5"
                 : "border-halaeats-200"
@@ -118,16 +164,42 @@ const AddressStep = ({
                 {address.city}, {address.state} {address.zipCode}
               </p>
             </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="absolute top-2 right-2 h-8 w-8 p-0"
+              onClick={() => handleEditAddress(address)}
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
           </div>
         ))}
 
-        <Button
-          variant="outline"
-          className="flex items-center w-full py-6 border-dashed"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add New Address
-        </Button>
+        <Sheet open={showAddressForm} onOpenChange={setShowAddressForm}>
+          <SheetTrigger asChild>
+            <Button
+              variant="outline"
+              className="flex items-center w-full py-6 border-dashed"
+              onClick={handleAddNewAddress}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add New Address
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
+            <h3 className="text-lg font-medium mb-4">
+              {addressToEdit ? 'Edit Address' : 'Add New Address'}
+            </h3>
+            <DeliveryAddressForm
+              onSave={handleSaveAddress}
+              onCancel={() => {
+                setShowAddressForm(false);
+                setAddressToEdit(null);
+              }}
+              initialAddress={addressToEdit || undefined}
+            />
+          </SheetContent>
+        </Sheet>
       </RadioGroup>
 
       <div className="pt-4">
