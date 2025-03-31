@@ -17,7 +17,7 @@ const LocationSearchResults: React.FC<LocationSearchResultsProps> = ({
   if (!isOpen) return null;
   
   return (
-    <div className="absolute z-10 mt-1 w-full bg-white border border-halaeats-200 rounded-md shadow-lg max-h-60 overflow-auto">
+    <div className="absolute z-50 mt-1 w-full bg-white border border-halaeats-200 rounded-md shadow-lg max-h-60 overflow-auto">
       {results.length === 0 ? (
         <div className="p-3 text-center text-halaeats-500">No results found</div>
       ) : (

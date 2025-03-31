@@ -78,6 +78,7 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
     }
     
     try {
+      console.log('Searching for:', query);
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`,
         {
@@ -92,6 +93,7 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
       }
       
       const data = await response.json();
+      console.log('Search results:', data);
       
       if (!Array.isArray(data)) {
         return [];

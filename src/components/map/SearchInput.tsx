@@ -22,7 +22,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
   onKeyDown
 }) => {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    // Prevent form submission on Enter key
+    // Always prevent form submission on Enter key
     if (e.key === 'Enter') {
       e.preventDefault();
       onSubmit(e as unknown as React.FormEvent);
@@ -34,6 +34,10 @@ const SearchInput: React.FC<SearchInputProps> = ({
     }
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setQuery(e.target.value);
+  };
+
   return (
     <div className="relative flex-1">
       <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-halaeats-400" />
@@ -42,7 +46,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
         placeholder={placeholder}
         className="w-full pl-9 pr-4 py-2 border border-halaeats-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
         value={query}
-        onChange={(e) => setQuery(e.target.value)}
+        onChange={handleInputChange}
         onFocus={onFocus}
         onKeyDown={handleKeyDown}
       />

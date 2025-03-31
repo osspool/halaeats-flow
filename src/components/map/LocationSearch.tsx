@@ -39,17 +39,19 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
     };
   }, []);
 
-  // Handle search query changes
-  useEffect(() => {
+  // Handle direct query updates
+  const handleQueryChange = (newQuery: string) => {
+    setQuery(newQuery);
+    
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
 
-    if (query.length > 2) {
+    if (newQuery.length > 2) {
       searchTimeoutRef.current = setTimeout(async () => {
         setIsLoading(true);
         try {
-          const locations = await searchAddress(query);
+          const locations = await searchAddress(newQuery);
           setResults(locations);
           setIsOpen(locations.length > 0);
         } catch (error) {
@@ -63,13 +65,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
       setResults([]);
       setIsOpen(false);
     }
-
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-    };
-  }, [query, searchAddress]);
+  };
 
   const handleLocationClick = (location: MapLocation) => {
     selectLocation(location);
@@ -86,11 +82,13 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
       setIsLoading(true);
       searchAddress(query)
         .then(locations => {
+          console.log('Search results:', locations);
           setResults(locations);
           setIsOpen(locations.length > 0);
         })
         .catch(error => {
           console.error('Error searching locations:', error);
+          setResults([]);
         })
         .finally(() => {
           setIsLoading(false);
@@ -129,7 +127,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
       <form onSubmit={handleSearch} className="flex items-center">
         <SearchInput 
           query={query}
-          setQuery={setQuery}
+          setQuery={handleQueryChange}
           isLoading={isLoading}
           placeholder={placeholder}
           onFocus={() => results.length > 0 && setIsOpen(true)}
