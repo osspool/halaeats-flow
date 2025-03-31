@@ -11,7 +11,7 @@ interface CuisineCategoryProps {
   onClick: (id: string) => void;
 }
 
-const cuisineIcons = {
+const cuisineIcons: Record<string, string> = {
   'All': '🍴',
   'Indian': '🍛',
   'Middle Eastern': '🧆',
@@ -22,7 +22,12 @@ const cuisineIcons = {
   'Thai': '🥘',
   'Mediterranean': '🫒',
   'Lebanese': '🥙',
-  'Turkish': '🥙'
+  'Turkish': '🥙',
+  'North Indian': '🍛',
+  'South Indian': '🍚',
+  'Halal': '🥙',
+  'Street Food': '🥪',
+  'Vegetarian': '🥗'
 };
 
 const CuisineCategory: React.FC<CuisineCategoryProps> = ({ 

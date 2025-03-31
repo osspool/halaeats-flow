@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { SearchX, MapPin, Utensils } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useCatererSearch } from '@/hooks/useCatererSearch';
-import { mockCaterers } from '@/data/mockData';
+import { caterers } from '@/data/mockData';
 import { MapProvider } from '@/components/map/MapContext';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -19,7 +19,7 @@ const CaterersPage: React.FC = () => {
   
   // Extract unique cuisine options from caterers
   const allCuisines = Array.from(
-    new Set(mockCaterers.flatMap(caterer => caterer.cuisine))
+    new Set(caterers.flatMap(caterer => caterer.cuisine))
   ).sort();
   
   // Use the custom hook for filtering caterers
@@ -28,7 +28,7 @@ const CaterersPage: React.FC = () => {
     updateFilters, 
     resetFilters, 
     filteredCaterers 
-  } = useCatererSearch(mockCaterers);
+  } = useCatererSearch(caterers);
   
   // Calculate how many active filters we have
   const activeFilterCount = [
@@ -101,7 +101,7 @@ const CaterersPage: React.FC = () => {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <SearchX className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 </div>
                 <button 
                   type="submit"
@@ -123,7 +123,7 @@ const CaterersPage: React.FC = () => {
               filters={filters}
               updateFilters={updateFilters}
               resetFilters={resetFilters}
-              cuisineOptions={allCuisines}
+              cuisineOptions={allCuisines as string[]}
               activeFilterCount={activeFilterCount}
             />
             

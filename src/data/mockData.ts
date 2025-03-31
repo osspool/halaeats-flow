@@ -350,6 +350,9 @@ export const caterers: Caterer[] = [
   },
 ];
 
+// Export caterers as mockCaterers to match the import in the components
+export const mockCaterers = caterers;
+
 // All menu items with their caterers
 export const allMenuItems = [
   ...caterers[0].availableDates.flatMap(date => 
