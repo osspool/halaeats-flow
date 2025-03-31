@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 // Import pages
 import Index from "./pages/Index";
+import CaterersPage from "./pages/CaterersPage";
 import CatererPage from "./pages/CatererPage";
 import DishPage from "./pages/DishPage";
 import CartPage from "./pages/CartPage";
@@ -57,6 +58,21 @@ const AnimatedRoutes = () => (
             transition={pageTransition}
           >
             <Index />
+          </motion.div>
+        } 
+      />
+      <Route 
+        path="/caterers" 
+        element={
+          <motion.div
+            key="caterers"
+            initial="initial"
+            animate="in"
+            exit="out"
+            variants={pageVariants}
+            transition={pageTransition}
+          >
+            <CaterersPage />
           </motion.div>
         } 
       />
