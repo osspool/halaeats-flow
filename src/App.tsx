@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { MapProvider } from "@/components/map/MapContext";
 
 // Import pages
 import Index from "./pages/Index";
@@ -175,11 +176,13 @@ const App = () => {
     <React.StrictMode>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <AnimatedRoutes />
-          </TooltipProvider>
+          <MapProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <AnimatedRoutes />
+            </TooltipProvider>
+          </MapProvider>
         </BrowserRouter>
       </QueryClientProvider>
     </React.StrictMode>
