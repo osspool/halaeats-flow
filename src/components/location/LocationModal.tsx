@@ -17,36 +17,43 @@ const LocationModal = () => {
     setSelectedLocation 
   } = useLocation();
   
-  const { currentLocation } = useMap();
+  const { currentLocation, setCurrentLocation, selectLocation } = useMap();
   const [activeTab, setActiveTab] = useState<string>('delivery');
   const [deliveryRadius, setDeliveryRadius] = useState<number>(selectedLocation?.radius || 5);
   const [tempLocation, setTempLocation] = useState(selectedLocation);
 
+  // Update temp location when modal opens
   useEffect(() => {
-    if (currentLocation && !tempLocation) {
-      setTempLocation({
-        name: currentLocation.name || 'Current Location',
-        address: currentLocation.address,
-        coordinates: currentLocation.coordinates,
-        radius: deliveryRadius
-      });
+    if (isLocationModalOpen) {
+      if (selectedLocation) {
+        setTempLocation(selectedLocation);
+        setDeliveryRadius(selectedLocation.radius || 5);
+      } else if (currentLocation) {
+        setTempLocation({
+          name: currentLocation.name || 'Current Location',
+          address: currentLocation.address,
+          coordinates: currentLocation.coordinates,
+          radius: deliveryRadius
+        });
+      }
     }
-  }, [currentLocation, tempLocation, deliveryRadius]);
-
-  // Update temp location when selected location changes
-  useEffect(() => {
-    if (selectedLocation) {
-      setTempLocation(selectedLocation);
-      setDeliveryRadius(selectedLocation.radius || 5);
-    }
-  }, [selectedLocation]);
+  }, [isLocationModalOpen, currentLocation, selectedLocation, deliveryRadius]);
 
   const handleLocationSelect = (location: any) => {
-    setTempLocation({
+    const newLocation = {
       name: location.address?.split(',')[0] || 'Selected Location',
       address: location.address,
       coordinates: [location.lat, location.lng],
       radius: deliveryRadius
+    };
+    
+    setTempLocation(newLocation);
+    
+    // Also update the current location in MapContext
+    selectLocation({
+      coordinates: [location.lat, location.lng],
+      address: location.address,
+      name: location.address?.split(',')[0] || 'Selected Location'
     });
   };
 
@@ -62,10 +69,20 @@ const LocationModal = () => {
 
   const handleDone = () => {
     if (tempLocation) {
+      // Update both contexts
       setSelectedLocation({
         ...tempLocation,
         radius: deliveryRadius
       });
+      
+      // Make sure MapContext is also updated with the final location
+      if (tempLocation.coordinates) {
+        selectLocation({
+          coordinates: tempLocation.coordinates,
+          address: tempLocation.address,
+          name: tempLocation.name || 'Selected Location'
+        });
+      }
     }
     closeLocationModal();
   };
@@ -135,7 +152,7 @@ const LocationModal = () => {
           <div className="p-4 border-t space-y-4">
             <h3 className="font-medium">Enter delivery address</h3>
             <LocationSearch 
-              onSelectAddress={(address) => {}} 
+              onSelectAddress={() => {}} 
               placeholder="Search for your address"
               className="mb-4"
             />

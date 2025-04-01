@@ -14,7 +14,7 @@ const LocationSearchResults = ({ results, onLocationClick }: LocationSearchResul
   }
 
   return (
-    <div className="max-h-60 overflow-y-auto py-2">
+    <div className="max-h-60 overflow-y-auto py-2 z-50">
       {results.map((location, index) => (
         <div
           key={`${location.address}-${index}`}

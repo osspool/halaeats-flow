@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useMap } from './MapContext';
 import SearchInput from './SearchInput';
 import LocationButton from './LocationButton';
@@ -68,6 +68,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
   };
 
   const handleLocationClick = (location: MapLocation) => {
+    // Update the current location in the MapContext
     selectLocation(location);
     setQuery(location.address || location.name || '');
     setIsOpen(false);
@@ -104,8 +105,13 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
           const location = {
             coordinates: [latitude, longitude] as [number, number],
             address: 'Current Location',
+            name: 'Current Location'
           };
+          
+          // Update the global current location
           setCurrentLocation(location);
+          selectLocation(location);
+          
           setQuery('Current Location');
           setIsOpen(false);
           setIsLoading(false);
