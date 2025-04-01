@@ -71,6 +71,13 @@ export const MapProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   }, []);
 
+  // Update default location when current location changes
+  useEffect(() => {
+    if (currentLocation) {
+      setDefaultLocation(currentLocation.coordinates);
+    }
+  }, [currentLocation]);
+
   // Real function to search for addresses using OpenStreetMap Nominatim API
   const searchAddress = async (query: string): Promise<MapLocation[]> => {
     if (!query.trim()) {
@@ -113,6 +120,8 @@ export const MapProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const selectLocation = (location: MapLocation) => {
     setCurrentLocation(location);
+    // Also update default location to center the map
+    setDefaultLocation(location.coordinates);
   };
 
   const value: MapContextType = {

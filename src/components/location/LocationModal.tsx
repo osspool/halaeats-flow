@@ -1,13 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { MapPin, Clock, X } from 'lucide-react';
+import { MapPin, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLocation } from '@/contexts/LocationContext';
 import { useMap } from '@/components/map/MapContext';
 import LocationSearch from '@/components/map/LocationSearch';
 import LeafletMap from '@/components/map/LeafletMap';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Slider } from '@/components/ui/slider';
 
 const LocationModal = () => {
@@ -32,7 +31,7 @@ const LocationModal = () => {
         radius: deliveryRadius
       });
     }
-  }, [currentLocation, tempLocation]);
+  }, [currentLocation, tempLocation, deliveryRadius]);
 
   // Update temp location when selected location changes
   useEffect(() => {
@@ -75,7 +74,7 @@ const LocationModal = () => {
     <Dialog open={isLocationModalOpen} onOpenChange={(open) => !open && closeLocationModal()}>
       <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden">
         <div className="p-4 flex items-center justify-between border-b">
-          <DialogTitle className="text-xl font-semibold">Delivery details</DialogTitle>
+          <DialogTitle className="text-xl font-semibold">Delivery Location</DialogTitle>
           <Button variant="ghost" size="icon" onClick={closeLocationModal}>
             <X className="h-4 w-4" />
           </Button>
@@ -97,20 +96,6 @@ const LocationModal = () => {
                   onClick={() => setActiveTab('address')}
                 >
                   Change
-                </Button>
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex items-start space-x-3">
-            <Clock className="h-5 w-5 text-primary mt-1" />
-            <div className="flex-1">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-medium">Deliver now</h3>
-                </div>
-                <Button variant="outline" size="sm" className="h-8">
-                  Schedule
                 </Button>
               </div>
             </div>
@@ -152,7 +137,7 @@ const LocationModal = () => {
             <LocationSearch 
               onSelectAddress={(address) => {}} 
               placeholder="Search for your address"
-              className="mb-4 relative z-50"
+              className="mb-4"
             />
             <div className="h-48 relative rounded-md overflow-hidden border">
               <LeafletMap 

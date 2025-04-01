@@ -138,11 +138,14 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
         />
       </form>
       
-      <LocationSearchResults 
-        isOpen={isOpen}
-        results={results}
-        onLocationClick={handleLocationClick}
-      />
+      {isOpen && (
+        <div className="absolute w-full left-0 top-full mt-1 shadow-lg bg-white rounded-md border border-halaeats-200 z-50">
+          <LocationSearchResults 
+            results={results}
+            onLocationClick={handleLocationClick}
+          />
+        </div>
+      )}
     </div>
   );
 };

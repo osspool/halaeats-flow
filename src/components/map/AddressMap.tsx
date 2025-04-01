@@ -1,8 +1,9 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import LeafletMap from './LeafletMap';
 import LocationSearch from './LocationSearch';
 import { Address } from '@/types/checkout';
+import { useMap } from './MapContext';
 
 interface AddressMapProps {
   onLocationSelect?: (location: {
@@ -21,11 +22,28 @@ const AddressMap: React.FC<AddressMapProps> = ({
   className = '',
   initialAddress
 }) => {
+  const { currentLocation, setCurrentLocation } = useMap();
   const [selectedAddress, setSelectedAddress] = useState<string | undefined>(
     initialAddress?.street ? 
     `${initialAddress.street}, ${initialAddress.city}, ${initialAddress.state} ${initialAddress.zipCode}` : 
     undefined
   );
+
+  // Set initial address from props if available
+  useEffect(() => {
+    if (initialAddress?.street && initialAddress?.city) {
+      const addressStr = `${initialAddress.street}, ${initialAddress.city}, ${initialAddress.state} ${initialAddress.zipCode}`;
+      setSelectedAddress(addressStr);
+      
+      if (initialAddress.lat && initialAddress.lng) {
+        setCurrentLocation({
+          coordinates: [initialAddress.lat, initialAddress.lng],
+          address: addressStr,
+          name: initialAddress.name || 'Selected Address'
+        });
+      }
+    }
+  }, [initialAddress, setCurrentLocation]);
 
   const handleLocationSelect = (lat: number, lng: number) => {
     if (onLocationSelect) {
@@ -41,12 +59,10 @@ const AddressMap: React.FC<AddressMapProps> = ({
     setSelectedAddress(address);
     
     // If the parent component needs the address too
-    if (onLocationSelect) {
-      // We don't have exact coordinates here, but the map component will update them
-      // This is just to ensure the address gets passed along
+    if (onLocationSelect && currentLocation) {
       onLocationSelect({
-        lat: 0,
-        lng: 0,
+        lat: currentLocation.coordinates[0],
+        lng: currentLocation.coordinates[1],
         address
       });
     }
@@ -54,7 +70,7 @@ const AddressMap: React.FC<AddressMapProps> = ({
 
   return (
     <div className={`${className} space-y-3`}>
-      <div className="relative z-10">
+      <div className="relative">
         <LocationSearch 
           onSelectAddress={handleAddressSelect}
           placeholder="Enter delivery address..."

@@ -1,42 +1,35 @@
 
 import React from 'react';
-import { MapPin } from 'lucide-react';
 import { MapLocation } from './MapContext';
+import { MapPin } from 'lucide-react';
 
 interface LocationSearchResultsProps {
-  isOpen: boolean;
-  results: Array<MapLocation>;
+  results: MapLocation[];
   onLocationClick: (location: MapLocation) => void;
 }
 
-const LocationSearchResults: React.FC<LocationSearchResultsProps> = ({ 
-  isOpen, 
-  results, 
-  onLocationClick 
-}) => {
-  if (!isOpen) return null;
-  
+const LocationSearchResults = ({ results, onLocationClick }: LocationSearchResultsProps) => {
+  if (results.length === 0) {
+    return null;
+  }
+
   return (
-    <div className="absolute z-50 mt-1 w-full bg-white border border-halaeats-200 rounded-md shadow-lg max-h-60 overflow-auto">
-      {results.length === 0 ? (
-        <div className="p-3 text-center text-halaeats-500">No results found</div>
-      ) : (
-        results.map((item, index) => (
-          <div
-            key={index}
-            className="p-2 hover:bg-halaeats-50 cursor-pointer flex items-start"
-            onClick={() => onLocationClick(item)}
-          >
-            <MapPin className="h-4 w-4 text-primary mt-0.5 mr-2 flex-shrink-0" />
-            <div>
-              <div className="font-medium">{item.name}</div>
-              {item.address && item.address !== item.name && (
-                <div className="text-sm text-halaeats-600">{item.address}</div>
-              )}
-            </div>
+    <div className="max-h-60 overflow-y-auto py-2">
+      {results.map((location, index) => (
+        <div
+          key={`${location.address}-${index}`}
+          className="flex items-start px-3 py-2 hover:bg-halaeats-50 cursor-pointer"
+          onClick={() => onLocationClick(location)}
+        >
+          <MapPin className="h-4 w-4 mt-1 text-primary flex-shrink-0" />
+          <div className="ml-2 text-sm">
+            <div className="font-medium">{location.name}</div>
+            {location.address && (
+              <div className="text-halaeats-500 text-xs truncate">{location.address}</div>
+            )}
           </div>
-        ))
-      )}
+        </div>
+      ))}
     </div>
   );
 };

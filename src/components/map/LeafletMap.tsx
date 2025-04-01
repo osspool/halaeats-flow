@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { MapContainer, TileLayer } from 'react-leaflet';
+import React, { useEffect, useState } from 'react';
+import { MapContainer, TileLayer, useMap as useLeafletMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useMap as useMapContext } from './MapContext';
@@ -19,6 +19,18 @@ let DefaultIcon = L.icon({
 });
 
 L.Marker.prototype.options.icon = DefaultIcon;
+
+// Component to recenter map when default location changes
+const MapCenterUpdater = () => {
+  const map = useLeafletMap();
+  const { defaultLocation } = useMapContext();
+  
+  useEffect(() => {
+    map.setView(defaultLocation, map.getZoom());
+  }, [defaultLocation, map]);
+  
+  return null;
+};
 
 interface LeafletMapProps {
   height?: string;
@@ -85,6 +97,7 @@ const LeafletMap: React.FC<LeafletMapProps> = ({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        <MapCenterUpdater />
         <MapEvents onMapClick={handleMapClick} interactive={interactive} />
         <LocationMarker draggable={interactive} onDragEnd={handleMarkerDragEnd} />
       </MapContainer>
