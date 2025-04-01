@@ -25,7 +25,7 @@ function calculateDistance(point1: LatLngTuple, point2: LatLngTuple): number {
 }
 
 export const searchCaterers = (params: SearchParams) => {
-  let results = [...mockCaterers] as (Caterer & { distance?: number })[];
+  let results = [...mockCaterers] as Caterer[];
   
   // Filter by search query
   if (params.query && params.query.trim() !== '') {
@@ -33,10 +33,7 @@ export const searchCaterers = (params: SearchParams) => {
     results = results.filter(caterer => {
       return caterer.name.toLowerCase().includes(query) || 
              caterer.description.toLowerCase().includes(query) ||
-             caterer.cuisine.some(cuisine => cuisine.toLowerCase().includes(query)) ||
-             // Fix: Safely check for optional properties
-             (caterer.cuisineTypes ? caterer.cuisineTypes.some(cuisine => cuisine.toLowerCase().includes(query)) : false) ||
-             (caterer.cuisineTags ? caterer.cuisineTags.some(tag => tag.toLowerCase().includes(query)) : false);
+             caterer.cuisine.some(cuisine => cuisine.toLowerCase().includes(query));
     });
   }
   
@@ -44,7 +41,6 @@ export const searchCaterers = (params: SearchParams) => {
   if (params.cuisine && params.cuisine.trim() !== '') {
     const cuisine = params.cuisine.toLowerCase();
     results = results.filter(caterer => {
-      // Fix: Use cuisine property instead of cuisineTypes
       return caterer.cuisine.some(type => type.toLowerCase() === cuisine);
     });
   }
@@ -65,19 +61,19 @@ export const searchCaterers = (params: SearchParams) => {
         catererCoords
       );
       
-      // Add distance property for sorting
-      caterer.distance = distance;
+      // Store distance for sorting
+      (caterer as any).distance = distance;
       
       return distance <= (params.radius || 5);
     });
     
     // Sort by distance
-    results.sort((a, b) => (a.distance || 0) - (b.distance || 0));
+    results.sort((a, b) => ((a as any).distance || 0) - ((b as any).distance || 0));
   }
   
   // Filter for delivery only
   if (params.deliveryOnly) {
-    results = results.filter(caterer => caterer.canDeliver !== false); // Default to true if not specified
+    results = results.filter(caterer => (caterer as any).canDeliver !== false); // Default to true if not specified
   }
   
   return results;

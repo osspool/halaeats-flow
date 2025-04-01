@@ -54,17 +54,20 @@ const AddressMap: React.FC<AddressMapProps> = ({
 
   return (
     <div className={`${className} space-y-3`}>
-      <LocationSearch 
-        onSelectAddress={handleAddressSelect}
-        placeholder="Enter delivery address..."
-      />
+      <div className="relative z-10">
+        <LocationSearch 
+          onSelectAddress={handleAddressSelect}
+          placeholder="Enter delivery address..."
+          className="mb-3"
+        />
+      </div>
       <LeafletMap 
         height={height} 
         onLocationSelect={handleLocationSelect}
         className="rounded-lg overflow-hidden border border-halaeats-200"
       />
       {selectedAddress && (
-        <div className="text-sm text-halaeats-600">
+        <div className="text-sm text-halaeats-600 mt-2">
           <p className="font-medium">Selected Address:</p>
           <p>{selectedAddress}</p>
         </div>

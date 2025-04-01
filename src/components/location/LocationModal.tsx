@@ -20,7 +20,7 @@ const LocationModal = () => {
   
   const { currentLocation } = useMap();
   const [activeTab, setActiveTab] = useState<string>('delivery');
-  const [deliveryRadius, setDeliveryRadius] = useState<number>(5);
+  const [deliveryRadius, setDeliveryRadius] = useState<number>(selectedLocation?.radius || 5);
   const [tempLocation, setTempLocation] = useState(selectedLocation);
 
   useEffect(() => {
@@ -33,6 +33,14 @@ const LocationModal = () => {
       });
     }
   }, [currentLocation, tempLocation]);
+
+  // Update temp location when selected location changes
+  useEffect(() => {
+    if (selectedLocation) {
+      setTempLocation(selectedLocation);
+      setDeliveryRadius(selectedLocation.radius || 5);
+    }
+  }, [selectedLocation]);
 
   const handleLocationSelect = (location: any) => {
     setTempLocation({
@@ -113,6 +121,7 @@ const LocationModal = () => {
               <h3 className="font-medium">Delivery radius: {deliveryRadius} km</h3>
               <Slider
                 defaultValue={[deliveryRadius]}
+                value={[deliveryRadius]}
                 max={20}
                 min={1}
                 step={1}
@@ -143,7 +152,7 @@ const LocationModal = () => {
             <LocationSearch 
               onSelectAddress={(address) => {}} 
               placeholder="Search for your address"
-              className="mb-4"
+              className="mb-4 relative z-50"
             />
             <div className="h-48 relative rounded-md overflow-hidden border">
               <LeafletMap 

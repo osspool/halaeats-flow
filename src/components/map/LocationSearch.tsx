@@ -82,7 +82,6 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
       setIsLoading(true);
       searchAddress(query)
         .then(locations => {
-          console.log('Search results:', locations);
           setResults(locations);
           setIsOpen(locations.length > 0);
         })

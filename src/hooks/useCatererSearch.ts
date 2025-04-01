@@ -8,7 +8,7 @@ export interface CatererFilters {
   cuisine: string;
   deliveryOnly: boolean;
   sortBy: string;
-  location?: string; // Added to match usage in CaterersPage
+  location?: string;
 }
 
 export const useCatererSearch = (initialCaterers: any[]) => {
@@ -18,7 +18,8 @@ export const useCatererSearch = (initialCaterers: any[]) => {
     query: searchQuery,
     cuisine: selectedCuisine !== 'All cuisines' ? selectedCuisine : '',
     deliveryOnly: false,
-    sortBy: 'relevance'
+    sortBy: 'relevance',
+    location: selectedLocation?.name
   });
   
   const [filteredCaterers, setFilteredCaterers] = useState(initialCaterers);
@@ -44,16 +45,26 @@ export const useCatererSearch = (initialCaterers: any[]) => {
     if (filters.sortBy === 'rating') {
       sortedResults.sort((a, b) => b.rating - a.rating);
     } else if (filters.sortBy === 'price-low') {
-      // Fix: Use deliveryFee as a fallback for priceLevel
-      sortedResults.sort((a, b) => (a.priceLevel || a.deliveryFee) - (b.priceLevel || b.deliveryFee));
+      // Use deliveryFee for sorting if priceLevel is not available
+      sortedResults.sort((a, b) => (a.deliveryFee || 0) - (b.deliveryFee || 0));
     } else if (filters.sortBy === 'price-high') {
-      // Fix: Use deliveryFee as a fallback for priceLevel
-      sortedResults.sort((a, b) => (b.priceLevel || b.deliveryFee) - (a.priceLevel || a.deliveryFee));
+      // Use deliveryFee for sorting if priceLevel is not available
+      sortedResults.sort((a, b) => (b.deliveryFee || 0) - (a.deliveryFee || 0));
     }
     // Default 'relevance' sorting is already handled by the search function
     
     setFilteredCaterers(sortedResults);
   }, [filters, selectedLocation, initialCaterers]);
+
+  // Update filters when location changes
+  useEffect(() => {
+    if (selectedLocation) {
+      setFilters(prev => ({
+        ...prev,
+        location: selectedLocation.name
+      }));
+    }
+  }, [selectedLocation]);
 
   // Function to update filters
   const updateFilters = (newFilters: Partial<CatererFilters>) => {
@@ -66,7 +77,8 @@ export const useCatererSearch = (initialCaterers: any[]) => {
       query: '',
       cuisine: '',
       deliveryOnly: false,
-      sortBy: 'relevance'
+      sortBy: 'relevance',
+      location: selectedLocation?.name
     });
   };
 
