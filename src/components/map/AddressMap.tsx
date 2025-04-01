@@ -35,9 +35,11 @@ const AddressMap: React.FC<AddressMapProps> = ({
       const addressStr = `${initialAddress.street}, ${initialAddress.city}, ${initialAddress.state} ${initialAddress.zipCode}`;
       setSelectedAddress(addressStr);
       
-      if (initialAddress.lat && initialAddress.lng) {
+      // Check if initialAddress has latitude and longitude coordinates
+      if ('latitude' in initialAddress && 'longitude' in initialAddress && 
+          initialAddress.latitude && initialAddress.longitude) {
         setCurrentLocation({
-          coordinates: [initialAddress.lat, initialAddress.lng],
+          coordinates: [initialAddress.latitude, initialAddress.longitude],
           address: addressStr,
           name: initialAddress.name || 'Selected Address'
         });
