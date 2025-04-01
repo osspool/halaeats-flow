@@ -14,6 +14,7 @@ const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useRouterLocation();
+  const isHome = location.pathname === '/';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -35,33 +36,39 @@ const Header = () => {
     <header 
       className={cn(
         'fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-out-expo',
-        isScrolled 
-          ? 'py-3 bg-white/90 backdrop-blur-md shadow-sm' 
-          : 'py-5 bg-transparent'
+        isScrolled || !isHome
+          ? 'py-3 bg-white/95 backdrop-blur-md shadow-sm' 
+          : 'py-4 bg-transparent'
       )}
     >
-      <div className="container mx-auto px-4 flex justify-between items-center">
-        {/* Logo */}
-        <Logo />
+      <div className="container mx-auto px-4">
+        <div className="flex justify-between items-center">
+          {/* Logo */}
+          <div className="flex items-center">
+            <Logo />
+          </div>
 
-        {/* Desktop Navigation */}
-        <Navigation />
+          {/* Desktop Navigation */}
+          <Navigation className="mx-6 hidden lg:flex" />
 
-        {/* Desktop Search and Actions */}
-        <div className="hidden md:flex items-center space-x-4">
-          <SearchBar />
-          
-          <CartButton />
-          
-          <Button className="bg-primary hover:bg-primary/90 hover:shadow-md transition-gpu" size="sm">
-            Sign In
-          </Button>
-        </div>
+          {/* Desktop Search and Actions */}
+          <div className="flex items-center gap-3 flex-1 justify-end">
+            <SearchBar className="flex-1 max-w-md" isMinimal={true} />
+            
+            <div className="hidden md:flex items-center gap-2">
+              <CartButton />
+              
+              <Button className="bg-primary hover:bg-primary/90 hover:shadow-md transition-gpu" size="sm">
+                Sign In
+              </Button>
+            </div>
+          </div>
 
-        {/* Mobile Menu Button and Cart */}
-        <div className="flex items-center space-x-3 md:hidden">
-          <CartButton />
-          <MobileMenu isOpen={isMenuOpen} onToggle={toggleMenu} />
+          {/* Mobile Menu Button and Cart */}
+          <div className="flex items-center space-x-3 md:hidden">
+            <CartButton />
+            <MobileMenu isOpen={isMenuOpen} onToggle={toggleMenu} />
+          </div>
         </div>
       </div>
 

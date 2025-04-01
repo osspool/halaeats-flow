@@ -21,6 +21,7 @@ interface LocationContextType {
   setSearchQuery: (query: string) => void;
   selectedCuisine: string;
   setSelectedCuisine: (cuisine: string) => void;
+  buildSearchParams: () => URLSearchParams;
 }
 
 const LocationContext = createContext<LocationContextType | undefined>(undefined);
@@ -50,6 +51,24 @@ export const LocationProvider: React.FC<{children: ReactNode}> = ({ children }) 
   // Function to close location modal
   const closeLocationModal = () => setIsLocationModalOpen(false);
 
+  // Function to build search params from current state
+  const buildSearchParams = () => {
+    const params = new URLSearchParams();
+    
+    if (searchQuery) params.set('q', searchQuery);
+    if (selectedCuisine !== 'All cuisines') params.set('cuisine', selectedCuisine);
+    
+    if (selectedLocation?.coordinates) {
+      params.set('lat', selectedLocation.coordinates[0].toString());
+      params.set('lng', selectedLocation.coordinates[1].toString());
+      if (selectedLocation.radius) {
+        params.set('radius', selectedLocation.radius.toString());
+      }
+    }
+    
+    return params;
+  };
+
   // Handle location changes with notification
   const handleSetSelectedLocation = (location: LocationData | null) => {
     setSelectedLocation(location);
@@ -69,7 +88,8 @@ export const LocationProvider: React.FC<{children: ReactNode}> = ({ children }) 
         searchQuery,
         setSearchQuery,
         selectedCuisine,
-        setSelectedCuisine
+        setSelectedCuisine,
+        buildSearchParams
       }}
     >
       {children}

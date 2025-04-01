@@ -6,13 +6,19 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { useLocation } from '@/contexts/LocationContext';
 import { useNavigate } from 'react-router-dom';
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 interface SearchBarProps {
   className?: string;
   isMobile?: boolean;
+  isMinimal?: boolean;
 }
 
-const SearchBar: React.FC<SearchBarProps> = ({ className, isMobile = false }) => {
+const SearchBar: React.FC<SearchBarProps> = ({ className, isMobile = false, isMinimal = false }) => {
   const {
     searchQuery, 
     setSearchQuery, 
@@ -23,6 +29,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ className, isMobile = false }) =>
   } = useLocation();
   
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [isSearchSheetOpen, setIsSearchSheetOpen] = useState(false);
   const navigate = useNavigate();
 
   const cuisineOptions = [
@@ -58,7 +65,77 @@ const SearchBar: React.FC<SearchBarProps> = ({ className, isMobile = false }) =>
     
     // Navigate to caterers page with search params
     navigate(`/caterers?${params.toString()}`);
+    
+    // Close sheet if open
+    if (isSearchSheetOpen) {
+      setIsSearchSheetOpen(false);
+    }
   };
+
+  // Minimal version for main header (like Uber Eats)
+  if (isMinimal) {
+    return (
+      <Sheet open={isSearchSheetOpen} onOpenChange={setIsSearchSheetOpen}>
+        <SheetTrigger asChild>
+          <Button 
+            variant="ghost" 
+            className={cn("flex items-center justify-between w-full max-w-xs rounded-full border border-halaeats-200 bg-background h-12 px-4", className)}
+          >
+            <div className="flex items-center">
+              <Search className="h-4 w-4 mr-2 text-halaeats-500" />
+              <span className="text-halaeats-600 text-sm">Search HalaEats</span>
+            </div>
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="top" className="pt-16 px-4 sm:px-6">
+          <div className="max-w-3xl mx-auto">
+            <form onSubmit={handleSearch} className="space-y-4">
+              <div className="flex items-center bg-white rounded-lg border border-halaeats-200">
+                <Search className="h-4 w-4 ml-4 text-halaeats-400" />
+                <input 
+                  type="text" 
+                  placeholder="Search for dishes or caterers..." 
+                  className="pl-3 pr-4 py-3 rounded-r-lg border-0 focus:outline-none text-sm w-full" 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  autoFocus
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <Button 
+                  variant="outline" 
+                  className="w-full flex justify-between items-center bg-white"
+                  onClick={openLocationModal}
+                  type="button"
+                >
+                  <div className="flex items-center">
+                    <MapPin className="h-4 w-4 mr-2 text-primary" />
+                    <span className="truncate text-sm">{selectedLocation?.name || 'Select location'}</span>
+                  </div>
+                  <ChevronDown className="h-4 w-4 text-halaeats-400" />
+                </Button>
+                
+                <select
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  value={selectedCuisine}
+                  onChange={(e) => setSelectedCuisine(e.target.value)}
+                >
+                  {cuisineOptions.map((cuisine) => (
+                    <option key={cuisine} value={cuisine}>{cuisine}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <Button type="submit" variant="default" className="w-full bg-primary hover:bg-primary/90">
+                Search
+              </Button>
+            </form>
+          </div>
+        </SheetContent>
+      </Sheet>
+    );
+  }
 
   if (isMobile) {
     return (
@@ -137,7 +214,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ className, isMobile = false }) =>
         <Input 
           type="text" 
           placeholder="Search dishes or caterers..." 
-          className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-10 w-40 lg:w-56"
+          className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-10 w-44 lg:w-64"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onFocus={() => setIsSearchFocused(true)}
