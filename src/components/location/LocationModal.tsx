@@ -3,11 +3,12 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { MapPin, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useLocation } from '@/contexts/LocationContext';
+import { useLocation, LocationData } from '@/contexts/LocationContext';
 import { useMap } from '@/components/map/MapContext';
 import LocationSearch from '@/components/map/LocationSearch';
 import LeafletMap from '@/components/map/LeafletMap';
 import { Slider } from '@/components/ui/slider';
+import { LatLngTuple } from 'leaflet';
 
 const LocationModal = () => {
   const { 
@@ -20,7 +21,7 @@ const LocationModal = () => {
   const { currentLocation, setCurrentLocation, selectLocation } = useMap();
   const [activeTab, setActiveTab] = useState<string>('delivery');
   const [deliveryRadius, setDeliveryRadius] = useState<number>(selectedLocation?.radius || 5);
-  const [tempLocation, setTempLocation] = useState(selectedLocation);
+  const [tempLocation, setTempLocation] = useState<LocationData | null>(selectedLocation);
 
   // Update temp location when modal opens
   useEffect(() => {
@@ -32,7 +33,7 @@ const LocationModal = () => {
         setTempLocation({
           name: currentLocation.name || 'Current Location',
           address: currentLocation.address,
-          coordinates: currentLocation.coordinates,
+          coordinates: currentLocation.coordinates as LatLngTuple,
           radius: deliveryRadius
         });
       }
@@ -40,10 +41,14 @@ const LocationModal = () => {
   }, [isLocationModalOpen, currentLocation, selectedLocation, deliveryRadius]);
 
   const handleLocationSelect = (location: any) => {
-    const newLocation = {
+    if (!location.lat || !location.lng) return;
+    
+    const coordinates: LatLngTuple = [location.lat, location.lng];
+    
+    const newLocation: LocationData = {
       name: location.address?.split(',')[0] || 'Selected Location',
       address: location.address,
-      coordinates: [location.lat, location.lng],
+      coordinates: coordinates,
       radius: deliveryRadius
     };
     
@@ -51,7 +56,7 @@ const LocationModal = () => {
     
     // Also update the current location in MapContext
     selectLocation({
-      coordinates: [location.lat, location.lng],
+      coordinates: coordinates,
       address: location.address,
       name: location.address?.split(',')[0] || 'Selected Location'
     });

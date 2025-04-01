@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import LeafletMap from './LeafletMap';
 import LocationSearch from './LocationSearch';
@@ -29,16 +28,19 @@ const AddressMap: React.FC<AddressMapProps> = ({
     undefined
   );
 
-  // Set initial address from props if available
   useEffect(() => {
     if (initialAddress?.street && initialAddress?.city) {
       const addressStr = `${initialAddress.street}, ${initialAddress.city}, ${initialAddress.state} ${initialAddress.zipCode}`;
       setSelectedAddress(addressStr);
       
-      // Check if initialAddress has latitude and longitude coordinates
-      if (initialAddress.latitude && initialAddress.longitude) {
-        const lat = Number(initialAddress.latitude);
-        const lng = Number(initialAddress.longitude);
+      if (initialAddress.latitude !== undefined && initialAddress.longitude !== undefined) {
+        const lat = typeof initialAddress.latitude === 'string' 
+          ? parseFloat(initialAddress.latitude) 
+          : initialAddress.latitude as number;
+          
+        const lng = typeof initialAddress.longitude === 'string'
+          ? parseFloat(initialAddress.longitude)
+          : initialAddress.longitude as number;
         
         if (!isNaN(lat) && !isNaN(lng)) {
           setCurrentLocation({
@@ -64,7 +66,6 @@ const AddressMap: React.FC<AddressMapProps> = ({
   const handleAddressSelect = (address: string) => {
     setSelectedAddress(address);
     
-    // If the parent component needs the address too
     if (onLocationSelect && currentLocation) {
       onLocationSelect({
         lat: currentLocation.coordinates[0],

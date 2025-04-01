@@ -1,4 +1,3 @@
-
 import { DeliveryQuote } from './delivery';
 
 export interface Address {
@@ -10,6 +9,8 @@ export interface Address {
   state: string;
   zipCode: string;
   isDefault: boolean;
+  latitude?: string | number;  // Added to resolve type error
+  longitude?: string | number; // Added to resolve type error
 }
 
 export type PaymentMethodType = 'card' | 'paypal' | 'apple_pay' | 'google_pay' | 'bank_transfer';
