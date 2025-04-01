@@ -46,8 +46,15 @@ const SearchBar: React.FC<SearchBarProps> = ({ className, isMobile = false }) =>
     const params = new URLSearchParams();
     if (searchQuery) params.set('q', searchQuery);
     if (selectedCuisine !== cuisineOptions[0]) params.set('cuisine', selectedCuisine);
-    if (selectedLocation?.name) params.set('location', selectedLocation.name);
-    if (selectedLocation?.radius) params.set('radius', selectedLocation.radius.toString());
+    
+    // Add location parameters from global state
+    if (selectedLocation?.coordinates) {
+      params.set('lat', selectedLocation.coordinates[0].toString());
+      params.set('lng', selectedLocation.coordinates[1].toString());
+      if (selectedLocation.radius) {
+        params.set('radius', selectedLocation.radius.toString());
+      }
+    }
     
     // Navigate to caterers page with search params
     navigate(`/caterers?${params.toString()}`);
@@ -73,6 +80,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ className, isMobile = false }) =>
               variant="outline" 
               className="w-full flex justify-between items-center bg-white"
               onClick={openLocationModal}
+              type="button"
             >
               <div className="flex items-center">
                 <MapPin className="h-4 w-4 mr-2 text-primary" />

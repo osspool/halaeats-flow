@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { LatLngTuple } from 'leaflet';
 import { useMap } from '@/components/map/MapContext';
+import { toast } from 'sonner';
 
 export interface LocationData {
   name: string;
@@ -43,14 +44,25 @@ export const LocationProvider: React.FC<{children: ReactNode}> = ({ children }) 
     }
   }, [currentLocation, selectedLocation]);
 
+  // Function to open location modal
   const openLocationModal = () => setIsLocationModalOpen(true);
+  
+  // Function to close location modal
   const closeLocationModal = () => setIsLocationModalOpen(false);
+
+  // Handle location changes with notification
+  const handleSetSelectedLocation = (location: LocationData | null) => {
+    setSelectedLocation(location);
+    if (location) {
+      toast.success(`Location updated to ${location.name}`);
+    }
+  };
 
   return (
     <LocationContext.Provider
       value={{
         selectedLocation,
-        setSelectedLocation,
+        setSelectedLocation: handleSetSelectedLocation,
         isLocationModalOpen,
         openLocationModal,
         closeLocationModal,

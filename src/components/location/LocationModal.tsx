@@ -18,7 +18,7 @@ const LocationModal = () => {
     setSelectedLocation 
   } = useLocation();
   
-  const { currentLocation, setCurrentLocation, selectLocation } = useMap();
+  const { currentLocation, selectLocation } = useMap();
   const [activeTab, setActiveTab] = useState<string>('delivery');
   const [deliveryRadius, setDeliveryRadius] = useState<number>(selectedLocation?.radius || 5);
   const [tempLocation, setTempLocation] = useState<LocationData | null>(selectedLocation);

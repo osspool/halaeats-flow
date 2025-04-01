@@ -1,16 +1,10 @@
-
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Search, MapPin, Calendar, ChevronDown, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue 
-} from '@/components/ui/select';
+import { useLocation } from '@/contexts/LocationContext';
+import { useNavigate } from 'react-router-dom';
 
 // Cuisine categories available in the app
 const cuisineCategories = [
@@ -33,10 +27,12 @@ const cuisineCategories = [
 const Hero = () => {
   const [searchFocused, setSearchFocused] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCuisine, setSelectedCuisine] = useState('all');
-  const [location, setLocation] = useState('Current Location');
   const [showCuisineFilter, setShowCuisineFilter] = useState(false);
   const [selectedCuisines, setSelectedCuisines] = useState<string[]>(['all']);
+  const navigate = useNavigate();
+  
+  // Use the global location context
+  const { selectedLocation, openLocationModal } = useLocation();
 
   // Handle selecting a cuisine from the dropdown or chips
   const handleCuisineSelect = (cuisineId: string) => {
@@ -56,38 +52,31 @@ const Hero = () => {
     }
   };
 
-  // Get the current location using browser geolocation
-  const getCurrentLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          // In a real app, you would use a reverse geocoding service to get the address
-          // For now, we'll just use the coordinates
-          const { latitude, longitude } = position.coords;
-          console.log(`Got coordinates: ${latitude}, ${longitude}`);
-          setLocation('Current Location');
-        },
-        (error) => {
-          console.error('Error getting location:', error);
-          alert('Unable to retrieve your location. Using default location instead.');
-        }
-      );
-    } else {
-      alert('Geolocation is not supported by your browser');
-    }
-  };
-
   const handleSearch = () => {
     const cuisineFilters = selectedCuisines.includes('all') 
       ? [] 
       : selectedCuisines;
-      
-    console.log('Searching for:', {
-      query: searchQuery,
-      cuisines: cuisineFilters,
-      location: location
-    });
-    // This would typically navigate to search results page with these parameters
+    
+    // Build search params
+    const params = new URLSearchParams();
+    if (searchQuery) params.set('q', searchQuery);
+    
+    // Add selected cuisines
+    if (cuisineFilters.length > 0) {
+      params.set('cuisine', cuisineFilters.join(','));
+    }
+    
+    // Add location parameters from global state
+    if (selectedLocation?.coordinates) {
+      params.set('lat', selectedLocation.coordinates[0].toString());
+      params.set('lng', selectedLocation.coordinates[1].toString());
+      if (selectedLocation.radius) {
+        params.set('radius', selectedLocation.radius.toString());
+      }
+    }
+    
+    // Navigate to search results page with these parameters
+    navigate(`/caterers?${params.toString()}`);
   };
 
   // Toggle the cuisine filter dropdown
@@ -237,20 +226,25 @@ const Hero = () => {
                   )}
                 </div>
 
-                <div className="flex flex-wrap gap-3 md:gap-4">
+                {/* Location display - using global location */}
+                <div className="flex items-center mb-3 text-sm">
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="flex items-center text-sm text-halaeats-600 p-0 h-auto hover:bg-transparent hover:text-primary"
-                    onClick={getCurrentLocation}
+                    className="flex items-center text-halaeats-600 p-0 h-auto hover:bg-transparent hover:text-primary"
+                    onClick={openLocationModal}
                   >
                     <MapPin className="h-4 w-4 text-primary mr-1" />
-                    <span>{location}</span>
+                    <span className="truncate max-w-[200px]">
+                      {selectedLocation?.name || 'Select location in navigation'}
+                    </span>
+                    <ChevronDown className="h-3 w-3 ml-1 text-halaeats-400" />
                   </Button>
-                  <div className="flex items-center text-sm text-halaeats-600">
-                    <Calendar className="h-4 w-4 text-primary mr-1" />
-                    <span>Delivery: Today</span>
-                  </div>
+                </div>
+                
+                <div className="flex items-center text-sm text-halaeats-600 mb-3">
+                  <Calendar className="h-4 w-4 text-primary mr-1" />
+                  <span>Delivery: Today</span>
                 </div>
               </div>
               <div className="px-4 pb-4">
