@@ -1,4 +1,3 @@
-
 export interface Caterer {
   id: string;
   name: string;
@@ -8,12 +7,17 @@ export interface Caterer {
   rating: number;
   reviewCount: number;
   cuisine: string[];
+  cuisineTypes?: string[]; // Added for search functionality
+  cuisineTags?: string[]; // Added for search functionality
   location: string;
   deliveryFee: number;
   minimumOrder: number;
   preparationTime: string;
   isOpen: boolean;
   availableDates: AvailableDate[];
+  priceLevel?: number; // Added for sorting functionality
+  canDeliver?: boolean; // Added for filtering functionality
+  distance?: number; // Added for location-based sorting
 }
 
 export interface AvailableDate {

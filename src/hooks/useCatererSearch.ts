@@ -8,6 +8,7 @@ export interface CatererFilters {
   cuisine: string;
   deliveryOnly: boolean;
   sortBy: string;
+  location?: string; // Added to match usage in CaterersPage
 }
 
 export const useCatererSearch = (initialCaterers: any[]) => {
@@ -43,9 +44,11 @@ export const useCatererSearch = (initialCaterers: any[]) => {
     if (filters.sortBy === 'rating') {
       sortedResults.sort((a, b) => b.rating - a.rating);
     } else if (filters.sortBy === 'price-low') {
-      sortedResults.sort((a, b) => a.priceLevel - b.priceLevel);
+      // Fix: Use deliveryFee as a fallback for priceLevel
+      sortedResults.sort((a, b) => (a.priceLevel || a.deliveryFee) - (b.priceLevel || b.deliveryFee));
     } else if (filters.sortBy === 'price-high') {
-      sortedResults.sort((a, b) => b.priceLevel - a.priceLevel);
+      // Fix: Use deliveryFee as a fallback for priceLevel
+      sortedResults.sort((a, b) => (b.priceLevel || b.deliveryFee) - (a.priceLevel || a.deliveryFee));
     }
     // Default 'relevance' sorting is already handled by the search function
     

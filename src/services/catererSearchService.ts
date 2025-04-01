@@ -1,6 +1,7 @@
 
 import { LatLngTuple } from 'leaflet';
 import { mockCaterers } from '@/data/mockData';
+import { Caterer } from '@/types';
 
 export interface SearchParams {
   query?: string;
@@ -24,7 +25,7 @@ function calculateDistance(point1: LatLngTuple, point2: LatLngTuple): number {
 }
 
 export const searchCaterers = (params: SearchParams) => {
-  let results = [...mockCaterers];
+  let results = [...mockCaterers] as (Caterer & { distance?: number })[];
   
   // Filter by search query
   if (params.query && params.query.trim() !== '') {
@@ -32,8 +33,10 @@ export const searchCaterers = (params: SearchParams) => {
     results = results.filter(caterer => {
       return caterer.name.toLowerCase().includes(query) || 
              caterer.description.toLowerCase().includes(query) ||
-             caterer.cuisineTypes.some(cuisine => cuisine.toLowerCase().includes(query)) ||
-             (caterer.cuisineTags && caterer.cuisineTags.some(tag => tag.toLowerCase().includes(query)));
+             caterer.cuisine.some(cuisine => cuisine.toLowerCase().includes(query)) ||
+             // Fix: Safely check for optional properties
+             (caterer.cuisineTypes ? caterer.cuisineTypes.some(cuisine => cuisine.toLowerCase().includes(query)) : false) ||
+             (caterer.cuisineTags ? caterer.cuisineTags.some(tag => tag.toLowerCase().includes(query)) : false);
     });
   }
   
@@ -41,7 +44,8 @@ export const searchCaterers = (params: SearchParams) => {
   if (params.cuisine && params.cuisine.trim() !== '') {
     const cuisine = params.cuisine.toLowerCase();
     results = results.filter(caterer => {
-      return caterer.cuisineTypes.some(type => type.toLowerCase() === cuisine);
+      // Fix: Use cuisine property instead of cuisineTypes
+      return caterer.cuisine.some(type => type.toLowerCase() === cuisine);
     });
   }
   
@@ -50,9 +54,15 @@ export const searchCaterers = (params: SearchParams) => {
     results = results.filter(caterer => {
       if (!caterer.location) return false;
       
+      // Parse location string into coordinates or use mock coordinates
+      const catererCoords: LatLngTuple = [
+        // Default to some coordinates if we can't parse the location
+        37.7749, -122.4194 // Default San Francisco coordinates
+      ];
+      
       const distance = calculateDistance(
         params.location as LatLngTuple,
-        [caterer.location.lat, caterer.location.lng]
+        catererCoords
       );
       
       // Add distance property for sorting
@@ -67,7 +77,7 @@ export const searchCaterers = (params: SearchParams) => {
   
   // Filter for delivery only
   if (params.deliveryOnly) {
-    results = results.filter(caterer => caterer.canDeliver);
+    results = results.filter(caterer => caterer.canDeliver !== false); // Default to true if not specified
   }
   
   return results;

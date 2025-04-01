@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { SearchX, MapPin, Utensils } from 'lucide-react';
@@ -33,7 +32,6 @@ const CaterersPage: React.FC = () => {
   const activeFilterCount = [
     filters.query,
     filters.cuisine,
-    filters.location,
     filters.deliveryOnly
   ].filter(Boolean).length;
   
@@ -136,12 +134,11 @@ const CaterersPage: React.FC = () => {
             {filteredCaterers.length > 0 ? (
               <motion.div 
                 className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
-                variants={containerVariants}
                 initial="hidden"
                 animate="visible"
               >
                 {filteredCaterers.map((caterer) => (
-                  <motion.div key={caterer.id} variants={itemVariants}>
+                  <motion.div key={caterer.id}>
                     <CatererCard caterer={caterer} />
                   </motion.div>
                 ))}
