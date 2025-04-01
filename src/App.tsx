@@ -173,19 +173,17 @@ const AnimatedRoutes = () => (
 
 const App = () => {
   return (
-    <React.StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <MapProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <AnimatedRoutes />
-            </TooltipProvider>
-          </MapProvider>
-        </BrowserRouter>
-      </QueryClientProvider>
-    </React.StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <MapProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <AnimatedRoutes />
+          </TooltipProvider>
+        </MapProvider>
+      </BrowserRouter>
+    </QueryClientProvider>
   );
 };
 

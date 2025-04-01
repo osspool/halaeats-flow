@@ -26,7 +26,7 @@ interface MapContextType {
 
 const MapContext = createContext<MapContextType | undefined>(undefined);
 
-export const MapProvider = ({ children }: { children: ReactNode }) => {
+export const MapProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [currentLocation, setCurrentLocation] = useState<MapLocation | null>(null);
   const [defaultLocation, setDefaultLocation] = useState<LatLngTuple>(DEFAULT_COORDINATES);
   const [isLoadingLocation, setIsLoadingLocation] = useState(true);

@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import { MapProvider } from './MapContext';
 import LeafletMap from './LeafletMap';
 import LocationSearch from './LocationSearch';
 import { Address } from '@/types/checkout';
@@ -54,25 +53,23 @@ const AddressMap: React.FC<AddressMapProps> = ({
   };
 
   return (
-    <MapProvider>
-      <div className={`${className} space-y-3`}>
-        <LocationSearch 
-          onSelectAddress={handleAddressSelect}
-          placeholder="Enter delivery address..."
-        />
-        <LeafletMap 
-          height={height} 
-          onLocationSelect={handleLocationSelect}
-          className="rounded-lg overflow-hidden border border-halaeats-200"
-        />
-        {selectedAddress && (
-          <div className="text-sm text-halaeats-600">
-            <p className="font-medium">Selected Address:</p>
-            <p>{selectedAddress}</p>
-          </div>
-        )}
-      </div>
-    </MapProvider>
+    <div className={`${className} space-y-3`}>
+      <LocationSearch 
+        onSelectAddress={handleAddressSelect}
+        placeholder="Enter delivery address..."
+      />
+      <LeafletMap 
+        height={height} 
+        onLocationSelect={handleLocationSelect}
+        className="rounded-lg overflow-hidden border border-halaeats-200"
+      />
+      {selectedAddress && (
+        <div className="text-sm text-halaeats-600">
+          <p className="font-medium">Selected Address:</p>
+          <p>{selectedAddress}</p>
+        </div>
+      )}
+    </div>
   );
 };
 
