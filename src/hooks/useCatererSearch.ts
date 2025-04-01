@@ -43,9 +43,9 @@ export const useCatererSearch = (initialCaterers: any[]) => {
     if (filters.sortBy === 'rating') {
       sortedResults.sort((a, b) => b.rating - a.rating);
     } else if (filters.sortBy === 'price-low') {
-      sortedResults.sort((a, b) => a.priceRange.length - b.priceRange.length);
+      sortedResults.sort((a, b) => a.priceLevel - b.priceLevel);
     } else if (filters.sortBy === 'price-high') {
-      sortedResults.sort((a, b) => b.priceRange.length - a.priceRange.length);
+      sortedResults.sort((a, b) => b.priceLevel - a.priceLevel);
     }
     // Default 'relevance' sorting is already handled by the search function
     
