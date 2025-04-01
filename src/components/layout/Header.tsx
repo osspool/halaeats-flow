@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ShoppingCart, Menu, X, Search, MapPin, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { mockCartItems } from '@/pages/CartPage';
 import CartDropdown from '@/components/cart/CartDropdown';
@@ -18,6 +19,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "@/components/ui/navigation-menu";
 
 const cuisineOptions = [
   "All cuisines",
@@ -39,9 +48,11 @@ const Header = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCuisine, setSelectedCuisine] = useState(cuisineOptions[0]);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const { currentLocation } = useMap();
   const location = useLocation();
   const navigate = useNavigate();
+  const searchInputRef = useRef(null);
 
   // Extract location name for display
   const locationDisplay = currentLocation?.name || 'Select location';
@@ -82,7 +93,7 @@ const Header = () => {
       className={cn(
         'fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-out-expo',
         isScrolled 
-          ? 'py-3 bg-white/80 backdrop-blur-md shadow-sm' 
+          ? 'py-3 bg-white/90 backdrop-blur-md shadow-sm' 
           : 'py-5 bg-transparent'
       )}
     >
@@ -127,18 +138,30 @@ const Header = () => {
 
         {/* Desktop Search and Actions */}
         <div className="hidden md:flex items-center space-x-4">
-          <form onSubmit={handleSearch} className="flex items-center space-x-2">
+          <form 
+            onSubmit={handleSearch} 
+            className={cn(
+              "flex items-center bg-white rounded-full border transition-all duration-200",
+              isSearchFocused 
+                ? "ring-2 ring-primary/20 border-primary" 
+                : "border-halaeats-200 hover:border-halaeats-300"
+            )}
+          >
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="flex items-center">
-                  <MapPin className="h-4 w-4 mr-1" />
-                  <span className="truncate max-w-28">{locationDisplay}</span>
-                  <ChevronDown className="h-3 w-3 ml-1" />
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="flex items-center h-10 rounded-l-full border-r border-halaeats-100 px-4"
+                >
+                  <MapPin className="h-4 w-4 mr-1 text-primary" />
+                  <span className="truncate max-w-28 text-halaeats-700">{locationDisplay}</span>
+                  <ChevronDown className="h-3 w-3 ml-1 text-halaeats-400" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-64">
+              <DropdownMenuContent className="w-64 p-2">
                 {currentLocation && (
-                  <DropdownMenuItem className="flex items-start">
+                  <DropdownMenuItem className="flex items-start rounded-md">
                     <MapPin className="h-4 w-4 text-primary mt-0.5 mr-2 flex-shrink-0" />
                     <div>
                       <div className="font-medium">{currentLocation.name}</div>
@@ -148,49 +171,55 @@ const Header = () => {
                     </div>
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuItem onClick={() => navigate('/caterers')}>
+                <DropdownMenuItem onClick={() => navigate('/caterers')} className="rounded-md mt-1">
                   Change location
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
             
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="flex items-center">
-                  <span className="truncate max-w-28">{selectedCuisine}</span>
-                  <ChevronDown className="h-3 w-3 ml-1" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-48">
-                {cuisineOptions.map((cuisine) => (
-                  <DropdownMenuItem 
-                    key={cuisine} 
-                    onClick={() => setSelectedCuisine(cuisine)}
-                    className={cn(
-                      "cursor-pointer",
-                      selectedCuisine === cuisine && "font-medium text-primary"
-                    )}
-                  >
-                    {cuisine}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-            
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-halaeats-400" />
-              <input 
+            <div className="flex items-center px-2">
+              <Input 
+                ref={searchInputRef}
                 type="text" 
-                placeholder="Search for dishes or caterers..." 
-                className="pl-10 pr-4 py-2 rounded-full bg-halaeats-50 border border-halaeats-100 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm transition-gpu w-56" 
+                placeholder="Search dishes or caterers..." 
+                className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-10 w-40 lg:w-56"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setIsSearchFocused(true)}
+                onBlur={() => setIsSearchFocused(false)}
               />
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="flex items-center h-8 rounded-md px-3 text-sm text-halaeats-700"
+                  >
+                    <span className="truncate max-w-28">{selectedCuisine}</span>
+                    <ChevronDown className="h-3 w-3 ml-1 text-halaeats-400" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-48 p-2">
+                  {cuisineOptions.map((cuisine) => (
+                    <DropdownMenuItem 
+                      key={cuisine} 
+                      onClick={() => setSelectedCuisine(cuisine)}
+                      className={cn(
+                        "cursor-pointer rounded-md",
+                        selectedCuisine === cuisine && "font-medium text-primary bg-primary/5"
+                      )}
+                    >
+                      {cuisine}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
+              <Button type="submit" variant="ghost" size="icon" className="text-halaeats-500 hover:text-primary">
+                <Search className="h-5 w-5" />
+              </Button>
             </div>
-            
-            <Button type="submit" variant="ghost" size="icon" className="text-primary">
-              <Search className="h-5 w-5" />
-            </Button>
           </form>
           
           <Popover open={isCartOpen} onOpenChange={setIsCartOpen}>
@@ -207,7 +236,7 @@ const Header = () => {
             </PopoverContent>
           </Popover>
           
-          <Button className="bg-gradient-to-r from-primary to-cuisine-600 hover:shadow-md transition-gpu" size="sm">
+          <Button className="bg-primary hover:bg-primary/90 hover:shadow-md transition-gpu" size="sm">
             Sign In
           </Button>
         </div>
@@ -243,71 +272,75 @@ const Header = () => {
       >
         <div className="container mx-auto px-4 flex flex-col items-center space-y-6 pt-4">
           <form onSubmit={handleSearch} className="flex flex-col w-full space-y-3">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="w-full flex justify-between items-center">
-                  <div className="flex items-center">
-                    <MapPin className="h-4 w-4 mr-2" />
-                    <span className="truncate">{locationDisplay}</span>
-                  </div>
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56">
-                {currentLocation && (
-                  <DropdownMenuItem className="flex items-start">
-                    <MapPin className="h-4 w-4 text-primary mt-0.5 mr-2 flex-shrink-0" />
-                    <div>
-                      <div className="font-medium">{currentLocation.name}</div>
-                      {currentLocation.address && (
-                        <div className="text-xs text-muted-foreground">{currentLocation.address}</div>
-                      )}
-                    </div>
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuItem onClick={() => navigate('/caterers')}>
-                  Change location
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="w-full flex justify-between items-center">
-                  <span>{selectedCuisine}</span>
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56">
-                {cuisineOptions.map((cuisine) => (
-                  <DropdownMenuItem 
-                    key={cuisine} 
-                    onClick={() => setSelectedCuisine(cuisine)}
-                    className={cn(
-                      "cursor-pointer",
-                      selectedCuisine === cuisine && "font-medium text-primary"
+            <div className="bg-halaeats-50 rounded-xl p-3 border border-halaeats-100">
+              <div className="flex items-center bg-white rounded-lg border border-halaeats-200 mb-3">
+                <Search className="h-4 w-4 ml-3 text-halaeats-400" />
+                <input 
+                  type="text" 
+                  placeholder="Search for dishes or caterers..." 
+                  className="pl-2 pr-4 py-3 rounded-r-lg border-0 focus:outline-none text-sm w-full" 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="w-full flex justify-between items-center bg-white">
+                      <div className="flex items-center">
+                        <MapPin className="h-4 w-4 mr-2 text-primary" />
+                        <span className="truncate text-sm">{locationDisplay}</span>
+                      </div>
+                      <ChevronDown className="h-4 w-4 text-halaeats-400" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56">
+                    {currentLocation && (
+                      <DropdownMenuItem className="flex items-start">
+                        <MapPin className="h-4 w-4 text-primary mt-0.5 mr-2 flex-shrink-0" />
+                        <div>
+                          <div className="font-medium">{currentLocation.name}</div>
+                          {currentLocation.address && (
+                            <div className="text-xs text-muted-foreground">{currentLocation.address}</div>
+                          )}
+                        </div>
+                      </DropdownMenuItem>
                     )}
-                  >
-                    {cuisine}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-            
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-halaeats-400" />
-              <input 
-                type="text" 
-                placeholder="Search for dishes or caterers..." 
-                className="pl-10 pr-4 py-3 rounded-lg border border-halaeats-100 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm w-full" 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+                    <DropdownMenuItem onClick={() => navigate('/caterers')}>
+                      Change location
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="w-full flex justify-between items-center bg-white">
+                      <span className="truncate text-sm">{selectedCuisine}</span>
+                      <ChevronDown className="h-4 w-4 text-halaeats-400" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56">
+                    {cuisineOptions.map((cuisine) => (
+                      <DropdownMenuItem 
+                        key={cuisine} 
+                        onClick={() => setSelectedCuisine(cuisine)}
+                        className={cn(
+                          "cursor-pointer",
+                          selectedCuisine === cuisine && "font-medium text-primary bg-primary/5"
+                        )}
+                      >
+                        {cuisine}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              
+              <Button type="submit" variant="default" className="w-full mt-3 bg-primary hover:bg-primary/90">
+                Search
+              </Button>
             </div>
-            
-            <Button type="submit" variant="default" className="w-full">
-              Search
-            </Button>
           </form>
           
           <nav className="flex flex-col items-center space-y-6 w-full mt-4">
@@ -338,7 +371,7 @@ const Header = () => {
             >
               How It Works
             </Link>
-            <Button className="bg-gradient-to-r from-primary to-cuisine-600 hover:shadow-md transition-gpu w-full max-w-xs mt-4">
+            <Button className="bg-primary hover:bg-primary/90 hover:shadow-md transition-gpu w-full max-w-xs mt-4">
               Sign In
             </Button>
           </nav>
