@@ -56,21 +56,25 @@ const DeliveryContinueButton = ({
   useEffect(() => {
     if (pendingNext && !isLoadingQuote) {
       setPendingNext(false);
-      // Verify the quote is now valid
-      if (isQuoteValid()) {
-        // Reset refresh attempts when successful
-        setRefreshAttempts(0);
-        onNext();
-      } else {
-        // If we've tried to refresh multiple times, show a more detailed error
-        if (refreshAttempts >= 2) {
-          toast.error('We\'re having trouble getting a delivery quote. Please try a different time slot or address.');
+      
+      // Add a small delay to ensure the quote is set in state
+      setTimeout(() => {
+        // Verify the quote is now valid
+        if (isQuoteValid()) {
+          // Reset refresh attempts when successful
           setRefreshAttempts(0);
+          onNext();
         } else {
-          toast.error('Could not get a valid delivery quote. Please try again.');
-          setRefreshAttempts(prev => prev + 1);
+          // If we've tried to refresh multiple times, show a more detailed error
+          if (refreshAttempts >= 2) {
+            toast.error('We\'re having trouble getting a delivery quote. Please try a different time slot or address.');
+            setRefreshAttempts(0);
+          } else {
+            toast.error('Could not get a valid delivery quote. Please try again.');
+            setRefreshAttempts(prev => prev + 1);
+          }
         }
-      }
+      }, 50);
     }
   }, [isLoadingQuote, pendingNext, isQuoteValid, onNext, refreshAttempts]);
 
@@ -78,7 +82,7 @@ const DeliveryContinueButton = ({
     e.preventDefault();
     console.log('Continue button clicked');
     
-    // For pickup orders, we need a selected slot
+    // For pickup orders, we just need a selected slot
     if (selectedType === 'pickup' && selectedSlot) {
       console.log('Pickup order is valid, proceeding to next step');
       onNext();
@@ -87,33 +91,33 @@ const DeliveryContinueButton = ({
     
     // For delivery orders
     if (selectedType === 'delivery') {
-      if (selectedAddressId && selectedSlot) {
-        // Check if the delivery quote is valid
-        const quoteValid = isQuoteValid();
-        console.log('Delivery quote validity check result:', quoteValid);
-        
-        if (quoteValid) {
-          console.log('Delivery order is valid, proceeding to next step');
-          onNext();
-          return;
-        } else if (!isLoadingQuote) {
-          console.log('Delivery quote is not valid, refreshing...');
-          // Set flag to proceed once refresh is complete
-          setPendingNext(true);
-          onRefreshQuote();
-          toast('Your delivery quote has expired. We are refreshing it for you.', {
-            description: 'Please wait a moment...'
-          });
-          return;
-        }
-      } else {
-        console.log('Missing required fields for delivery order');
-        if (!selectedAddressId) {
-          toast.error('Please select a delivery address to continue.');
-        } else if (!selectedSlot) {
-          toast.error('Please select a time slot to continue.');
-        }
+      if (!selectedAddressId) {
+        console.log('Missing delivery address');
+        toast.error('Please select a delivery address to continue.');
         return;
+      }
+      
+      if (!selectedSlot) {
+        console.log('Missing time slot');
+        toast.error('Please select a time slot to continue.');
+        return;
+      }
+      
+      // Check if the delivery quote is valid
+      const quoteValid = isQuoteValid();
+      console.log('Delivery quote validity check result:', quoteValid);
+      
+      if (quoteValid) {
+        console.log('Delivery order is valid, proceeding to next step');
+        onNext();
+      } else if (!isLoadingQuote) {
+        console.log('Delivery quote is not valid, refreshing...');
+        // Set flag to proceed once refresh is complete
+        setPendingNext(true);
+        onRefreshQuote();
+        toast('Your delivery quote has expired. We are refreshing it for you.', {
+          description: 'Please wait a moment...'
+        });
       }
     }
   };

@@ -54,7 +54,7 @@ export const useDeliveryMethodValidation = ({
         isLoadingQuote
       });
       
-      // FIXED: Enable the button if we have both address and time slot
+      // Enable the button if we have both address and time slot
       // Quote validity is checked when the button is clicked
       const isValid = hasAddress && hasTimeSlot;
       setIsButtonDisabled(!isValid);

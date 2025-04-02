@@ -72,27 +72,36 @@ const DeliveryMethodStep = ({
     }
   }, [deliveryQuote, setDeliveryQuote]);
 
+  // Initialize address from props if available
   useEffect(() => {
-    // If the address or slot changes and we're in delivery mode, try to get a new quote
+    if (selectedAddressId && !currentAddressId) {
+      console.log('Initializing address from props:', selectedAddressId);
+      setCurrentAddressId(selectedAddressId);
+    }
+  }, [selectedAddressId, currentAddressId]);
+
+  // Fetch a new quote when the address or time slot changes
+  useEffect(() => {
+    // Only attempt to fetch if we have both an address and time slot
     if (selectedType === 'delivery' && currentAddressId && selectedSlot) {
       const selectedAddress = mockAddresses.find(addr => addr.id === currentAddressId);
       if (selectedAddress) {
-        console.log('Address or time slot changed, fetching new quote');
+        console.log('Address or time slot changed, fetching new quote for:', 
+          selectedAddress.street, 'with time slot:', selectedSlot);
         
-        // Only show toast if we're actually fetching (not just updating state)
-        if (!isLoadingQuote) {
-          toast.promise(fetchDeliveryQuote(selectedAddress, selectedSlot), {
-            loading: 'Getting delivery quote...',
-            success: 'Delivery quote updated!',
-            error: 'Could not get delivery quote. Please try again.'
+        // Fetch the delivery quote without showing the toast (we'll show it on error only)
+        fetchDeliveryQuote(selectedAddress, selectedSlot)
+          .then(quote => {
+            if (!quote) {
+              toast.error('Could not get delivery quote. Please try a different address or time slot.');
+            }
           });
-        }
 
-        // Also update the time selection in the delivery quote hook
+        // Update the time selection in the delivery quote hook
         updateTimeSelection(selectedSlot, selectedDate || null);
       }
     }
-  }, [currentAddressId, selectedSlot, selectedType, selectedDate, updateTimeSelection, fetchDeliveryQuote, isLoadingQuote]);
+  }, [currentAddressId, selectedSlot, selectedType, selectedDate, fetchDeliveryQuote, updateTimeSelection]);
 
   const handleOrderTypeChange = (type: OrderType) => {
     console.log("Setting order type to:", type);

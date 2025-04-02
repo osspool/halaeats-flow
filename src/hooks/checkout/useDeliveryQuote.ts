@@ -22,9 +22,9 @@ export const useDeliveryQuote = (defaultAddressId?: string) => {
         return null;
       }
       
-      // Less aggressive throttling - 500ms instead of 2000ms to prevent blocking legitimate refreshes
+      // Even less aggressive throttling - 200ms instead of 500ms
       const now = Date.now();
-      if (now - lastFetchTime.current < 500) { 
+      if (now - lastFetchTime.current < 200) { 
         console.log('Throttling quote request, too soon after last request');
         return deliveryQuote;
       }
@@ -89,8 +89,16 @@ export const useDeliveryQuote = (defaultAddressId?: string) => {
 
   // Check if the quote is still valid
   const isQuoteValid = useCallback(() => {
+    // Log more details for debugging
+    console.log(`Checking quote validity:`, deliveryQuote);
+    
+    if (!deliveryQuote) {
+      console.log('Quote is null or undefined, not valid');
+      return false;
+    }
+    
     const valid = isDeliveryQuoteValid(deliveryQuote);
-    console.log(`Checking if quote is valid: ${valid}`, deliveryQuote);
+    console.log(`Quote validity check result: ${valid}`);
     return valid;
   }, [deliveryQuote]);
 
