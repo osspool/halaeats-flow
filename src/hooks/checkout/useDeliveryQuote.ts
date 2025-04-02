@@ -10,6 +10,7 @@ export const useDeliveryQuote = (defaultAddressId?: string) => {
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const quoteRequestInProgress = useRef(false);
+  const lastFetchTime = useRef<number>(0);
 
   // Fetch a delivery quote when address changes
   const fetchDeliveryQuote = useCallback(async (address: Address, timeSlot?: string): Promise<DeliveryQuote | null> => {
@@ -20,8 +21,17 @@ export const useDeliveryQuote = (defaultAddressId?: string) => {
         return null;
       }
       
+      // Throttle requests to prevent too many API calls
+      const now = Date.now();
+      if (now - lastFetchTime.current < 2000) { // 2 second cooldown
+        console.log('Throttling quote request, too soon after last request');
+        return deliveryQuote;
+      }
+      
       quoteRequestInProgress.current = true;
       setIsLoadingQuote(true);
+      lastFetchTime.current = now;
+      
       console.log('Fetching delivery quote for address:', address, 'time slot:', timeSlot || 'not specified');
       
       // Pass the selected time slot to the quote creation if available
@@ -36,7 +46,7 @@ export const useDeliveryQuote = (defaultAddressId?: string) => {
       setIsLoadingQuote(false);
       quoteRequestInProgress.current = false;
     }
-  }, []);
+  }, [deliveryQuote]);
 
   // Refresh the quote (typically when it's expired)
   const refreshQuote = useCallback(async (address: Address): Promise<DeliveryQuote | null> => {
@@ -49,6 +59,8 @@ export const useDeliveryQuote = (defaultAddressId?: string) => {
     try {
       quoteRequestInProgress.current = true;
       setIsLoadingQuote(true);
+      lastFetchTime.current = Date.now();
+      
       const quote = await createDeliveryQuote(address, selectedSlot || undefined);
       setDeliveryQuote(quote);
       return quote;
@@ -63,11 +75,14 @@ export const useDeliveryQuote = (defaultAddressId?: string) => {
 
   // Check if the quote is still valid
   const isQuoteValid = useCallback(() => {
-    return isDeliveryQuoteValid(deliveryQuote);
+    const valid = isDeliveryQuoteValid(deliveryQuote);
+    console.log(`Checking if quote is valid: ${valid}`, deliveryQuote);
+    return valid;
   }, [deliveryQuote]);
 
   // Update selectedSlot and selectedDate
   const updateTimeSelection = useCallback((slot: string | null, date: Date | null) => {
+    console.log('Updating time selection:', slot, date);
     setSelectedSlot(slot);
     setSelectedDate(date);
   }, []);
@@ -78,6 +93,8 @@ export const useDeliveryQuote = (defaultAddressId?: string) => {
     fetchDeliveryQuote,
     refreshQuote,
     isQuoteValid,
-    updateTimeSelection
+    updateTimeSelection,
+    selectedSlot,
+    selectedDate
   };
 };

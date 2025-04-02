@@ -9,11 +9,13 @@ import SearchBar from '@/components/header/SearchBar';
 import CartButton from '@/components/header/CartButton';
 import MobileMenu from '@/components/header/MobileMenu';
 import LocationModal from '@/components/location/LocationModal';
+import { useLocation } from '@/contexts/LocationContext';
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const location = useRouterLocation();
+  const routerLocation = useRouterLocation();
+  const { openLocationModal } = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -27,7 +29,7 @@ const Header = () => {
   // Close mobile menu when route changes
   useEffect(() => {
     setIsMenuOpen(false);
-  }, [location]);
+  }, [routerLocation]);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
@@ -53,7 +55,11 @@ const Header = () => {
           
           <CartButton />
           
-          <Button className="bg-primary hover:bg-primary/90 hover:shadow-md transition-gpu" size="sm">
+          <Button 
+            className="bg-primary hover:bg-primary/90 hover:shadow-md transition-gpu" 
+            size="sm"
+            onClick={openLocationModal}
+          >
             Sign In
           </Button>
         </div>

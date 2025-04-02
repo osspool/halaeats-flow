@@ -28,6 +28,7 @@ const DeliveryContinueButton = ({
   isQuoteValid
 }: DeliveryContinueButtonProps) => {
   const [isButtonDisabled, setIsButtonDisabled] = useState(true);
+  const [pendingNext, setPendingNext] = useState(false);
 
   // Determine if button should be enabled based on selections
   useEffect(() => {
@@ -49,6 +50,19 @@ const DeliveryContinueButton = ({
     
     setIsButtonDisabled(!hasRequiredFields);
   }, [selectedType, selectedAddressId, selectedSlot]);
+
+  // If we're waiting for a quote refresh to complete, go to next step once loading is done
+  useEffect(() => {
+    if (pendingNext && !isLoadingQuote) {
+      setPendingNext(false);
+      // Verify the quote is now valid
+      if (isQuoteValid()) {
+        onNext();
+      } else {
+        toast.error('Could not get a valid delivery quote. Please try again.');
+      }
+    }
+  }, [isLoadingQuote, pendingNext, isQuoteValid, onNext]);
 
   const handleContinue = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -74,8 +88,12 @@ const DeliveryContinueButton = ({
           return;
         } else if (!isLoadingQuote) {
           console.log('Delivery quote is not valid, refreshing...');
+          // Set flag to proceed once refresh is complete
+          setPendingNext(true);
           onRefreshQuote();
-          toast.error('Your delivery quote has expired. We have refreshed it for you. Please try again.');
+          toast('Your delivery quote has expired. We are refreshing it for you.', {
+            description: 'Please wait a moment...'
+          });
           return;
         }
       } else {
@@ -95,7 +113,7 @@ const DeliveryContinueButton = ({
       onClick={handleContinue}
       isDisabled={isButtonDisabled}
       isLoadingPayment={bookTimeSlotMutation.isPending}
-      isLoadingQuote={isLoadingQuote}
+      isLoadingQuote={isLoadingQuote || pendingNext}
     />
   );
 };

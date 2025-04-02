@@ -12,6 +12,7 @@ import {
   PickupTabContent
 } from './delivery-method';
 import DeliveryContinueButton from './delivery-method/DeliveryContinueButton';
+import { useCheckout } from '@/hooks/useCheckout';
 
 interface DeliveryMethodStepProps {
   orderType: OrderType;
@@ -34,7 +35,6 @@ const DeliveryMethodStep = ({
 }: DeliveryMethodStepProps) => {
   const [selectedType, setSelectedType] = useState<OrderType>(orderType);
   const [currentAddressId, setCurrentAddressId] = useState<string | undefined>(selectedAddressId);
-  const [shouldRefreshQuote, setShouldRefreshQuote] = useState(false);
   
   // Fetch restaurant menu data to get time slots and capacities
   const { data: menuData, isLoading: isMenuLoading } = useRestaurantMenu();
@@ -57,18 +57,39 @@ const DeliveryMethodStep = ({
     isLoadingQuote, 
     fetchDeliveryQuote, 
     isQuoteValid,
-    refreshQuote
+    refreshQuote,
+    updateTimeSelection
   } = useDeliveryQuote();
 
-  // Import setDeliveryQuote from useCheckout
+  // Get the setDeliveryQuote function from the checkout context
   const { setDeliveryQuote } = useCheckout();
 
   // Update checkout state with the delivery quote when it changes
   useEffect(() => {
     if (deliveryQuote) {
+      console.log('Updating checkout context with delivery quote:', deliveryQuote);
       setDeliveryQuote(deliveryQuote);
     }
   }, [deliveryQuote, setDeliveryQuote]);
+
+  // Fetch or refresh a quote when address or time slot changes
+  useEffect(() => {
+    if (selectedType === 'delivery' && currentAddressId && selectedSlot) {
+      const selectedAddress = mockAddresses.find(addr => addr.id === currentAddressId);
+      if (selectedAddress) {
+        console.log('Address or time slot changed, refreshing quote');
+        
+        toast.promise(refreshQuote(selectedAddress), {
+          loading: 'Getting delivery quote...',
+          success: 'Delivery quote updated!',
+          error: 'Could not get delivery quote. Please try again.'
+        });
+
+        // Also update the time selection in the delivery quote hook
+        updateTimeSelection(selectedSlot, selectedDate || null);
+      }
+    }
+  }, [currentAddressId, selectedSlot, selectedType, refreshQuote, selectedDate, updateTimeSelection]);
 
   const handleOrderTypeChange = (type: OrderType) => {
     console.log("Setting order type to:", type);
@@ -80,7 +101,6 @@ const DeliveryMethodStep = ({
     console.log('Address selected in DeliveryMethodStep:', addressId);
     setCurrentAddressId(addressId);
     onAddressSelect(addressId);
-    setShouldRefreshQuote(true);
   };
 
   // Update pickup time when slot changes
@@ -164,8 +184,5 @@ const DeliveryMethodStep = ({
     </div>
   );
 };
-
-// Add missing import
-import { useCheckout } from '@/hooks/useCheckout';
 
 export default DeliveryMethodStep;
