@@ -72,24 +72,27 @@ const DeliveryMethodStep = ({
     }
   }, [deliveryQuote, setDeliveryQuote]);
 
-  // Fetch or refresh a quote when address or time slot changes
   useEffect(() => {
+    // If the address or slot changes and we're in delivery mode, try to get a new quote
     if (selectedType === 'delivery' && currentAddressId && selectedSlot) {
       const selectedAddress = mockAddresses.find(addr => addr.id === currentAddressId);
       if (selectedAddress) {
-        console.log('Address or time slot changed, refreshing quote');
+        console.log('Address or time slot changed, fetching new quote');
         
-        toast.promise(refreshQuote(selectedAddress), {
-          loading: 'Getting delivery quote...',
-          success: 'Delivery quote updated!',
-          error: 'Could not get delivery quote. Please try again.'
-        });
+        // Only show toast if we're actually fetching (not just updating state)
+        if (!isLoadingQuote) {
+          toast.promise(fetchDeliveryQuote(selectedAddress, selectedSlot), {
+            loading: 'Getting delivery quote...',
+            success: 'Delivery quote updated!',
+            error: 'Could not get delivery quote. Please try again.'
+          });
+        }
 
         // Also update the time selection in the delivery quote hook
         updateTimeSelection(selectedSlot, selectedDate || null);
       }
     }
-  }, [currentAddressId, selectedSlot, selectedType, refreshQuote, selectedDate, updateTimeSelection]);
+  }, [currentAddressId, selectedSlot, selectedType, selectedDate, updateTimeSelection, fetchDeliveryQuote, isLoadingQuote]);
 
   const handleOrderTypeChange = (type: OrderType) => {
     console.log("Setting order type to:", type);
@@ -105,6 +108,7 @@ const DeliveryMethodStep = ({
 
   // Update pickup time when slot changes
   const handleTimeSlotSelection = (slotId: string) => {
+    console.log('Time slot selected:', slotId);
     handleSelectTimeSlot(slotId);
     onPickupTimeChange(slotId);
   };
@@ -117,11 +121,14 @@ const DeliveryMethodStep = ({
     
     const selectedAddress = mockAddresses.find(addr => addr.id === currentAddressId);
     if (selectedAddress) {
+      console.log('Manually refreshing quote for address:', selectedAddress);
       toast.promise(refreshQuote(selectedAddress), {
         loading: 'Refreshing delivery quote...',
         success: 'Delivery quote updated!',
         error: 'Could not refresh quote. Please try again.'
       });
+    } else {
+      toast.error('Please select a delivery address to continue.');
     }
   };
 

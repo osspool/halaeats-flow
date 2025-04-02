@@ -29,6 +29,7 @@ const DeliveryContinueButton = ({
 }: DeliveryContinueButtonProps) => {
   const [isButtonDisabled, setIsButtonDisabled] = useState(true);
   const [pendingNext, setPendingNext] = useState(false);
+  const [refreshAttempts, setRefreshAttempts] = useState(0);
 
   // Determine if button should be enabled based on selections
   useEffect(() => {
@@ -57,12 +58,21 @@ const DeliveryContinueButton = ({
       setPendingNext(false);
       // Verify the quote is now valid
       if (isQuoteValid()) {
+        // Reset refresh attempts when successful
+        setRefreshAttempts(0);
         onNext();
       } else {
-        toast.error('Could not get a valid delivery quote. Please try again.');
+        // If we've tried to refresh multiple times, show a more detailed error
+        if (refreshAttempts >= 2) {
+          toast.error('We\'re having trouble getting a delivery quote. Please try a different time slot or address.');
+          setRefreshAttempts(0);
+        } else {
+          toast.error('Could not get a valid delivery quote. Please try again.');
+          setRefreshAttempts(prev => prev + 1);
+        }
       }
     }
-  }, [isLoadingQuote, pendingNext, isQuoteValid, onNext]);
+  }, [isLoadingQuote, pendingNext, isQuoteValid, onNext, refreshAttempts]);
 
   const handleContinue = (e: React.MouseEvent) => {
     e.preventDefault();
