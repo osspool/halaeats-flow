@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { format } from "date-fns";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -18,8 +18,8 @@ const orderStatusOptions = [
 ];
 
 const OrderCalendar = () => {
-  // State for order management
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  // States for order management
+  const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
 
@@ -46,18 +46,22 @@ const OrderCalendar = () => {
     statusFilter || undefined
   );
 
-  // Filter orders based on customer name search
-  const filteredOrders = ordersQuery.data?.orders.filter(order => {
-    if (!searchQuery.trim()) return true;
-    return order.customer.name.toLowerCase().includes(searchQuery.toLowerCase());
-  }) || [];
+  // Filter orders based on customer name search - with safety checks
+  const filteredOrders = React.useMemo(() => {
+    const orders = ordersQuery.data?.orders || [];
+    if (!searchQuery.trim()) return orders;
+    
+    return orders.filter(order => {
+      return order?.customer?.name?.toLowerCase().includes(searchQuery.toLowerCase()) || false;
+    });
+  }, [ordersQuery.data?.orders, searchQuery]);
 
   // Count orders by status (using filtered orders)
   const orderCounts = {
     total: filteredOrders.length,
-    pending: filteredOrders.filter(order => order.status === 'pending').length,
-    confirmed: filteredOrders.filter(order => order.status === 'confirmed').length,
-    completed: filteredOrders.filter(order => order.status === 'completed').length,
+    pending: filteredOrders.filter(order => order?.status === 'pending').length,
+    confirmed: filteredOrders.filter(order => order?.status === 'confirmed').length,
+    completed: filteredOrders.filter(order => order?.status === 'completed').length,
   };
 
   // Open dialog with order details
@@ -82,13 +86,7 @@ const OrderCalendar = () => {
   };
 
   // Custom render function for the orders content
-  const renderOrdersContent = (
-    selectedDate: Date | undefined, 
-    isLoading: boolean, 
-    statusFilter: string | null,
-    onFilterChange: (filter: string | null) => void,
-    itemCounts: Record<string, number>
-  ) => {
+  const renderOrdersContent = () => {
     return (
       <>
         {/* Customer Search Input */}

@@ -5,11 +5,13 @@ import DishManagement from "@/components/dashboard/DishManagement";
 import OrderCalendar from "@/components/dashboard/OrderCalendar";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-// Create a client
+// Create a client with more robust error handling
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 60 * 1000, // 1 minute
+      retry: 1, // Only retry failed queries once
+      refetchOnWindowFocus: false, // Disable automatic refetching when window regains focus
     },
   },
 });

@@ -29,7 +29,7 @@ interface DishListProps {
 }
 
 const DishList = ({ 
-  dishes, 
+  dishes = [], // Provide default empty array
   onEditAvailability, 
   onDeleteDish,
   onEditDish,

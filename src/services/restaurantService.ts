@@ -1,7 +1,6 @@
-import { DishCreateRequest, RestaurantMenu, TimeSlotUpdateRequest, Order, OrderDate, OrdersResponse, OrderDatesResponse, TimeSlotCapacity, BookTimeSlotRequest } from "@/types/restaurant";
+import { DishCreateRequest, RestaurantMenu, TimeSlotUpdateRequest, Order, OrderDate, OrdersResponse, OrderDatesResponse, TimeSlotCapacity, BookTimeSlotRequest, OrderItem } from "@/types/restaurant";
 import { MenuItem } from "@/types";
 import { addDays, format, parseISO, subDays, startOfMonth, endOfMonth } from "date-fns";
-import { OrderItem } from "@/types/restaurant";
 
 // Default time slots
 const defaultTimeSlots = [
