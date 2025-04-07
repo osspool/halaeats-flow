@@ -152,7 +152,7 @@ const generateMockOrders = (): Order[] => {
 // Generate mock data
 const mockOrders = generateMockOrders();
 
-// Mock menu data
+// Initialize menu data with proper structure
 let menuData: RestaurantMenu = {
   dishes: [...mockDishes],
   availableTimeSlots: [...defaultTimeSlots],
@@ -164,10 +164,18 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 // Restaurant API Service
 export const restaurantService = {
-  // Get menu with availability
+  // Get menu with availability - ensure we always return valid data
   getMenu: async (): Promise<RestaurantMenu> => {
+    console.log('Fetching menu data...');
     // Simulate network delay
     await delay(800);
+    
+    // For debugging
+    console.log('Returning menu data:', {
+      dishes: Array.isArray(menuData.dishes) ? menuData.dishes.length : 'not an array',
+      availableTimeSlots: Array.isArray(menuData.availableTimeSlots) ? menuData.availableTimeSlots.length : 'not an array',
+      timeSlotCapacities: menuData.timeSlotCapacities ? 'defined' : 'undefined'
+    });
     
     // Ensure we always return valid data structure
     return {
@@ -179,6 +187,7 @@ export const restaurantService = {
   
   // Add a new dish with additional validation
   addDish: async (dish: DishCreateRequest): Promise<MenuItem> => {
+    console.log('Adding dish:', dish);
     await delay(600);
     
     // Ensure required fields
@@ -187,7 +196,7 @@ export const restaurantService = {
     }
     
     const newDish: MenuItem = {
-      id: `dish-${Date.now()}`,
+      id: dish.id || `dish-${Date.now()}`,
       name: dish.name,
       price: dish.price,
       description: dish.description || "",
@@ -198,24 +207,50 @@ export const restaurantService = {
       availableDates: [],
     };
     
-    // Add to mock data
-    if (Array.isArray(menuData.dishes)) {
-      menuData.dishes.push(newDish);
+    console.log('Created new dish:', newDish);
+    
+    // Add to mock data or update existing
+    if (!menuData.dishes) {
+      menuData.dishes = [];
+    }
+    
+    if (dish.id) {
+      // Update existing dish
+      const index = menuData.dishes.findIndex(d => d.id === dish.id);
+      if (index >= 0) {
+        menuData.dishes[index] = newDish;
+        console.log('Updated existing dish');
+      } else {
+        menuData.dishes.push(newDish);
+        console.log('Added new dish with existing ID');
+      }
     } else {
-      menuData.dishes = [newDish];
+      // Add new dish
+      menuData.dishes.push(newDish);
+      console.log('Added new dish');
     }
     
     return newDish;
   },
   
-  // Delete a dish
+  // Delete a dish with additional logging
   deleteDish: async (dishId: string): Promise<boolean> => {
+    console.log('Deleting dish:', dishId);
     await delay(700);
     
+    if (!menuData.dishes) {
+      console.log('No dishes array to delete from');
+      return false;
+    }
+    
+    const initialLength = menuData.dishes.length;
     // Remove dish from menu
     menuData.dishes = menuData.dishes.filter(dish => dish.id !== dishId);
     
-    return true;
+    const deleted = menuData.dishes.length < initialLength;
+    console.log('Dish deleted:', deleted);
+    
+    return deleted;
   },
   
   // Update available time slots

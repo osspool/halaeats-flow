@@ -55,6 +55,9 @@ const DishList = ({
     );
   }
 
+  // Ensure availability is defined
+  const safeAvailability = availability || {};
+
   return (
     <Table>
       <TableHeader>
@@ -67,59 +70,71 @@ const DishList = ({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {dishesArray.map((dish) => (
-          <TableRow key={dish.id}>
-            <TableCell className="font-medium">{dish.name}</TableCell>
-            <TableCell>{dish.category}</TableCell>
-            <TableCell>${dish.price.toFixed(2)}</TableCell>
-            <TableCell>
-              {availability && dish && dish.id && availability[dish.id] && Object.keys(availability[dish.id] || {}).length > 0 ? (
-                <div className="flex flex-wrap gap-1">
-                  {Object.keys(availability[dish.id] || {}).slice(0, 2).map((day) => (
-                    <Badge key={day} variant="outline" className="flex items-center gap-1">
-                      <CalendarIcon className="h-3 w-3" />
-                      {day}
-                    </Badge>
-                  ))}
-                  {Object.keys(availability[dish.id] || {}).length > 2 && (
-                    <Badge variant="outline">+{Object.keys(availability[dish.id] || {}).length - 2} more</Badge>
-                  )}
-                </div>
-              ) : (
-                <span className="text-gray-500 text-sm">Not scheduled</span>
-              )}
-            </TableCell>
-            <TableCell>
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => onEditAvailability(dish)}
-                >
-                  <Clock className="h-3.5 w-3.5 mr-1" />
-                  Set Times
-                </Button>
-                {onEditDish && (
+        {dishesArray.map((dish) => {
+          // Ensure dish and dish.id are defined before accessing properties
+          if (!dish || !dish.id) {
+            return null;
+          }
+          
+          const dishId = dish.id;
+          const dishAvailability = safeAvailability[dishId] || {};
+          const availabilityDays = Object.keys(dishAvailability);
+          const hasAvailability = availabilityDays.length > 0;
+          
+          return (
+            <TableRow key={dishId}>
+              <TableCell className="font-medium">{dish.name || 'Unnamed Dish'}</TableCell>
+              <TableCell>{dish.category || 'Uncategorized'}</TableCell>
+              <TableCell>${(dish.price || 0).toFixed(2)}</TableCell>
+              <TableCell>
+                {hasAvailability ? (
+                  <div className="flex flex-wrap gap-1">
+                    {availabilityDays.slice(0, 2).map((day) => (
+                      <Badge key={day} variant="outline" className="flex items-center gap-1">
+                        <CalendarIcon className="h-3 w-3" />
+                        {day}
+                      </Badge>
+                    ))}
+                    {availabilityDays.length > 2 && (
+                      <Badge variant="outline">+{availabilityDays.length - 2} more</Badge>
+                    )}
+                  </div>
+                ) : (
+                  <span className="text-gray-500 text-sm">Not scheduled</span>
+                )}
+              </TableCell>
+              <TableCell>
+                <div className="flex gap-2">
                   <Button 
                     variant="outline" 
-                    size="sm"
-                    onClick={() => onEditDish(dish)}
+                    size="sm" 
+                    onClick={() => onEditAvailability(dish)}
                   >
-                    Edit
+                    <Clock className="h-3.5 w-3.5 mr-1" />
+                    Set Times
                   </Button>
-                )}
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="text-red-500 hover:text-red-700 hover:bg-red-100"
-                  onClick={() => onDeleteDish(dish.id)}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            </TableCell>
-          </TableRow>
-        ))}
+                  {onEditDish && (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => onEditDish(dish)}
+                    >
+                      Edit
+                    </Button>
+                  )}
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-red-500 hover:text-red-700 hover:bg-red-100"
+                    onClick={() => onDeleteDish(dishId)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          );
+        })}
       </TableBody>
     </Table>
   );

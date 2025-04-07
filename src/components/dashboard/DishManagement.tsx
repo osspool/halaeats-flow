@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
@@ -47,6 +47,11 @@ const DishManagement = () => {
   
   // Handler for deleting a dish
   const handleDeleteDish = (dishId: string) => {
+    if (!dishId) {
+      console.error("No dish ID provided for deletion");
+      return;
+    }
+    
     deleteDishMutation.mutate(dishId, {
       onSuccess: () => {
         toast({
@@ -66,19 +71,32 @@ const DishManagement = () => {
   
   // Handler for editing availability
   const handleEditAvailability = (dish: MenuItem) => {
+    if (!dish) {
+      console.error("No dish provided for availability editing");
+      return;
+    }
+    
     setSelectedDish(dish);
     setIsEditDialogOpen(true);
   };
   
   // Handler for editing a dish
   const handleEditDish = (dish: MenuItem) => {
+    if (!dish) {
+      console.error("No dish provided for editing");
+      return;
+    }
+    
     setSelectedDish(dish);
     setIsEditDialogOpen(true);
   };
   
   // Handler for updating a dish
   const handleUpdateDish = (data: DishCreateRequest) => {
-    if (!selectedDish) return;
+    if (!selectedDish || !selectedDish.id) {
+      console.error("No dish selected for update or dish ID is missing");
+      return;
+    }
     
     // Use addDish mutation to update dish
     addDishMutation.mutate({
@@ -111,12 +129,14 @@ const DishManagement = () => {
     
     // Ensure dishes is an array before iterating
     const dishes = Array.isArray(menuData.dishes) ? menuData.dishes : [];
+    const availableTimeSlots = Array.isArray(menuData.availableTimeSlots) ? 
+      menuData.availableTimeSlots : [];
     
     dishes.forEach(dish => {
-      if (dish && dish.id && menuData.availableTimeSlots) {
+      if (dish && dish.id) {
         availabilityMap[dish.id] = {
-          "Monday": menuData.availableTimeSlots ? [...menuData.availableTimeSlots] : [],
-          "Wednesday": menuData.availableTimeSlots ? [...menuData.availableTimeSlots] : [],
+          "Monday": [...availableTimeSlots],
+          "Wednesday": [...availableTimeSlots],
         };
       }
     });
@@ -126,6 +146,11 @@ const DishManagement = () => {
   
   // Ensure we have an array of dishes, even if menuData is undefined
   const dishes = menuData && menuData.dishes ? [...menuData.dishes] : [];
+  
+  // Log data for debugging
+  console.log('Menu Data:', menuData);
+  console.log('Dishes:', dishes);
+  console.log('Availability Map:', createAvailabilityMap());
   
   return (
     <div className="space-y-6">
@@ -164,12 +189,12 @@ const DishManagement = () => {
           {selectedDish && (
             <DishForm
               initialData={{
-                name: selectedDish.name,
-                price: selectedDish.price,
+                name: selectedDish.name || '',
+                price: selectedDish.price || 0,
                 description: selectedDish.description || '',
                 dishType: (selectedDish.category as any) || 'main_course',
-                dietary: selectedDish.dietary || [],
-                featured: selectedDish.featured || false,
+                dietary: Array.isArray(selectedDish.dietary) ? [...selectedDish.dietary] : [],
+                featured: !!selectedDish.featured,
                 // Other fields would come from the API
               }}
               onSubmit={handleUpdateDish}

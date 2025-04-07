@@ -15,9 +15,27 @@ const ORDERS_RANGE_KEY = "orders-range";
  * Hook for fetching restaurant menu data
  */
 export const useRestaurantMenu = () => {
+  console.log('useRestaurantMenu hook called');
   return useQuery({
     queryKey: [MENU_QUERY_KEY],
-    queryFn: restaurantService.getMenu,
+    queryFn: async () => {
+      console.log('Fetching menu data via hook...');
+      try {
+        const result = await restaurantService.getMenu();
+        console.log('Menu data fetched successfully:', result);
+        return result;
+      } catch (error) {
+        console.error('Error fetching menu data:', error);
+        throw error;
+      }
+    },
+    onSuccess: (data) => {
+      console.log('Menu query succeeded, data:', data);
+    },
+    onError: (error) => {
+      console.error('Menu query failed:', error);
+      toast.error("Failed to load menu data. Please try again later.");
+    }
   });
 };
 
@@ -28,12 +46,23 @@ export const useAddDish = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: (newDish: DishCreateRequest) => restaurantService.addDish(newDish),
+    mutationFn: async (newDish: DishCreateRequest) => {
+      console.log('Adding dish mutation called with:', newDish);
+      try {
+        const result = await restaurantService.addDish(newDish);
+        console.log('Dish added successfully:', result);
+        return result;
+      } catch (error) {
+        console.error('Error adding dish:', error);
+        throw error;
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [MENU_QUERY_KEY] });
       toast.success("Dish saved successfully!");
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Add dish mutation failed:', error);
       toast.error("Failed to save dish. Please try again.");
     }
   });
@@ -46,12 +75,23 @@ export const useDeleteDish = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: (dishId: string) => restaurantService.deleteDish(dishId),
+    mutationFn: async (dishId: string) => {
+      console.log('Delete dish mutation called with ID:', dishId);
+      try {
+        const result = await restaurantService.deleteDish(dishId);
+        console.log('Dish deleted successfully:', result);
+        return result;
+      } catch (error) {
+        console.error('Error deleting dish:', error);
+        throw error;
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [MENU_QUERY_KEY] });
       toast.success("Dish deleted successfully!");
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Delete dish mutation failed:', error);
       toast.error("Failed to delete dish. Please try again.");
     }
   });
