@@ -44,7 +44,10 @@ const DishList = ({
     );
   }
 
-  if (dishes.length === 0) {
+  // Make sure dishes is an array before checking its length
+  const dishesArray = Array.isArray(dishes) ? dishes : [];
+
+  if (dishesArray.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500">
         No dishes added yet. Click "Add New Dish" to create your first menu item.
@@ -64,22 +67,22 @@ const DishList = ({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {dishes.map((dish) => (
+        {dishesArray.map((dish) => (
           <TableRow key={dish.id}>
             <TableCell className="font-medium">{dish.name}</TableCell>
             <TableCell>{dish.category}</TableCell>
             <TableCell>${dish.price.toFixed(2)}</TableCell>
             <TableCell>
-              {availability[dish.id] && Object.keys(availability[dish.id]).length > 0 ? (
+              {availability[dish.id] && Object.keys(availability[dish.id] || {}).length > 0 ? (
                 <div className="flex flex-wrap gap-1">
-                  {Object.keys(availability[dish.id]).slice(0, 2).map((day) => (
+                  {Object.keys(availability[dish.id] || {}).slice(0, 2).map((day) => (
                     <Badge key={day} variant="outline" className="flex items-center gap-1">
                       <CalendarIcon className="h-3 w-3" />
                       {day}
                     </Badge>
                   ))}
-                  {Object.keys(availability[dish.id]).length > 2 && (
-                    <Badge variant="outline">+{Object.keys(availability[dish.id]).length - 2} more</Badge>
+                  {Object.keys(availability[dish.id] || {}).length > 2 && (
+                    <Badge variant="outline">+{Object.keys(availability[dish.id] || {}).length - 2} more</Badge>
                   )}
                 </div>
               ) : (

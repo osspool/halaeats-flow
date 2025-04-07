@@ -1,10 +1,11 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
 import DishList from "./dishes/DishList";
 import DishForm from "./dishes/DishForm";
-import { useAddDish, useDeleteDish, useRestaurantMenu, useUpdateAvailability } from "@/hooks/useRestaurantApi";
+import { useAddDish, useDeleteDish, useRestaurantMenu } from "@/hooks/useRestaurantApi";
 import { useToast } from "@/hooks/use-toast";
 import { DishCreateRequest } from "@/types/restaurant";
 import { MenuItem } from "@/types";
@@ -109,7 +110,10 @@ const DishManagement = () => {
     
     const availabilityMap: {[dishId: string]: {[day: string]: string[]}} = {};
     
-    menuData.dishes.forEach(dish => {
+    // Ensure dishes is an array before iterating
+    const dishes = menuData.dishes || [];
+    
+    dishes.forEach(dish => {
       if (menuData.availableTimeSlots) {
         availabilityMap[dish.id] = {
           "Monday": menuData.availableTimeSlots,
@@ -120,6 +124,9 @@ const DishManagement = () => {
     
     return availabilityMap;
   };
+  
+  // Ensure we have an array of dishes, even if menuData is undefined
+  const dishes = menuData?.dishes || [];
   
   return (
     <div className="space-y-6">
@@ -144,7 +151,7 @@ const DishManagement = () => {
       </div>
       
       <DishList 
-        dishes={menuData?.dishes || []}
+        dishes={dishes}
         onDeleteDish={handleDeleteDish}
         onEditAvailability={handleEditAvailability}
         onEditDish={handleEditDish}

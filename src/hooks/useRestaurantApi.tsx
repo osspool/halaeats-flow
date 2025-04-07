@@ -83,7 +83,7 @@ export const useBookTimeSlot = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: (timeSlot: string) => restaurantService.bookTimeSlot(timeSlot),
+    mutationFn: (request: BookTimeSlotRequest) => restaurantService.bookTimeSlot(request.timeSlot),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [MENU_QUERY_KEY] });
       toast.success("Time slot booked successfully!");
