@@ -1,15 +1,42 @@
 
 import { MenuItem } from "./index";
 
-export interface TimeSlotSettings {
-  dayOfWeek: string;
-  timeSlots: string[];
+export enum DishVisibility {
+  PUBLIC = 'public',
+  DRAFT = 'draft',
 }
 
-export interface DishAvailability {
-  [dishId: string]: {
-    [day: string]: string[];
-  };
+export enum DishType {
+  APPETIZER = 'appetizer',
+  MAIN_COURSE = 'main_course',
+  DESSERT = 'dessert',
+  BEVERAGE = 'beverage',
+  SIDE_DISH = 'side_dish',
+  SPECIAL = 'special'
+}
+
+export interface TimeSlot {
+  start_time: string;
+  end_time: string;
+}
+
+export interface DailyAvailability {
+  day: 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+  time_slots: TimeSlot[];
+}
+
+// Update the DishCreateRequest interface to align with the new schema
+export interface DishCreateRequest {
+  name: string;
+  price: number;
+  description: string;
+  dishType: DishType;
+  dietary: string[];
+  featured?: boolean;
+  visibility?: DishVisibility;
+  isSpicy?: boolean;
+  maxOrdersPerDay?: number;
+  availability?: DailyAvailability[];
 }
 
 export interface TimeSlotCapacity {
@@ -21,29 +48,8 @@ export interface TimeSlotCapacity {
 
 export interface RestaurantMenu {
   dishes: MenuItem[];
-  availability: DishAvailability;
   availableTimeSlots: string[]; // Available time slots
   timeSlotCapacities: TimeSlotCapacity; // Added capacity information
-}
-
-export interface AvailabilityUpdateRequest {
-  dishId: string;
-  availability: {
-    [day: string]: string[];
-  };
-}
-
-export interface DishCreateRequest {
-  name: string;
-  price: number;
-  description: string;
-  category: string;
-  dietary: string[];
-}
-
-export interface TimeSlotUpdateRequest {
-  timeSlots: string[];
-  capacities?: TimeSlotCapacity; // Added capacities field
 }
 
 // Order related types
