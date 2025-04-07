@@ -1,7 +1,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { restaurantService } from "@/services/restaurantService";
-import { DishCreateRequest, TimeSlotUpdateRequest } from "@/types/restaurant";
+import { DishCreateRequest, TimeSlotUpdateRequest, BookTimeSlotRequest } from "@/types/restaurant";
 import { toast } from "sonner";
 import { startOfMonth, endOfMonth, format } from "date-fns";
 
@@ -77,6 +77,24 @@ export const useUpdateTimeSlots = () => {
 };
 
 /**
+ * Hook for booking a time slot
+ */
+export const useBookTimeSlot = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (timeSlot: string) => restaurantService.bookTimeSlot(timeSlot),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [MENU_QUERY_KEY] });
+      toast.success("Time slot booked successfully!");
+    },
+    onError: () => {
+      toast.error("Failed to book time slot. Please try again.");
+    }
+  });
+};
+
+/**
  * Hook for fetching order dates for a specific month
  */
 export const useOrderDatesForMonth = (date: Date) => {
@@ -111,7 +129,7 @@ export const useOrdersByDateRange = (startDate: string, endDate: string, status?
   });
 };
 
-// For backward compatibility with existing components, but we won't use these in the new implementation
+// For backward compatibility with existing components
 export const useUpdateAvailability = () => {
   const queryClient = useQueryClient();
   return useMutation({

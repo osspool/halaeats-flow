@@ -12,22 +12,29 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Trash2, CalendarIcon } from "lucide-react";
-import { DishAvailability } from "@/types/restaurant";
+
+interface DishAvailabilityMap {
+  [dishId: string]: {
+    [day: string]: string[];
+  };
+}
 
 interface DishListProps {
   dishes: MenuItem[];
-  availability: DishAvailability;
   onEditAvailability: (dish: MenuItem) => void;
   onDeleteDish: (dishId: string) => void;
-  isLoading?: boolean; // Made optional with default value
+  onEditDish?: (dish: MenuItem) => void; // Added for compatibility with DishManagement
+  isLoading?: boolean;
+  availability?: DishAvailabilityMap;
 }
 
 const DishList = ({ 
   dishes, 
-  availability, 
   onEditAvailability, 
   onDeleteDish,
-  isLoading = false
+  onEditDish,
+  isLoading = false,
+  availability = {}
 }: DishListProps) => {
   if (isLoading) {
     return (
@@ -89,6 +96,15 @@ const DishList = ({
                   <Clock className="h-3.5 w-3.5 mr-1" />
                   Set Times
                 </Button>
+                {onEditDish && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => onEditDish(dish)}
+                  >
+                    Edit
+                  </Button>
+                )}
                 <Button 
                   variant="ghost" 
                   size="sm" 

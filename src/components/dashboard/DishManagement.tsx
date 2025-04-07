@@ -6,7 +6,7 @@ import DishList from "./dishes/DishList";
 import DishForm from "./dishes/DishForm";
 import { useAddDish, useDeleteDish, useRestaurantMenu, useUpdateAvailability } from "@/hooks/useRestaurantApi";
 import { useToast } from "@/hooks/use-toast";
-import { DishCreateRequest, DailyAvailability } from "@/types/restaurant";
+import { DishCreateRequest } from "@/types/restaurant";
 import { MenuItem } from "@/types";
 
 const DishManagement = () => {
@@ -64,6 +64,12 @@ const DishManagement = () => {
     });
   };
   
+  // Handler for editing availability
+  const handleEditAvailability = (dish: MenuItem) => {
+    setSelectedDish(dish);
+    setIsEditDialogOpen(true);
+  };
+  
   // Handler for editing a dish
   const handleEditDish = (dish: MenuItem) => {
     setSelectedDish(dish);
@@ -97,6 +103,24 @@ const DishManagement = () => {
     });
   };
   
+  // Create a simplified availability map for the DishList
+  const createAvailabilityMap = () => {
+    if (!menuData) return {};
+    
+    const availabilityMap: {[dishId: string]: {[day: string]: string[]}} = {};
+    
+    menuData.dishes.forEach(dish => {
+      if (menuData.availableTimeSlots) {
+        availabilityMap[dish.id] = {
+          "Monday": menuData.availableTimeSlots,
+          "Wednesday": menuData.availableTimeSlots,
+        };
+      }
+    });
+    
+    return availabilityMap;
+  };
+  
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -122,8 +146,10 @@ const DishManagement = () => {
       <DishList 
         dishes={menuData?.dishes || []}
         onDeleteDish={handleDeleteDish}
+        onEditAvailability={handleEditAvailability}
         onEditDish={handleEditDish}
         isLoading={isMenuLoading}
+        availability={createAvailabilityMap()}
       />
       
       {/* Dialog for editing dish */}

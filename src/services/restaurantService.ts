@@ -1,5 +1,4 @@
-
-import { DishAvailability, DishCreateRequest, RestaurantMenu, AvailabilityUpdateRequest, TimeSlotUpdateRequest, Order, OrderDate, OrdersResponse, OrderDatesResponse, TimeSlotCapacity } from "@/types/restaurant";
+import { DishCreateRequest, RestaurantMenu, TimeSlotUpdateRequest, Order, OrderDate, OrdersResponse, OrderDatesResponse, TimeSlotCapacity, BookTimeSlotRequest } from "@/types/restaurant";
 import { MenuItem } from "@/types";
 import { addDays, format, parseISO, subDays, startOfMonth, endOfMonth } from "date-fns";
 import { OrderItem } from "@/types/restaurant";
@@ -57,8 +56,8 @@ const mockDishes: MenuItem[] = [
   }
 ];
 
-// Mock availability data
-const mockAvailability: DishAvailability = {
+// Mock availability data (simplified for now)
+const mockDishAvailability: {[dishId: string]: {[day: string]: string[]}} = {
   "dish-001": {
     "Monday": ["11:00-14:00", "18:00-21:00"],
     "Wednesday": ["11:00-14:00", "18:00-21:00"],
@@ -156,7 +155,6 @@ const mockOrders = generateMockOrders();
 // Mock menu data
 let menuData: RestaurantMenu = {
   dishes: [...mockDishes],
-  availability: {...mockAvailability},
   availableTimeSlots: [...defaultTimeSlots],
   timeSlotCapacities: {...defaultTimeSlotCapacities}
 };
@@ -182,28 +180,17 @@ export const restaurantService = {
       name: dish.name,
       price: dish.price,
       description: dish.description,
-      category: dish.category,
-      dietary: dish.dietary,
+      category: dish.category || dish.dishType,
       image: "",
-      featured: false,
+      dietary: dish.dietary,
+      featured: dish.featured || false,
       availableDates: [],
     };
     
     // Add to mock data
     menuData.dishes.push(newDish);
-    menuData.availability[newDish.id] = {};
     
     return newDish;
-  },
-  
-  // Update dish availability
-  updateAvailability: async (request: AvailabilityUpdateRequest): Promise<DishAvailability> => {
-    await delay(500);
-    
-    // Update availability for the specific dish
-    menuData.availability[request.dishId] = request.availability;
-    
-    return {...menuData.availability};
   },
   
   // Delete a dish
@@ -212,11 +199,6 @@ export const restaurantService = {
     
     // Remove dish from menu
     menuData.dishes = menuData.dishes.filter(dish => dish.id !== dishId);
-    
-    // Remove availability data
-    if (menuData.availability[dishId]) {
-      delete menuData.availability[dishId];
-    }
     
     return true;
   },

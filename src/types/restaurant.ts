@@ -30,6 +30,7 @@ export interface DishCreateRequest {
   name: string;
   price: number;
   description: string;
+  category?: string; // For backward compatibility
   dishType: DishType;
   dietary: string[];
   featured?: boolean;
@@ -50,6 +51,17 @@ export interface RestaurantMenu {
   dishes: MenuItem[];
   availableTimeSlots: string[]; // Available time slots
   timeSlotCapacities: TimeSlotCapacity; // Added capacity information
+}
+
+// Request types for API calls
+export interface TimeSlotUpdateRequest {
+  timeSlots: string[];
+  capacities?: TimeSlotCapacity;
+}
+
+export interface BookTimeSlotRequest {
+  timeSlot: string;
+  date: string;
 }
 
 // Order related types
