@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { restaurantService } from "@/services/restaurantService";
 import { DishCreateRequest, TimeSlotUpdateRequest, BookTimeSlotRequest } from "@/types/restaurant";
@@ -28,9 +29,13 @@ export const useRestaurantMenu = () => {
         throw error;
       }
     },
-    onError: (error) => {
-      console.error('Menu query failed:', error);
-      toast.error("Failed to load menu data. Please try again later.");
+    onSettled: (data, error) => {
+      if (error) {
+        console.error('Menu query failed:', error);
+        toast.error("Failed to load menu data. Please try again later.");
+      } else {
+        console.log('Menu query succeeded with data:', data);
+      }
     }
   });
 };
