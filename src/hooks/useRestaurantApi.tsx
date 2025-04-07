@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { restaurantService } from "@/services/restaurantService";
 import { DishCreateRequest, TimeSlotUpdateRequest, BookTimeSlotRequest } from "@/types/restaurant";
@@ -22,7 +23,12 @@ export const useRestaurantMenu = () => {
       try {
         const result = await restaurantService.getMenu();
         console.log('Menu data fetched successfully:', result);
-        return result;
+        // Ensure the result has the expected structure with defaults for missing properties
+        return {
+          dishes: Array.isArray(result?.dishes) ? result.dishes : [],
+          availableTimeSlots: Array.isArray(result?.availableTimeSlots) ? result.availableTimeSlots : [],
+          timeSlotCapacities: result?.timeSlotCapacities || {}
+        };
       } catch (error) {
         console.error('Error fetching menu data:', error);
         throw error;
