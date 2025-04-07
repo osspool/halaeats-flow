@@ -73,7 +73,7 @@ const DishList = ({
             <TableCell>{dish.category}</TableCell>
             <TableCell>${dish.price.toFixed(2)}</TableCell>
             <TableCell>
-              {availability[dish.id] && Object.keys(availability[dish.id] || {}).length > 0 ? (
+              {availability && dish && dish.id && availability[dish.id] && Object.keys(availability[dish.id] || {}).length > 0 ? (
                 <div className="flex flex-wrap gap-1">
                   {Object.keys(availability[dish.id] || {}).slice(0, 2).map((day) => (
                     <Badge key={day} variant="outline" className="flex items-center gap-1">

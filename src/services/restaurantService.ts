@@ -168,27 +168,42 @@ export const restaurantService = {
   getMenu: async (): Promise<RestaurantMenu> => {
     // Simulate network delay
     await delay(800);
-    return {...menuData};
+    
+    // Ensure we always return valid data structure
+    return {
+      dishes: Array.isArray(menuData.dishes) ? [...menuData.dishes] : [],
+      availableTimeSlots: Array.isArray(menuData.availableTimeSlots) ? [...menuData.availableTimeSlots] : [],
+      timeSlotCapacities: menuData.timeSlotCapacities || {...defaultTimeSlotCapacities}
+    };
   },
   
-  // Add a new dish
+  // Add a new dish with additional validation
   addDish: async (dish: DishCreateRequest): Promise<MenuItem> => {
     await delay(600);
+    
+    // Ensure required fields
+    if (!dish.name || dish.price === undefined || dish.price < 0) {
+      throw new Error("Invalid dish data");
+    }
     
     const newDish: MenuItem = {
       id: `dish-${Date.now()}`,
       name: dish.name,
       price: dish.price,
-      description: dish.description,
-      category: dish.category || dish.dishType,
+      description: dish.description || "",
+      category: dish.category || dish.dishType || "Main Course",
       image: "",
-      dietary: dish.dietary,
-      featured: dish.featured || false,
+      dietary: Array.isArray(dish.dietary) ? [...dish.dietary] : [],
+      featured: !!dish.featured,
       availableDates: [],
     };
     
     // Add to mock data
-    menuData.dishes.push(newDish);
+    if (Array.isArray(menuData.dishes)) {
+      menuData.dishes.push(newDish);
+    } else {
+      menuData.dishes = [newDish];
+    }
     
     return newDish;
   },

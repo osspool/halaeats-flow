@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
@@ -111,13 +110,13 @@ const DishManagement = () => {
     const availabilityMap: {[dishId: string]: {[day: string]: string[]}} = {};
     
     // Ensure dishes is an array before iterating
-    const dishes = menuData.dishes || [];
+    const dishes = Array.isArray(menuData.dishes) ? menuData.dishes : [];
     
     dishes.forEach(dish => {
-      if (menuData.availableTimeSlots) {
+      if (dish && dish.id && menuData.availableTimeSlots) {
         availabilityMap[dish.id] = {
-          "Monday": menuData.availableTimeSlots,
-          "Wednesday": menuData.availableTimeSlots,
+          "Monday": menuData.availableTimeSlots ? [...menuData.availableTimeSlots] : [],
+          "Wednesday": menuData.availableTimeSlots ? [...menuData.availableTimeSlots] : [],
         };
       }
     });
@@ -126,7 +125,7 @@ const DishManagement = () => {
   };
   
   // Ensure we have an array of dishes, even if menuData is undefined
-  const dishes = menuData?.dishes || [];
+  const dishes = menuData && menuData.dishes ? [...menuData.dishes] : [];
   
   return (
     <div className="space-y-6">
@@ -167,10 +166,10 @@ const DishManagement = () => {
               initialData={{
                 name: selectedDish.name,
                 price: selectedDish.price,
-                description: selectedDish.description,
-                dishType: selectedDish.category as any,
+                description: selectedDish.description || '',
+                dishType: (selectedDish.category as any) || 'main_course',
                 dietary: selectedDish.dietary || [],
-                featured: selectedDish.featured,
+                featured: selectedDish.featured || false,
                 // Other fields would come from the API
               }}
               onSubmit={handleUpdateDish}
