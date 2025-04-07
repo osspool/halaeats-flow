@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
@@ -102,7 +103,7 @@ const DishManagement = () => {
     addDishMutation.mutate({
       ...data,
       id: selectedDish.id,
-    } as any, {
+    }, {
       onSuccess: () => {
         setIsEditDialogOpen(false);
         setSelectedDish(null);
@@ -145,12 +146,7 @@ const DishManagement = () => {
   };
   
   // Ensure we have an array of dishes, even if menuData is undefined
-  const dishes = menuData && menuData.dishes ? [...menuData.dishes] : [];
-  
-  // Log data for debugging
-  console.log('Menu Data:', menuData);
-  console.log('Dishes:', dishes);
-  console.log('Availability Map:', createAvailabilityMap());
+  const dishes = menuData && Array.isArray(menuData.dishes) ? [...menuData.dishes] : [];
   
   return (
     <div className="space-y-6">
@@ -189,13 +185,13 @@ const DishManagement = () => {
           {selectedDish && (
             <DishForm
               initialData={{
+                id: selectedDish.id,
                 name: selectedDish.name || '',
                 price: selectedDish.price || 0,
                 description: selectedDish.description || '',
                 dishType: (selectedDish.category as any) || 'main_course',
                 dietary: Array.isArray(selectedDish.dietary) ? [...selectedDish.dietary] : [],
                 featured: !!selectedDish.featured,
-                // Other fields would come from the API
               }}
               onSubmit={handleUpdateDish}
               onCancel={() => setIsEditDialogOpen(false)}

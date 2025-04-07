@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { restaurantService } from "@/services/restaurantService";
 import { DishCreateRequest, TimeSlotUpdateRequest, BookTimeSlotRequest } from "@/types/restaurant";
@@ -28,9 +27,6 @@ export const useRestaurantMenu = () => {
         console.error('Error fetching menu data:', error);
         throw error;
       }
-    },
-    onSuccess: (data) => {
-      console.log('Menu query succeeded, data:', data);
     },
     onError: (error) => {
       console.error('Menu query failed:', error);

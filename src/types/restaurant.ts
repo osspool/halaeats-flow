@@ -27,6 +27,7 @@ export interface DailyAvailability {
 
 // Update the DishCreateRequest interface to align with the new schema
 export interface DishCreateRequest {
+  id?: string;  // Make id optional since it's added when creating a new dish
   name: string;
   price: number;
   description: string;
